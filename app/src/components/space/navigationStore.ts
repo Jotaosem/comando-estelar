@@ -9,6 +9,9 @@ interface NavigationState {
   proyecto: ProyectoResumenUI | null;
   etapa: any | null;
   searchQuery: string;
+  chatAbierto: boolean;
+  chatProyectoId: string | null;
+  chatPreguntaInicial?: string;
 
   // Acciones puras de navegación
   irAGalaxia: () => void;
@@ -17,6 +20,9 @@ interface NavigationState {
   seleccionarEtapa: (etapa: any) => void;
   volverUnNivel: () => void;
   setSearchQuery: (query: string) => void;
+  abrirChatConProyecto: (proyectoId: string, preguntaInicial?: string) => void;
+  cerrarChat: () => void;
+  setChatAbierto: (abierto: boolean) => void;
 }
 
 export const useNavigationStore = create<NavigationState>((set, get) => ({
@@ -25,6 +31,25 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
   proyecto: null,
   etapa: null,
   searchQuery: '',
+  chatAbierto: false,
+  chatProyectoId: null,
+  chatPreguntaInicial: undefined,
+
+  abrirChatConProyecto: (proyectoId: string, preguntaInicial?: string) => {
+    set({
+      chatAbierto: true,
+      chatProyectoId: proyectoId,
+      chatPreguntaInicial: preguntaInicial,
+    });
+  },
+
+  cerrarChat: () => {
+    set({ chatAbierto: false, chatPreguntaInicial: undefined });
+  },
+
+  setChatAbierto: (abierto: boolean) => {
+    set({ chatAbierto: abierto });
+  },
 
   setSearchQuery: (query: string) => {
     set({ searchQuery: query });

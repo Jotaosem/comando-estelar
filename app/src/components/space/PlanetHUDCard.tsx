@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import type { ProyectoResumenUI } from '../../lib/proyectosData';
-import { HelpCircle, AlertTriangle, User, X } from 'lucide-react';
+import { HelpCircle, AlertTriangle, User, X, MessageSquareQuote } from 'lucide-react';
 import { CompartirPopover } from '../CompartirPopover';
+import { useNavigationStore } from './navigationStore';
 
 interface PlanetHUDCardProps {
   proyecto: ProyectoResumenUI;
@@ -9,6 +10,7 @@ interface PlanetHUDCardProps {
 
 export const PlanetHUDCard: React.FC<PlanetHUDCardProps> = ({ proyecto }) => {
   const [mostrarPopover, setMostrarPopover] = useState(false);
+  const { abrirChatConProyecto } = useNavigationStore();
 
   const isCritico = proyecto.semaforo === 'rojo';
   const isAlerta = proyecto.semaforo === 'amarillo';
@@ -206,6 +208,41 @@ export const PlanetHUDCard: React.FC<PlanetHUDCardProps> = ({ proyecto }) => {
                 }, 2200);
               }}
             />
+          </div>
+        </div>
+
+        {/* Fila 6: Botón Preguntar al copiloto y Atajos */}
+        <div className="pt-2 border-t border-cyan-500/15 space-y-1.5">
+          <button
+            onClick={() => abrirChatConProyecto(proyecto.id)}
+            className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-gradient-to-r from-cyan-500/20 to-blue-600/20 hover:from-cyan-500/30 hover:to-blue-600/30 border border-cyan-400/40 text-cyan-200 font-mono text-xs font-bold transition-all shadow-[0_0_12px_rgba(0,242,254,0.15)]"
+          >
+            <MessageSquareQuote className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Preguntar al copiloto</span>
+          </button>
+
+          <div className="grid grid-cols-3 gap-1">
+            <button
+              onClick={() => abrirChatConProyecto(proyecto.id, '¿Por qué está atrasado?')}
+              className="text-[10px] font-mono p-1 rounded bg-slate-900/90 hover:bg-cyan-950/80 border border-slate-700/80 hover:border-cyan-400/50 text-cyan-300 truncate"
+              title="¿Por qué está atrasado?"
+            >
+              ¿Atrasado?
+            </button>
+            <button
+              onClick={() => abrirChatConProyecto(proyecto.id, 'Historial de bloqueos')}
+              className="text-[10px] font-mono p-1 rounded bg-slate-900/90 hover:bg-cyan-950/80 border border-slate-700/80 hover:border-cyan-400/50 text-cyan-300 truncate"
+              title="Historial de bloqueos"
+            >
+              Bloqueos
+            </button>
+            <button
+              onClick={() => abrirChatConProyecto(proyecto.id, '¿Quién es responsable?')}
+              className="text-[10px] font-mono p-1 rounded bg-slate-900/90 hover:bg-cyan-950/80 border border-slate-700/80 hover:border-cyan-400/50 text-cyan-300 truncate"
+              title="¿Quién es responsable?"
+            >
+              Responsable
+            </button>
           </div>
         </div>
       </div>

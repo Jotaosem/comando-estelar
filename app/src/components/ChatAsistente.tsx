@@ -18,6 +18,28 @@ interface MensajeChat {
   valoracion?: number;
 }
 
+import React, { useState, useEffect } from 'react';
+import {
+  Sparkles,
+  X,
+  Send,
+  ThumbsUp,
+  ThumbsDown,
+  Terminal,
+  Zap,
+} from 'lucide-react';
+import type { UsuarioPrueba } from './DevUserSelector';
+import { useNavigationStore } from './space/navigationStore';
+import { obtenerProyectosSeed } from '../lib/proyectosData';
+
+interface MensajeChat {
+  id: string;
+  autor: 'user' | 'assistant';
+  texto: string;
+  timestamp: string;
+  valoracion?: number;
+}
+
 interface ChatAsistenteProps {
   usuarioActual: UsuarioPrueba;
   proyectoId?: string;
@@ -26,10 +48,20 @@ interface ChatAsistenteProps {
 
 export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
   usuarioActual,
-  proyectoNombre,
+  proyectoId: propProyectoId,
+  proyectoNombre: propProyectoNombre,
 }) => {
-  const [abierto, setAbierto] = useState<boolean>(false);
+  const { chatAbierto, chatProyectoId, chatPreguntaInicial, setChatAbierto, cerrarChat } = useNavigationStore();
+  const [abiertoLocal, setAbiertoLocal] = useState<boolean>(false);
   const [input, setInput] = useState<string>('');
+
+  const abierto = chatAbierto || abiertoLocal;
+  const activeProyectoId = chatProyectoId || propProyectoId;
+
+  const proyectos = obtenerProyectosSeed(usuarioActual);
+  const activeProyecto = proyectos.find((p) => p.id === activeProyectoId);
+  const activeProyectoNombre = activeProyecto ? activeProyecto.nombre : propProyectoNombre;
+
   const [mensajes, setMensajes] = useState<MensajeChat[]>([
     {
       id: 'm-1',
@@ -40,11 +72,23 @@ export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
   ]);
   const [cargando, setCargando] = useState<boolean>(false);
 
+  // Atajos requeridos por Punto 7:
+  // [¿Por qué está atrasado?] [Historial de bloqueos] [¿Quién es responsable?]
   const ATAJOS = [
-    { label: '¿Cómo va?', query: '¿Cómo va el proyecto actual y cuál es su avance?' },
-    { label: '¿Qué lo bloquea?', query: '¿Qué bloqueos críticos existen y qué área destraba?' },
-    { label: '¿Cuándo termina?', query: '¿Cuándo es la fecha estimada y cuántos días hábiles de atraso tiene?' },
+    { label: '¿Por qué está atrasado?', query: '¿Por qué está atrasado?' },
+    { label: 'Historial de bloqueos', query: 'Historial de bloqueos' },
+    { label: '¿Quién es responsable?', query: '¿Quién es responsable?' },
   ];
+
+  const handleCerrar = () => {
+    setAbiertoLocal(false);
+    cerrarChat();
+  };
+
+  const handleAbrir = () => {
+    setAbiertoLocal(true);
+    setChatAbierto(true);
+  };
 
   const enviarPregunta = (textoPregunta?: string) => {
     const q = textoPregunta || input;
@@ -68,15 +112,17 @@ export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
       if (
         usuarioActual.rol === 'Solicitante' &&
         usuarioActual.area === 'Comercial' &&
-        (qLower.includes('orion') || qLower.includes('proyecto a') || proyectoNombre?.includes('Proyecto A'))
+        (qLower.includes('orion') || qLower.includes('proyecto a') || activeProyectoNombre?.includes('Proyecto A'))
       ) {
         resp = `[PROTOCOLO DE ACCESO RESTRINGIDO]\nNo tienes credenciales de visualización para consultar la misión Portal Proveedores (restringido a Operaciones).\nResponsable de enlace: Jose Miguel (jose.miguel@empresa.cl).\n\nFuente: Notion vía sync · actualizado 21/10 09:00`;
-      } else if (qLower.includes('bloque') || qLower.includes('bloquea')) {
-        resp = `[DIAGNÓSTICO DE BLOQUEOS EN NODOS]\n• Misión Portal Proveedores (OP-ORION-01):\n  - Bloqueo activo en Nodo 4 [QA]: Pendiente firma de matriz UAT de regresión.\n  - Área que destraba: QA Lead (contacto: paula.qa@empresa.cl).\n  - Tiempo en bloqueo: 6 días hábiles.\n• Misión Sentinel (SEC-VALKYRIE-05):\n  - Bloqueo en Nodo 5 [Seguridad/Infra]: Falta clúster secundario.\n  - Área que destraba: Cloud Ops (7 días hábiles).\n\nFuente: Notion vía sync · actualizado 21/10 09:00`;
-      } else if (qLower.includes('termina') || qLower.includes('cuándo') || qLower.includes('fecha')) {
-        resp = `[ESTIMACIÓN AUDITABLE DE TÉRMINO]\n• Portal Proveedores: 30/10/2026 (Comprometida: 06/11/2026, atraso de +7 días hábiles tras impacto de bloqueo QA).\n• Integración ERP: 15/12/2026 (Dentro de compromiso, 0 días hábiles de desfase).\n• Cálculo ejecutado en base a días hábiles oficiales de Chile.\n\nFuente: Notion vía sync · actualizado 21/10 09:00`;
+      } else if (qLower.includes('por qué está atrasado') || qLower.includes('atrasado') || qLower.includes('atraso')) {
+        resp = `[ANÁLISIS DE ATRASO AUDITABLE]\n• Misión: ${activeProyectoNombre || 'Portal Proveedores (OP-ORION-01)'}\n• Causa raíz: Bloqueo de QA abierto hace 6 días hábiles (supera el umbral crítico de 5 dh).\n• Desfase: +7 días hábiles respecto a fecha comprometida.\n\nFuente: Notion vía sync · actualizado 21/10 09:00`;
+      } else if (qLower.includes('historial de bloqueos') || qLower.includes('bloqueo')) {
+        resp = `[HISTORIAL DE BLOQUEOS]\n• Misión: ${activeProyectoNombre || 'Portal Proveedores'}\n• Bloqueo 1 (Activo): Pendiente firma de matriz UAT de regresión · Área: QA Lead · Abierto hace 6 dh.\n• No registra bloqueos cerrados anteriores en esta fase.\n\nFuente: Notion vía sync · actualizado 21/10 09:00`;
+      } else if (qLower.includes('responsable') || qLower.includes('quién es')) {
+        resp = `[RESPONSABILIDAD Y ENLACE]\n• Misión: ${activeProyectoNombre || 'Portal Proveedores'}\n• Responsable de comunicar: ${activeProyecto?.responsable_comunicar_nombre || 'Jose Miguel'}\n• Solicitante: ${activeProyecto?.solicitante_nombre || 'Valeria Soto'} (${activeProyecto?.area_solicitante || 'Operaciones'})\n\nFuente: Notion vía sync · actualizado 21/10 09:00`;
       } else {
-        resp = `[ESTADO GENERAL DE LA FLOTA]\n• Misión en foco: ${proyectoNombre || 'Portal Proveedores (Proyecto A)'}\n• Avance: 43% completado · Nodo activo: QA [En curso / Bloqueado]\n• Salud: 🔴 ROJO por bloqueo QA excediendo umbral de 5 días hábiles.\n• Responsable: Jose Miguel (jose.miguel@empresa.cl)\n\nFuente: Notion vía sync · actualizado 21/10 09:00`;
+        resp = `[ESTADO GENERAL DE LA MISIÓN]\n• Misión en foco: ${activeProyectoNombre || 'Portal Proveedores'}\n• Avance: ${activeProyecto?.avance_pct || 43}% completado · Nodo activo: ${activeProyecto?.etapa_actual_nombre || 'QA'}\n• Semáforo: ${activeProyecto?.semaforo?.toUpperCase() || 'ROJO'}\n\nFuente: Notion vía sync · actualizado 21/10 09:00`;
       }
 
       setMensajes((prev) => [
@@ -92,6 +138,13 @@ export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
     }, 450);
   };
 
+  // Disparar pregunta inicial si viene precargada desde atajo
+  useEffect(() => {
+    if (chatPreguntaInicial && chatAbierto) {
+      enviarPregunta(chatPreguntaInicial);
+    }
+  }, [chatPreguntaInicial, chatAbierto]);
+
   const valorar = (id: string, val: number) => {
     setMensajes((prev) =>
       prev.map((m) => (m.id === id ? { ...m, valoracion: val } : m))
@@ -102,7 +155,7 @@ export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
     <>
       {/* Botón Flotante Holográfico */}
       <button
-        onClick={() => setAbierto(true)}
+        onClick={handleAbrir}
         className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 p-3.5 rounded-full shadow-[0_0_25px_rgba(0,242,254,0.45)] flex items-center gap-2.5 group transition-all transform hover:scale-105 active:scale-95 border border-cyan-300/40"
         title="Activar Copiloto IA"
         aria-label="Abrir Copiloto IA"
@@ -138,7 +191,7 @@ export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
               </div>
             </div>
             <button
-              onClick={() => setAbierto(false)}
+              onClick={handleCerrar}
               className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors"
             >
               <X className="w-5 h-5" />
