@@ -35,10 +35,10 @@ const NavigationHeader: React.FC<{
             </div>
             <div>
               <span className="font-display font-black text-lg text-white tracking-widest uppercase block leading-none">
-                Mission Control
+                Comando Estelar
               </span>
               <span className="text-[10px] font-mono text-cyan-400/80 tracking-wider">
-                GALACTIC DIRECTOR // v2.6
+                Seguimiento de proyectos
               </span>
             </div>
           </Link>
@@ -53,7 +53,7 @@ const NavigationHeader: React.FC<{
               }`}
             >
               <Activity className="w-3.5 h-3.5" />
-              <span>MISIONES</span>
+              <span>Misiones</span>
             </Link>
 
             {puedeVerAvisos && (
@@ -66,7 +66,7 @@ const NavigationHeader: React.FC<{
                 }`}
               >
                 <Radio className="w-3.5 h-3.5" />
-                <span>COMMS SLACK</span>
+                <span>Avisos</span>
               </Link>
             )}
 
@@ -79,7 +79,7 @@ const NavigationHeader: React.FC<{
               }`}
             >
               <ClipboardList className="w-3.5 h-3.5" />
-              <span>FEEDBACK PILOTO</span>
+              <span>Encuesta</span>
             </Link>
 
             {esAdmin && (
@@ -92,7 +92,7 @@ const NavigationHeader: React.FC<{
                 }`}
               >
                 <Shield className="w-3.5 h-3.5" />
-                <span>ADMIN HQ</span>
+                <span>Administración</span>
               </Link>
             )}
           </nav>
@@ -141,7 +141,7 @@ export const App: React.FC = () => {
         <ChatAsistente usuarioActual={usuarioActual} />
 
         <footer className="border-t border-cyan-500/15 bg-[#030610]/90 backdrop-blur py-4 text-center font-mono text-[11px] text-slate-500 relative z-10">
-          MISSION CONTROL SYSTEM // FUENTE AUDITABLE: NOTION VÍA SYNC // OPERADOR: {usuarioActual.rol} ({usuarioActual.email})
+          COMANDO ESTELAR // FUENTE AUDITABLE: NOTION VÍA SYNC // OPERADOR: {usuarioActual.rol} ({usuarioActual.email})
         </footer>
       </div>
     </BrowserRouter>

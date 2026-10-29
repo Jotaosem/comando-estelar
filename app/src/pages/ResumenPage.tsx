@@ -91,7 +91,7 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
               <span>DIRECTOR GALÁCTICO DE MISIONES // SEGUIMIENTO EN TIEMPO REAL</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-display font-black tracking-wider text-white uppercase flex items-center gap-3">
-              <span>Mission Control</span>
+              <span>Comando Estelar</span>
               <span className="text-xs font-mono font-normal px-2.5 py-1 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300">
                 {proyectosFiltrados.length} ACTIVAS
               </span>
