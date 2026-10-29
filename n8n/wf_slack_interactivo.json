@@ -1,0 +1,67 @@
+{
+  "name": "Botón Interactivo de Slack para Publicar Avisos",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "slack-interactivity",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-slack",
+      "name": "Webhook Slack Interactivity",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/functions/v1/aviso-publicar",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-sync-secret",
+              "value": "={{$env.SYNC_SECRET}}"
+            },
+            {
+              "name": "x-publicado-por",
+              "value": "={{$json.body.user.email}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "aviso_id",
+              "value": "={{$json.body.actions[0].value}}"
+            },
+            {
+              "name": "accion",
+              "value": "={{$json.body.actions[0].style === 'primary' ? 'publicar' : 'descartar'}}"
+            }
+          ]
+        }
+      },
+      "id": "http-aviso-publicar",
+      "name": "Llamar aviso-publicar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Slack Interactivity": {
+      "main": [
+        [
+          {
+            "node": "Llamar aviso-publicar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

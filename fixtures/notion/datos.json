@@ -1,0 +1,224 @@
+{
+  "fuente": "fixture",
+  "leido_en": "2026-10-21T02:26:46.959Z",
+  "proyectos": [
+    {
+      "id": "a0000000-0000-0000-0000-000000000001",
+      "notion_id": "notion-proj-a",
+      "nombre": "Portal Proveedores (Proyecto A)",
+      "area_solicitante": "Operaciones",
+      "solicitante_nombre": "Valeria Soto",
+      "solicitante_email": "valeria.soto@empresa.cl",
+      "responsable_comunicar_nombre": "Jose Miguel",
+      "responsable_comunicar_email": "jose.miguel@empresa.cl",
+      "fecha_comprometida": "2026-11-06",
+      "notion_url": "https://notion.so/empresa/proj-a"
+    },
+    {
+      "id": "b0000000-0000-0000-0000-000000000002",
+      "notion_id": "notion-proj-b",
+      "nombre": "Integración ERP (Proyecto B)",
+      "area_solicitante": "Comercial",
+      "solicitante_nombre": "Esteban Lagos",
+      "solicitante_email": "esteban.lagos@empresa.cl",
+      "responsable_comunicar_nombre": "Jose Miguel",
+      "responsable_comunicar_email": "jose.miguel@empresa.cl",
+      "fecha_comprometida": "2026-12-15",
+      "notion_url": "https://notion.so/empresa/proj-b"
+    },
+    {
+      "id": "c0000000-0000-0000-0000-000000000003",
+      "notion_id": "notion-proj-c",
+      "nombre": "Automatización Compliance (Proyecto C)",
+      "area_solicitante": "Compliance",
+      "solicitante_nombre": "Camila Rivas",
+      "solicitante_email": "camila.rivas@empresa.cl",
+      "responsable_comunicar_nombre": "Jose Miguel",
+      "responsable_comunicar_email": "jose.miguel@empresa.cl",
+      "fecha_comprometida": "2026-11-10",
+      "notion_url": "https://notion.so/empresa/proj-c"
+    },
+    {
+      "id": "d0000000-0000-0000-0000-000000000004",
+      "notion_id": "notion-proj-d",
+      "nombre": "Migración Cloud Core (Proyecto D)",
+      "area_solicitante": "Operaciones",
+      "solicitante_nombre": "Valeria Soto",
+      "solicitante_email": "valeria.soto@empresa.cl",
+      "responsable_comunicar_nombre": "Jose Miguel",
+      "responsable_comunicar_email": "jose.miguel@empresa.cl",
+      "fecha_comprometida": "2026-10-15",
+      "notion_url": "https://notion.so/empresa/proj-d"
+    }
+  ],
+  "etapas": [
+    {
+      "id": "e0000000-0000-0000-0000-0000000000a1",
+      "notion_id": "notion-etapa-a1",
+      "proyecto_id": "a0000000-0000-0000-0000-000000000001",
+      "proyecto_notion_id": "notion-proj-a",
+      "nombre": "Levantamiento",
+      "orden": 1,
+      "responsable_nombre": "Carlos Dev",
+      "responsable_email": "carlos.dev@empresa.cl",
+      "estado": "Completada",
+      "fin_real": "2026-10-05",
+      "duracion_dh": 5
+    },
+    {
+      "id": "e0000000-0000-0000-0000-0000000000a2",
+      "notion_id": "notion-etapa-a2",
+      "proyecto_id": "a0000000-0000-0000-0000-000000000001",
+      "proyecto_notion_id": "notion-proj-a",
+      "nombre": "Desarrollo",
+      "orden": 2,
+      "responsable_nombre": "Carlos Dev",
+      "responsable_email": "carlos.dev@empresa.cl",
+      "estado": "Completada",
+      "fin_real": "2026-10-12",
+      "duracion_dh": 5
+    },
+    {
+      "id": "e0000000-0000-0000-0000-0000000000a3",
+      "notion_id": "notion-etapa-a3",
+      "proyecto_id": "a0000000-0000-0000-0000-000000000001",
+      "proyecto_notion_id": "notion-proj-a",
+      "nombre": "QA",
+      "orden": 3,
+      "responsable_nombre": "Paula QA",
+      "responsable_email": "paula.qa@empresa.cl",
+      "estado": "En curso",
+      "inicio_real": "2026-10-13",
+      "duracion_dh": 5
+    },
+    {
+      "id": "e0000000-0000-0000-0000-0000000000a4",
+      "notion_id": "notion-etapa-a4",
+      "proyecto_id": "a0000000-0000-0000-0000-000000000001",
+      "proyecto_notion_id": "notion-proj-a",
+      "nombre": "Despliegue",
+      "orden": 4,
+      "responsable_nombre": "Carlos Dev",
+      "responsable_email": "carlos.dev@empresa.cl",
+      "estado": "Pendiente",
+      "duracion_dh": 2
+    },
+    {
+      "id": "e0000000-0000-0000-0000-0000000000b1",
+      "notion_id": "notion-etapa-b1",
+      "proyecto_id": "b0000000-0000-0000-0000-000000000002",
+      "proyecto_notion_id": "notion-proj-b",
+      "nombre": "Levantamiento",
+      "orden": 1,
+      "responsable_nombre": "Carlos Dev",
+      "responsable_email": "carlos.dev@empresa.cl",
+      "estado": "Completada",
+      "fin_real": "2026-10-10",
+      "duracion_dh": 4
+    },
+    {
+      "id": "e0000000-0000-0000-0000-0000000000b2",
+      "notion_id": "notion-etapa-b2",
+      "proyecto_id": "b0000000-0000-0000-0000-000000000002",
+      "proyecto_notion_id": "notion-proj-b",
+      "nombre": "Desarrollo",
+      "orden": 2,
+      "responsable_nombre": "Carlos Dev",
+      "responsable_email": "carlos.dev@empresa.cl",
+      "estado": "En curso",
+      "inicio_real": "2026-10-14",
+      "duracion_dh": 15
+    },
+    {
+      "id": "e0000000-0000-0000-0000-0000000000b3",
+      "notion_id": "notion-etapa-b3",
+      "proyecto_id": "b0000000-0000-0000-0000-000000000002",
+      "proyecto_notion_id": "notion-proj-b",
+      "nombre": "QA",
+      "orden": 3,
+      "responsable_nombre": "Paula QA",
+      "responsable_email": "paula.qa@empresa.cl",
+      "estado": "Pendiente",
+      "duracion_dh": 5
+    },
+    {
+      "id": "e0000000-0000-0000-0000-0000000000c1",
+      "notion_id": "notion-etapa-c1",
+      "proyecto_id": "c0000000-0000-0000-0000-000000000003",
+      "proyecto_notion_id": "notion-proj-c",
+      "nombre": "Levantamiento",
+      "orden": 1,
+      "responsable_nombre": "Carlos Dev",
+      "responsable_email": "carlos.dev@empresa.cl",
+      "estado": "Completada",
+      "fin_real": "2026-10-05",
+      "duracion_dh": 4
+    },
+    {
+      "id": "e0000000-0000-0000-0000-0000000000c2",
+      "notion_id": "notion-etapa-c2",
+      "proyecto_id": "c0000000-0000-0000-0000-000000000003",
+      "proyecto_notion_id": "notion-proj-c",
+      "nombre": "Desarrollo",
+      "orden": 2,
+      "responsable_nombre": "Carlos Dev",
+      "responsable_email": "carlos.dev@empresa.cl",
+      "estado": "En curso",
+      "inicio_real": "2026-10-16",
+      "duracion_dh": 10
+    },
+    {
+      "id": "e0000000-0000-0000-0000-0000000000c3",
+      "notion_id": "notion-etapa-c3",
+      "proyecto_id": "c0000000-0000-0000-0000-000000000003",
+      "proyecto_notion_id": "notion-proj-c",
+      "nombre": "Aprobación Seguridad",
+      "orden": 3,
+      "responsable_nombre": null,
+      "responsable_email": null,
+      "estado": "Pendiente",
+      "duracion_dh": 5
+    },
+    {
+      "id": "e0000000-0000-0000-0000-0000000000d1",
+      "notion_id": "notion-etapa-d1",
+      "proyecto_id": "d0000000-0000-0000-0000-000000000004",
+      "proyecto_notion_id": "notion-proj-d",
+      "nombre": "Ejecución y Cierre",
+      "orden": 1,
+      "responsable_nombre": "Carlos Dev",
+      "responsable_email": "carlos.dev@empresa.cl",
+      "estado": "Completada",
+      "fin_real": "2026-10-14",
+      "duracion_dh": 10
+    }
+  ],
+  "bloqueos": [
+    {
+      "id": "b0000000-0000-0000-0000-000000000001",
+      "notion_id": "notion-bloq-a1",
+      "proyecto_id": "a0000000-0000-0000-0000-000000000001",
+      "proyecto_notion_id": "notion-proj-a",
+      "etapa_id": "e0000000-0000-0000-0000-0000000000a3",
+      "etapa_notion_id": "notion-etapa-a3",
+      "descripcion": "Pendiente firma de matriz de pruebas UAT",
+      "motivo": "Aprobación QA",
+      "area_destraba": "QA",
+      "fecha_apertura": "2026-10-13"
+    }
+  ],
+  "tareas": [
+    {
+      "id": "t0000000-0000-0000-0000-000000000001",
+      "notion_id": "notion-tar-1",
+      "proyecto_id": "a0000000-0000-0000-0000-000000000001",
+      "proyecto_notion_id": "notion-proj-a",
+      "etapa_id": "e0000000-0000-0000-0000-0000000000a3",
+      "etapa_notion_id": "notion-etapa-a3",
+      "nombre": "Revisar ambientes de staging",
+      "responsable_nombre": "Paula QA",
+      "responsable_email": "paula.qa@empresa.cl",
+      "estado": "En curso"
+    }
+  ]
+}

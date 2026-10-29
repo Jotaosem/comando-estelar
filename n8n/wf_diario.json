@@ -1,0 +1,55 @@
+{
+  "name": "Recálculo Diario 07:00 Hábiles y Snapshots",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * 1-5"
+            }
+          ]
+        }
+      },
+      "id": "cron-07h",
+      "name": "07:00 Días Hábiles",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/functions/v1/recalcular?snapshot=true",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-sync-secret",
+              "value": "={{$env.SYNC_SECRET}}"
+            }
+          ]
+        }
+      },
+      "id": "http-recalcular-snapshot",
+      "name": "Recalcular Proyección y Guardar Snapshot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    }
+  ],
+  "connections": {
+    "07:00 Días Hábiles": {
+      "main": [
+        [
+          {
+            "node": "Recalcular Proyección y Guardar Snapshot",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

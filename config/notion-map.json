@@ -1,0 +1,36 @@
+{
+  "proyecto": {
+    "nombre": "Nombre",
+    "area_solicitante": "Área",
+    "solicitante_nombre": "Solicitante",
+    "solicitante_email": "Email Solicitante",
+    "responsable_comunicar_nombre": "Responsable Comunicar",
+    "responsable_comunicar_email": "Email Responsable",
+    "fecha_comprometida": "Fecha Comprometida"
+  },
+  "etapa": {
+    "nombre": "Nombre",
+    "orden": "Orden",
+    "responsable_nombre": "Responsable",
+    "responsable_email": "Email Responsable",
+    "estado": "Estado",
+    "inicio_plan": "Inicio Plan",
+    "fin_plan": "Fin Plan",
+    "inicio_real": "Inicio Real",
+    "fin_real": "Fin Real",
+    "duracion_dh": "Duración DH"
+  },
+  "bloqueo": {
+    "descripcion": "Descripción",
+    "motivo": "Motivo",
+    "area_destraba": "Área Destraba",
+    "fecha_apertura": "Fecha Apertura",
+    "fecha_cierre": "Fecha Cierre"
+  },
+  "tarea": {
+    "nombre": "Nombre",
+    "responsable_nombre": "Responsable",
+    "responsable_email": "Email Responsable",
+    "estado": "Estado"
+  }
+}

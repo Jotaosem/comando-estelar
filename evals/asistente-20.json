@@ -1,0 +1,22 @@
+[
+  { "id": 1, "pregunta": "¿Cómo va el Proyecto A?", "proyecto_id": "a0000000-0000-0000-0000-000000000001", "hechos": ["Proyecto A", "QA", "rojo", "Fuente:"] },
+  { "id": 2, "pregunta": "¿Cuál es la fecha estimada del Proyecto A?", "proyecto_id": "a0000000-0000-0000-0000-000000000001", "hechos": ["30/10", "Fuente:"] },
+  { "id": 3, "pregunta": "¿Qué bloquea el Proyecto A?", "proyecto_id": "a0000000-0000-0000-0000-000000000001", "hechos": ["QA", "Fuente:"] },
+  { "id": 4, "pregunta": "¿Quién es el responsable de comunicar el Proyecto A?", "proyecto_id": "a0000000-0000-0000-0000-000000000001", "hechos": ["Jose Miguel", "jose.miguel@empresa.cl", "Fuente:"] },
+  { "id": 5, "pregunta": "¿Cuál es el avance del Proyecto B?", "proyecto_id": "b0000000-0000-0000-0000-000000000002", "hechos": ["Desarrollo", "Fuente:"] },
+  { "id": 6, "pregunta": "¿Está al día el Proyecto B?", "proyecto_id": "b0000000-0000-0000-0000-000000000002", "hechos": ["verde", "Fuente:"] },
+  { "id": 7, "pregunta": "¿Cuál es la fecha comprometida del Proyecto B?", "proyecto_id": "b0000000-0000-0000-0000-000000000002", "hechos": ["2026-12-15", "Fuente:"] },
+  { "id": 8, "pregunta": "¿Quién solicita el Proyecto B?", "proyecto_id": "b0000000-0000-0000-0000-000000000002", "hechos": ["Esteban", "Fuente:"] },
+  { "id": 9, "pregunta": "¿Cómo va el Proyecto C?", "proyecto_id": "c0000000-0000-0000-0000-000000000003", "hechos": ["Proyecto C", "amarillo", "Fuente:"] },
+  { "id": 10, "pregunta": "¿Por qué el Proyecto C está en amarillo?", "proyecto_id": "c0000000-0000-0000-0000-000000000003", "hechos": ["atraso", "Fuente:"] },
+  { "id": 11, "pregunta": "¿Cuál es el estado del Proyecto D?", "proyecto_id": "d0000000-0000-0000-0000-000000000004", "hechos": ["100%", "Cerrado", "Fuente:"] },
+  { "id": 12, "pregunta": "¿Cuándo finalizó el Proyecto D?", "proyecto_id": "d0000000-0000-0000-0000-000000000004", "hechos": ["2026-10-14", "Fuente:"] },
+  { "id": 13, "pregunta": "¿Qué proyectos pertenecen al área de Operaciones?", "hechos": ["Proyecto A", "Proyecto D", "Fuente:"] },
+  { "id": 14, "pregunta": "¿Hay proyectos en estado crítico?", "hechos": ["rojo", "Proyecto A", "Fuente:"] },
+  { "id": 15, "pregunta": "¿Quién destraba el bloqueo del Proyecto A?", "proyecto_id": "a0000000-0000-0000-0000-000000000001", "hechos": ["QA", "Fuente:"] },
+  { "id": 16, "pregunta": "¿Qué porcentaje de avance tiene el Proyecto A?", "proyecto_id": "a0000000-0000-0000-0000-000000000001", "hechos": ["50%", "Fuente:"] },
+  { "id": 17, "pregunta": "¿Tiene alertas de gobierno el Proyecto C?", "proyecto_id": "c0000000-0000-0000-0000-000000000003", "hechos": ["responsable", "Fuente:"] },
+  { "id": 18, "pregunta": "Como solicitante Comercial, ¿puedo consultar el Proyecto A?", "rol": "Solicitante", "usuario": "esteban.lagos@empresa.cl", "proyecto_id": "a0000000-0000-0000-0000-000000000001", "hechos": ["No tienes", "acceso", "Fuente:"] },
+  { "id": 19, "pregunta": "Como solicitante Operaciones, ¿puedo ver el Proyecto B?", "rol": "Solicitante", "usuario": "valeria.soto@empresa.cl", "proyecto_id": "b0000000-0000-0000-0000-000000000002", "hechos": ["No tienes", "acceso", "Fuente:"] },
+  { "id": 20, "pregunta": "Consulta de usuario no registrado", "rol": "Externo", "usuario": "desconocido@externo.cl", "hechos": ["No tienes", "acceso", "Fuente:"] }
+]

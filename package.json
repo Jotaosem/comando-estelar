@@ -1,0 +1,19 @@
+{
+  "name": "top-secret",
+  "version": "1.0.0",
+  "description": "Prototipo Comunicación de Avances de Proyectos",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix app run dev",
+    "build": "npm --prefix app run build",
+    "supabase:init": "npx supabase init",
+    "supabase:start": "npx supabase start",
+    "supabase:stop": "npx supabase stop",
+    "supabase:reset": "npx supabase db reset",
+    "test:reglas": "deno test --allow-read supabase/functions/_shared/__tests__/",
+    "sync:local": "deno run --allow-net --allow-read --allow-env scripts/sync-local.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "UNLICENSED"
+}

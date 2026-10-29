@@ -1,0 +1,110 @@
+{
+  "name": "Sync y Notificación a Slack de Avisos de Proyectos",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger-5m",
+      "name": "Cron cada 5 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{$env.SUPABASE_URL}}/functions/v1/sync-ingest",
+        "method": "POST",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-sync-secret",
+              "value": "={{$env.SYNC_SECRET}}"
+            }
+          ]
+        }
+      },
+      "id": "http-sync-ingest",
+      "name": "Llamar sync-ingest",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "operation": "chat:postMessage",
+        "channel": "={{$json.responsable_email}}",
+        "text": "={{$json.mensaje}}",
+        "blocks": [
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "={{$json.mensaje}}"
+            }
+          },
+          {
+            "type": "actions",
+            "elements": [
+              {
+                "type": "button",
+                "text": {
+                  "type": "plain_text",
+                  "text": "Publicar en Canal"
+                },
+                "style": "primary",
+                "value": "={{$json.aviso_id}}"
+              },
+              {
+                "type": "button",
+                "text": {
+                  "type": "plain_text",
+                  "text": "Descartar"
+                },
+                "style": "danger",
+                "value": "={{$json.aviso_id}}"
+              }
+            ]
+          }
+        ]
+      },
+      "id": "slack-dm-responsable",
+      "name": "Enviar DM al Responsable",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.1,
+      "position": [680, 300]
+    }
+  ],
+  "connections": {
+    "Cron cada 5 minutos": {
+      "main": [
+        [
+          {
+            "node": "Llamar sync-ingest",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Llamar sync-ingest": {
+      "main": [
+        [
+          {
+            "node": "Enviar DM al Responsable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
