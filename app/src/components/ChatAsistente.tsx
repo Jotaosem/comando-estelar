@@ -1,23 +1,3 @@
-import React, { useState } from 'react';
-import {
-  Sparkles,
-  X,
-  Send,
-  ThumbsUp,
-  ThumbsDown,
-  Terminal,
-  Zap,
-} from 'lucide-react';
-import type { UsuarioPrueba } from './DevUserSelector';
-
-interface MensajeChat {
-  id: string;
-  autor: 'user' | 'assistant';
-  texto: string;
-  timestamp: string;
-  valoracion?: number;
-}
-
 import React, { useState, useEffect } from 'react';
 import {
   Sparkles,

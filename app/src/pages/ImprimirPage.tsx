@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { obtenerProyectosSeed, type ProyectoResumenUI } from '../lib/proyectosData';
-import { USUARIOS_SEED } from '../components/DevUserSelector';
 
 export const ImprimirPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -59,7 +58,7 @@ export const ImprimirPage: React.FC = () => {
 
   return (
     <div className="bg-white text-slate-900 p-8 max-w-3xl mx-auto font-sans text-xs leading-relaxed print:p-0 print:max-w-none print:text-[11px]">
-      <style orientation="print">{`
+      <style>{`
         @page {
           size: A4 portrait;
           margin: 1.5cm;

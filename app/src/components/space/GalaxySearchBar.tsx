@@ -210,4 +210,3 @@ export const GalaxySearchBar: React.FC<GalaxySearchBarProps> = ({
     </div>
   );
 };
-};

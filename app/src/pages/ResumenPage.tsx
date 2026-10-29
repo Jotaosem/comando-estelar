@@ -2,12 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useRegistrarVista } from '../hooks/useRegistrarVista';
-import { obtenerProyectosSeed, type ProyectoResumenUI } from '../lib/proyectosData';
+import { obtenerProyectosSeed } from '../lib/proyectosData';
 import type { UsuarioPrueba } from '../components/DevUserSelector';
 import { SemanticGalaxyDirector } from '../components/space/SemanticGalaxyDirector';
 import { GalaxySearchBar } from '../components/space/GalaxySearchBar';
 import { CompartirPopover } from '../components/CompartirPopover';
-import { useNavigationStore } from '../components/space/navigationStore';
 import {
   ShieldAlert,
   Compass,
@@ -30,8 +29,6 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
   const [focoIndex, setFocoIndex] = useState<number>(0);
   const [esVistaLista, setEsVistaLista] = useState<boolean>(false);
   const [matchingIds, setMatchingIds] = useState<Set<string> | null>(null);
-
-  const { seleccionarProyecto } = useNavigationStore();
 
   const proyectos = obtenerProyectosSeed(usuarioActual);
 

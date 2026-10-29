@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { ProyectoResumenUI } from '../lib/proyectosData';
-import { Share2, Download, Copy, Link as LinkIcon, Check, X } from 'lucide-react';
+import { Share2, Download, Copy, Link as LinkIcon, X } from 'lucide-react';
 
 interface CompartirPopoverProps {
   proyecto: ProyectoResumenUI;
