@@ -339,6 +339,24 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
                   </div>
                 </div>
 
+                {/* Sprints en vista lista (3 columnas cortas: Ingreso · Compromiso · Producción) */}
+                <div className="mt-3 pt-2.5 border-t border-slate-900 grid grid-cols-3 gap-2 font-mono text-[10px]">
+                  <div>
+                    <span className="text-slate-500 block text-[9px] uppercase">Ingreso</span>
+                    <span className="text-slate-300 font-bold">{p.sprint_ingreso || '—'}</span>
+                  </div>
+                  <div className="text-center">
+                    <span className="text-slate-500 block text-[9px] uppercase">Compromiso</span>
+                    <span className="text-slate-300 font-bold">{p.sprint_comprometido || '—'}</span>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-slate-500 block text-[9px] uppercase">Producción</span>
+                    <span className="text-cyan-300 font-bold block truncate">
+                      {p.fecha_produccion ? `${p.fecha_produccion} (${p.sprint_estimado || 'est.'})` : '—'}
+                    </span>
+                  </div>
+                </div>
+
                 {/* Footer de Tarjeta: Responsable & Frescura */}
                 <div className="mt-4 pt-3 border-t border-slate-900 flex items-center justify-between text-[11px] font-mono text-slate-400">
                   <div className="flex items-center gap-1.5 truncate max-w-[180px]">

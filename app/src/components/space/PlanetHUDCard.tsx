@@ -102,6 +102,64 @@ export const PlanetHUDCard: React.FC<PlanetHUDCardProps> = ({ proyecto }) => {
           </span>
         </div>
 
+        {/* Fila Sprints (bajo FECHAS) */}
+        <div className="pt-2 pb-1 border-t border-cyan-500/15">
+          <div className="text-[10px] font-mono text-cyan-400 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+            <span>Sprints</span>
+            {(() => {
+              const estNum = proyecto.sprint_estimado ? parseInt(proyecto.sprint_estimado.replace(/\D/g, ''), 10) : NaN;
+              const compNum = proyecto.sprint_comprometido ? parseInt(proyecto.sprint_comprometido.replace(/\D/g, ''), 10) : NaN;
+              const diff = !isNaN(estNum) && !isNaN(compNum) ? estNum - compNum : 0;
+              if (diff > 0) {
+                return (
+                  <span className="text-amber-300 font-mono text-[10px] font-bold flex items-center gap-0.5">
+                    ⚠ +{diff} {diff === 1 ? 'sprint' : 'sprints'}
+                  </span>
+                );
+              }
+              return null;
+            })()}
+          </div>
+          
+          {/* Timeline de Sprints: ○───────────○───────────◉ */}
+          <div className="px-1 py-1">
+            <div className="relative flex items-center justify-between mb-1.5">
+              <div className="absolute left-2 right-2 top-1/2 -translate-y-1/2 h-[2px] bg-slate-700 -z-0" />
+              <div className="relative z-10 w-3.5 h-3.5 rounded-full bg-slate-900 border-2 border-slate-400 flex items-center justify-center">
+                <span className="w-1 h-1 rounded-full bg-slate-400" />
+              </div>
+              <div className="relative z-10 w-3.5 h-3.5 rounded-full bg-slate-900 border-2 border-cyan-400 flex items-center justify-center">
+                <span className="w-1 h-1 rounded-full bg-cyan-400" />
+              </div>
+              <div className="relative z-10 w-3.5 h-3.5 rounded-full bg-cyan-500 border-2 border-white flex items-center justify-center shadow-[0_0_8px_rgba(0,242,254,0.6)]">
+                <span className="w-1 h-1 rounded-full bg-white" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 text-[10px] font-mono">
+              <div>
+                <span className="text-slate-400 block text-[9px] uppercase">Ingresó</span>
+                <span className="text-slate-200 font-bold">{proyecto.sprint_ingreso || '—'}</span>
+              </div>
+              <div className="text-center">
+                <span className="text-slate-400 block text-[9px] uppercase">Comprometido</span>
+                <span className="text-slate-200 font-bold">{proyecto.sprint_comprometido || '—'}</span>
+              </div>
+              <div className="text-right">
+                <span className="text-slate-400 block text-[9px] uppercase">Producción</span>
+                <span className="text-white font-bold block leading-tight">
+                  {proyecto.fecha_produccion || '—'}
+                </span>
+                {proyecto.sprint_estimado && (
+                  <span className="text-[9px] text-cyan-300/90 block leading-tight">
+                    {proyecto.sprint_estimado}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Fila 4: Atraso en días hábiles */}
         <div className="flex items-center justify-between text-sm">
           <span className="text-xs font-mono text-slate-400 uppercase">Atraso:</span>
