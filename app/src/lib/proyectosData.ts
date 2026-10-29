@@ -39,6 +39,12 @@ export interface ProyectoResumenUI {
   // Mission Control extra attributes
   callsign?: string;
   threat_level?: 'ALPHA' | 'BETA' | 'CRITICAL' | 'STABLE';
+  descripcion?: string;
+  palabras_clave?: string[];
+  sprint_ingreso?: string;
+  sprint_comprometido?: string;
+  fecha_produccion?: string;
+  sprint_estimado?: string;
 }
 
 // 7 Etapas canónicas de la directiva Mission Control
@@ -67,6 +73,12 @@ const MOCK_EXTENDED_PROYECTOS = [
     notion_url: 'https://notion.so/empresa/proj-a',
     callsign: 'OP-ORION-01',
     threat_level: 'CRITICAL',
+    descripcion: 'Portal para que proveedores suban facturas y gestionen órdenes de compra de forma autónoma.',
+    palabras_clave: ['proveedores', 'facturas', 'órdenes', 'adquisiciones'],
+    sprint_ingreso: 'Sprint 18',
+    sprint_comprometido: 'Sprint 22',
+    fecha_produccion: '15/12',
+    sprint_estimado: 'Sprint 23 est.',
     bloqueo_destacado: {
       tipo: 'Aprobación QA',
       motivo: 'Aprobación QA',
@@ -90,6 +102,12 @@ const MOCK_EXTENDED_PROYECTOS = [
     notion_url: 'https://notion.so/empresa/proj-b',
     callsign: 'COM-NEXUS-02',
     threat_level: 'STABLE',
+    descripcion: 'Sincronización bidireccional entre CRM central y ERP corporativo con pipelines asíncronos.',
+    palabras_clave: ['erp', 'sap', 'sincronización', 'comercial', 'pedidos'],
+    sprint_ingreso: 'Sprint 19',
+    sprint_comprometido: 'Sprint 24',
+    fecha_produccion: '15/12',
+    sprint_estimado: 'Sprint 24 est.',
     etapa_actual_idx: 2, // Desarrollo
   },
   {
@@ -105,6 +123,12 @@ const MOCK_EXTENDED_PROYECTOS = [
     notion_url: 'https://notion.so/empresa/proj-c',
     callsign: 'SEC-AEGIS-03',
     threat_level: 'BETA',
+    descripcion: 'Monitoreo regulatorio automático y reportería de riesgos para auditoría interna.',
+    palabras_clave: ['auditoría', 'cumplimiento', 'riesgo', 'normativa'],
+    sprint_ingreso: 'Sprint 17',
+    sprint_comprometido: 'Sprint 21',
+    fecha_produccion: '10/11',
+    sprint_estimado: 'Sprint 22 est.',
     reabierta: {
       etapa: 'Desarrollo',
       fecha: '18/10',
@@ -125,6 +149,12 @@ const MOCK_EXTENDED_PROYECTOS = [
     notion_url: 'https://notion.so/empresa/proj-d',
     callsign: 'INFRA-TITAN-04',
     threat_level: 'STABLE',
+    descripcion: 'Paso de servicios legados hacia arquitectura distribuida Kubernetes multi-zona.',
+    palabras_clave: ['cloud', 'kubernetes', 'aws', 'migración', 'infraestructura'],
+    sprint_ingreso: 'Sprint 14',
+    sprint_comprometido: 'Sprint 18',
+    fecha_produccion: '15/10',
+    sprint_estimado: 'Sprint 18 est.',
     cerrado: true,
     etapa_actual_idx: 6, // Cierre
   },
@@ -141,6 +171,12 @@ const MOCK_EXTENDED_PROYECTOS = [
     notion_url: 'https://notion.so/empresa/proj-e',
     callsign: 'SEC-VALKYRIE-05',
     threat_level: 'CRITICAL',
+    descripcion: 'Implementación de esquema de autenticación continua y perímetro definido por software.',
+    palabras_clave: ['zero trust', 'seguridad', 'mfa', 'firewall', 'acceso'],
+    sprint_ingreso: 'Sprint 16',
+    sprint_comprometido: 'Sprint 20',
+    fecha_produccion: '20/11',
+    sprint_estimado: 'Sprint 22 est.',
     bloqueo_destacado: {
       tipo: 'Infraestructura',
       motivo: 'Infraestructura',
@@ -164,6 +200,12 @@ const MOCK_EXTENDED_PROYECTOS = [
     notion_url: 'https://notion.so/empresa/proj-f',
     callsign: 'BI-PULSAR-06',
     threat_level: 'STABLE',
+    // Sin descripcion para probar el fallback "Sin descripción" en itálica
+    palabras_clave: ['telemetría', 'datos', 'analítica', 'dashboard'],
+    sprint_ingreso: 'Sprint 20',
+    sprint_comprometido: 'Sprint 25',
+    fecha_produccion: '01/12',
+    sprint_estimado: 'Sprint 25 est.',
     etapa_actual_idx: 1, // Diseño
   },
 ];
@@ -349,6 +391,12 @@ export function obtenerProyectosSeed(usuarioActual?: { email: string; rol: strin
       tareas,
       callsign: pConfig.callsign,
       threat_level: pConfig.threat_level as any,
+      descripcion: pConfig.descripcion,
+      palabras_clave: pConfig.palabras_clave,
+      sprint_ingreso: pConfig.sprint_ingreso,
+      sprint_comprometido: pConfig.sprint_comprometido,
+      fecha_produccion: pConfig.fecha_produccion,
+      sprint_estimado: pConfig.sprint_estimado,
     };
   });
 }

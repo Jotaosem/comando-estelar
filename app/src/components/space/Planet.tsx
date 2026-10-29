@@ -103,50 +103,61 @@ export const Planet: React.FC<PlanetProps> = ({
             className="cursor-pointer transition-transform duration-150 hover:scale-105"
             style={{ pointerEvents: 'auto' }}
           >
-            <div className="relative px-3 py-1.5 rounded-xl hud-glass border border-cyan-500/40 backdrop-blur-md shadow-xl flex items-center gap-2 min-w-[155px]">
-              {/* Anillo de avance */}
-              <div className="relative w-7 h-7 flex items-center justify-center shrink-0">
-                <svg className="w-full h-full -rotate-90">
-                  <circle
-                    cx="14"
-                    cy="14"
-                    r="10.5"
-                    className="text-slate-800"
-                    strokeWidth="2.5"
-                    stroke="currentColor"
-                    fill="transparent"
-                  />
-                  <circle
-                    cx="14"
-                    cy="14"
-                    r="10.5"
-                    stroke={baseColor}
-                    strokeWidth="2.5"
-                    strokeDasharray={66}
-                    strokeDashoffset={66 - (66 * (proyecto.avance_pct || 0)) / 100}
-                    strokeLinecap="round"
-                    fill="transparent"
-                  />
-                </svg>
-                <span className="absolute font-mono text-[9px] font-bold text-white">
-                  {proyecto.avance_pct}%
-                </span>
-              </div>
-
-              {/* Nombre corto + Estado */}
-              <div className="flex-1 min-w-0">
-                <div className="font-display font-black text-[11px] text-white truncate max-w-[95px] uppercase tracking-wide">
-                  {proyecto.callsign || proyecto.nombre.split('(')[0].trim()}
-                </div>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <HealthIcon className="w-2.5 h-2.5 shrink-0" style={{ color: baseColor }} />
-                  <span
-                    className="font-mono text-[9px] font-bold tracking-wider uppercase truncate"
-                    style={{ color: baseColor }}
-                  >
-                    {healthText}
+            <div className="relative px-3 py-1.5 rounded-xl hud-glass border border-cyan-500/40 backdrop-blur-md shadow-xl min-w-[190px] max-w-[240px]">
+              <div className="flex items-center gap-2">
+                {/* Anillo de avance */}
+                <div className="relative w-7 h-7 flex items-center justify-center shrink-0">
+                  <svg className="w-full h-full -rotate-90">
+                    <circle
+                      cx="14"
+                      cy="14"
+                      r="10.5"
+                      className="text-slate-800"
+                      strokeWidth="2.5"
+                      stroke="currentColor"
+                      fill="transparent"
+                    />
+                    <circle
+                      cx="14"
+                      cy="14"
+                      r="10.5"
+                      stroke={baseColor}
+                      strokeWidth="2.5"
+                      strokeDasharray={66}
+                      strokeDashoffset={66 - (66 * (proyecto.avance_pct || 0)) / 100}
+                      strokeLinecap="round"
+                      fill="transparent"
+                    />
+                  </svg>
+                  <span className="absolute font-mono text-[9px] font-bold text-white">
+                    {proyecto.avance_pct}%
                   </span>
                 </div>
+
+                {/* Nombre corto + Estado */}
+                <div className="flex-1 min-w-0">
+                  <div className="font-display font-black text-[11px] text-white truncate uppercase tracking-wide">
+                    {proyecto.callsign || proyecto.nombre.split('(')[0].trim()}
+                  </div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <HealthIcon className="w-2.5 h-2.5 shrink-0" style={{ color: baseColor }} />
+                    <span
+                      className="font-mono text-[9px] font-bold tracking-wider uppercase truncate"
+                      style={{ color: baseColor }}
+                    >
+                      {healthText}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 1 línea extra de descripción (12px, gris claro) */}
+              <div className="mt-1 pt-1 border-t border-cyan-500/15 text-[12px] leading-tight text-slate-300 truncate">
+                {proyecto.descripcion ? (
+                  <span>{proyecto.descripcion}</span>
+                ) : (
+                  <span className="italic text-slate-500">Sin descripción</span>
+                )}
               </div>
             </div>
 

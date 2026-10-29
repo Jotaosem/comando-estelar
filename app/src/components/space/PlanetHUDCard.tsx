@@ -34,42 +34,53 @@ export const PlanetHUDCard: React.FC<PlanetHUDCardProps> = ({ proyecto }) => {
       {/* Tarjeta HUD compacta de 320px, máximo 5 filas, texto de 14-16px */}
       <div className="hud-glass rounded-2xl p-4 border border-cyan-500/30 shadow-[0_12px_40px_rgba(0,0,0,0.85)] backdrop-blur-2xl space-y-2.5">
         {/* Fila 1: Nombre + Anillo % */}
-        <div className="flex items-center justify-between gap-3 pb-2 border-b border-cyan-500/20">
-          <div className="min-w-0">
-            <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest block">
-              {proyecto.area_solicitante}
-            </span>
-            <h2 className="font-display font-black text-base text-white truncate uppercase tracking-wide">
-              {proyecto.callsign || proyecto.nombre.split('(')[0].trim()}
-            </h2>
+        <div className="pb-2 border-b border-cyan-500/20">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <span className="text-[10px] font-mono text-cyan-400 uppercase tracking-widest block">
+                {proyecto.area_solicitante}
+              </span>
+              <h2 className="font-display font-black text-base text-white truncate uppercase tracking-wide">
+                {proyecto.callsign || proyecto.nombre.split('(')[0].trim()}
+              </h2>
+            </div>
+
+            <div className="relative w-10 h-10 flex items-center justify-center shrink-0">
+              <svg className="w-full h-full -rotate-90">
+                <circle
+                  cx="20"
+                  cy="20"
+                  r="15"
+                  className="text-slate-800"
+                  strokeWidth="3"
+                  stroke="currentColor"
+                  fill="transparent"
+                />
+                <circle
+                  cx="20"
+                  cy="20"
+                  r="15"
+                  stroke={isCritico ? '#ff3366' : isAlerta ? '#f59e0b' : '#00f2fe'}
+                  strokeWidth="3"
+                  strokeDasharray={94.2}
+                  strokeDashoffset={94.2 - (94.2 * (proyecto.avance_pct || 0)) / 100}
+                  strokeLinecap="round"
+                  fill="transparent"
+                />
+              </svg>
+              <span className="absolute font-mono text-[11px] font-bold text-white">
+                {proyecto.avance_pct}%
+              </span>
+            </div>
           </div>
 
-          <div className="relative w-10 h-10 flex items-center justify-center shrink-0">
-            <svg className="w-full h-full -rotate-90">
-              <circle
-                cx="20"
-                cy="20"
-                r="15"
-                className="text-slate-800"
-                strokeWidth="3"
-                stroke="currentColor"
-                fill="transparent"
-              />
-              <circle
-                cx="20"
-                cy="20"
-                r="15"
-                stroke={isCritico ? '#ff3366' : isAlerta ? '#f59e0b' : '#00f2fe'}
-                strokeWidth="3"
-                strokeDasharray={94.2}
-                strokeDashoffset={94.2 - (94.2 * (proyecto.avance_pct || 0)) / 100}
-                strokeLinecap="round"
-                fill="transparent"
-              />
-            </svg>
-            <span className="absolute font-mono text-[11px] font-bold text-white">
-              {proyecto.avance_pct}%
-            </span>
+          {/* Descripción bajo el nombre: máx 2 líneas, texto completo con hover */}
+          <div className="mt-1 text-xs text-slate-300 font-sans line-clamp-2" title={proyecto.descripcion || 'Sin descripción'}>
+            {proyecto.descripcion ? (
+              <span>{proyecto.descripcion}</span>
+            ) : (
+              <span className="italic text-slate-500">Sin descripción</span>
+            )}
           </div>
         </div>
 

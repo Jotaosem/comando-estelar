@@ -230,9 +230,18 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
                 </div>
 
                 {/* Título de Misión */}
-                <h3 className="text-xl font-display font-bold text-white tracking-wide group-hover:text-cyan-300 transition-colors line-clamp-1 mb-2">
+                <h3 className="text-xl font-display font-bold text-white tracking-wide group-hover:text-cyan-300 transition-colors line-clamp-1 mb-1">
                   {p.nombre}
                 </h3>
+
+                {/* Columna / Campo Descripción truncada a 1 línea */}
+                <p className="text-xs text-slate-300 font-sans truncate mb-3" title={p.descripcion || 'Sin descripción'}>
+                  {p.descripcion ? (
+                    <span>{p.descripcion}</span>
+                  ) : (
+                    <span className="italic text-slate-500">Sin descripción</span>
+                  )}
+                </p>
 
                 {/* Estado y Salud */}
                 <div className="flex items-center gap-2 mb-4">
