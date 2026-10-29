@@ -10,6 +10,7 @@ interface Galaxy25DControlsProps {
   panOffset: [number, number];
   onCameraChange?: (cam: THREE.Camera) => void;
   targetFocusPos?: [number, number, number] | null;
+  centrarTrigger?: number;
 }
 
 export const Galaxy25DControls: React.FC<Galaxy25DControlsProps> = ({
@@ -18,15 +19,14 @@ export const Galaxy25DControls: React.FC<Galaxy25DControlsProps> = ({
   panOffset,
   onCameraChange,
   targetFocusPos,
+  centrarTrigger = 0,
 }) => {
   const { camera, size } = useThree();
   const controlsRef = useRef<MapControlsImpl>(null);
 
-  // Centrar y encuadrar fit-to-view al inicio y en resize
-  useEffect(() => {
+  const encuadrarGalaxia = React.useCallback(() => {
     if (!enabled) return;
 
-    // Calcular distancia necesaria para abarcar el box3 con 15% de margen
     const center = new THREE.Vector3();
     const boxSize = new THREE.Vector3();
     galaxyBox.getCenter(center);
@@ -45,7 +45,19 @@ export const Galaxy25DControls: React.FC<Galaxy25DControlsProps> = ({
       controlsRef.current.target.set(center.x + panOffset[0], 0, center.z + panOffset[1]);
       controlsRef.current.update();
     }
-  }, [enabled, size.width, size.height, galaxyBox]);
+  }, [enabled, galaxyBox, size.width, size.height, camera, panOffset]);
+
+  // Centrar y encuadrar fit-to-view al inicio y en resize
+  useEffect(() => {
+    encuadrarGalaxia();
+  }, [encuadrarGalaxia]);
+
+  // Ejecutar fitToBox cuando el usuario presiona "Centrar" desde cualquier parte
+  useEffect(() => {
+    if (centrarTrigger > 0) {
+      encuadrarGalaxia();
+    }
+  }, [centrarTrigger, encuadrarGalaxia]);
 
   // Si hay un targetFocusPos (por búsqueda), volar cinematográficamente hacia él
   useEffect(() => {

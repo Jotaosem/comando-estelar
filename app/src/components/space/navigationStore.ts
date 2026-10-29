@@ -9,6 +9,8 @@ interface NavigationState {
   proyecto: ProyectoResumenUI | null;
   etapa: any | null;
   searchQuery: string;
+  isSearchDropdownOpen: boolean;
+  centrarTrigger: number;
   chatAbierto: boolean;
   chatProyectoId: string | null;
   chatPreguntaInicial?: string;
@@ -20,6 +22,8 @@ interface NavigationState {
   seleccionarEtapa: (etapa: any) => void;
   volverUnNivel: () => void;
   setSearchQuery: (query: string) => void;
+  setIsSearchDropdownOpen: (open: boolean) => void;
+  triggerCentrar: () => void;
   abrirChatConProyecto: (proyectoId: string, preguntaInicial?: string) => void;
   cerrarChat: () => void;
   setChatAbierto: (abierto: boolean) => void;
@@ -31,9 +35,19 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
   proyecto: null,
   etapa: null,
   searchQuery: '',
+  isSearchDropdownOpen: false,
+  centrarTrigger: 0,
   chatAbierto: false,
   chatProyectoId: null,
   chatPreguntaInicial: undefined,
+
+  setIsSearchDropdownOpen: (open: boolean) => {
+    set({ isSearchDropdownOpen: open });
+  },
+
+  triggerCentrar: () => {
+    set((state) => ({ centrarTrigger: state.centrarTrigger + 1 }));
+  },
 
   abrirChatConProyecto: (proyectoId: string, preguntaInicial?: string) => {
     set({

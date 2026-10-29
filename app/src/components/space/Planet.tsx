@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import type { ProyectoResumenUI } from '../../lib/proyectosData';
 import { AlertTriangle, Flame, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { EarthPlanetMesh } from './EarthPlanetMesh';
+import { useNavigationStore } from './navigationStore';
 
 interface PlanetProps {
   proyecto: ProyectoResumenUI;
@@ -24,6 +25,7 @@ export const Planet: React.FC<PlanetProps> = ({
 }) => {
   const meshRef = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
+  const { isSearchDropdownOpen } = useNavigationStore();
 
   const isCritico = proyecto.semaforo === 'rojo';
   const isAlerta = proyecto.semaforo === 'amarillo';
@@ -83,27 +85,28 @@ export const Planet: React.FC<PlanetProps> = ({
 
       <pointLight color={baseColor} intensity={1.2} distance={10} />
 
-      {/* REQUERIMIENTO 4: Chip anclado arriba con tamaño fijo en px y pointer-events: none (salvo hover). Click equivale a click en planeta */}
+      {/* REQUERIMIENTO: Chip anclado arriba sin descripción (solo anillo %, código y estado). pointer-events: none cuando dropdown está abierto */}
       {chipVisible && (
         <Html
           position={[0, planetRadius + 1.25, 0]}
           center
           style={{
-            pointerEvents: hovered ? 'auto' : 'none',
+            pointerEvents: isSearchDropdownOpen ? 'none' : hovered ? 'auto' : 'none',
             userSelect: 'none',
           }}
         >
           <div
             onClick={(e) => {
+              if (isSearchDropdownOpen) return;
               e.stopPropagation();
               onSelect(proyecto);
             }}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             className="cursor-pointer transition-transform duration-150 hover:scale-105"
-            style={{ pointerEvents: 'auto' }}
+            style={{ pointerEvents: isSearchDropdownOpen ? 'none' : 'auto' }}
           >
-            <div className="relative px-3 py-1.5 rounded-xl hud-glass border border-cyan-500/40 backdrop-blur-md shadow-xl min-w-[190px] max-w-[240px]">
+            <div className="relative px-3 py-1.5 rounded-xl hud-glass border border-cyan-500/40 backdrop-blur-md shadow-xl min-w-[155px]">
               <div className="flex items-center gap-2">
                 {/* Anillo de avance */}
                 <div className="relative w-7 h-7 flex items-center justify-center shrink-0">
@@ -134,7 +137,7 @@ export const Planet: React.FC<PlanetProps> = ({
                   </span>
                 </div>
 
-                {/* Nombre corto + Estado */}
+                {/* Código / Nombre corto + Estado */}
                 <div className="flex-1 min-w-0">
                   <div className="font-display font-black text-[11px] text-white truncate uppercase tracking-wide">
                     {proyecto.callsign || proyecto.nombre.split('(')[0].trim()}
@@ -149,15 +152,6 @@ export const Planet: React.FC<PlanetProps> = ({
                     </span>
                   </div>
                 </div>
-              </div>
-
-              {/* 1 línea extra de descripción (12px, gris claro) */}
-              <div className="mt-1 pt-1 border-t border-cyan-500/15 text-[12px] leading-tight text-slate-300 truncate">
-                {proyecto.descripcion ? (
-                  <span>{proyecto.descripcion}</span>
-                ) : (
-                  <span className="italic text-slate-500">Sin descripción</span>
-                )}
               </div>
             </div>
 

@@ -402,6 +402,35 @@ export const OrbitStationsRing: React.FC<{
           continue;
         }
 
+        // REQUERIMIENTO 5: Ocultar labels de etapas cuya posición en pantalla cae dentro del rect del HUD (getBoundingClientRect)
+        let fallsInsideHUD = false;
+        const hudEl = document.getElementById('planet-hud-card-container');
+        if (hudEl) {
+          const rect = hudEl.getBoundingClientRect();
+          // Agregar un margen de seguridad de 10px alrededor del HUD
+          if (
+            item.screenX >= rect.left - 10 &&
+            item.screenX <= rect.right + 10 &&
+            item.screenY >= rect.top - 10 &&
+            item.screenY <= rect.bottom + 10
+          ) {
+            fallsInsideHUD = true;
+          }
+        }
+
+        if (fallsInsideHUD) {
+          newScreenData[item.index] = {
+            index: item.index,
+            screenX: item.screenX,
+            screenY: item.screenY,
+            depthZ: item.depthZ,
+            visible: false,
+            opacity: 0,
+            fontSize: 10,
+          };
+          continue;
+        }
+
         // ¿Choca con un label ya colocado más al frente?
         let collides = false;
         // La estación actual siempre tiene prioridad absoluta

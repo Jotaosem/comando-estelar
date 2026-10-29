@@ -28,6 +28,7 @@ interface GalaxyCanvas3DProps {
   healthFilter?: string | null;
   onCameraUpdate?: (cam: THREE.Camera) => void;
   targetFocusPos?: [number, number, number] | null;
+  centrarTrigger?: number;
 }
 
 const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
@@ -46,6 +47,7 @@ const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
   healthFilter = null,
   onCameraUpdate,
   targetFocusPos = null,
+  centrarTrigger = 0,
 }) => {
   const proyectosConPosicion = useMemo(() => {
     const sectorCountMap = new Map<string, number>();
@@ -69,6 +71,33 @@ const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
     return calcularGalaxiaBox(proyectosConPosicion);
   }, [proyectosConPosicion]);
 
+  // Detección de colisión de chips de planetas en galaxia:
+  // Si colisionan en 3D (distancia < 5.5 unidades), se oculta el de menor riesgo
+  const ocultarChipIds = useMemo(() => {
+    const ocultos = new Set<string>();
+    const riesgoScore: Record<string, number> = { rojo: 4, amarillo: 3, gris: 2, verde: 1 };
+
+    for (let i = 0; i < proyectosConPosicion.length; i++) {
+      for (let j = i + 1; j < proyectosConPosicion.length; j++) {
+        const p1 = proyectosConPosicion[i];
+        const p2 = proyectosConPosicion[j];
+        const v1 = new THREE.Vector3(...p1.position);
+        const v2 = new THREE.Vector3(...p2.position);
+        if (v1.distanceTo(v2) < 5.5) {
+          const r1 = riesgoScore[p1.proyecto.semaforo] || 1;
+          const r2 = riesgoScore[p2.proyecto.semaforo] || 1;
+          // Se muestra el de mayor riesgo; el otro se oculta (se muestra al hacer hover)
+          if (r1 >= r2) {
+            ocultos.add(p2.proyecto.id);
+          } else {
+            ocultos.add(p1.proyecto.id);
+          }
+        }
+      }
+    }
+    return ocultos;
+  }, [proyectosConPosicion]);
+
   return (
     <Canvas
       camera={{ position: [0, 32, 45], fov: 45 }}
@@ -90,6 +119,7 @@ const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
           panOffset={panOffset}
           onCameraChange={onCameraUpdate}
           targetFocusPos={targetFocusPos}
+          centrarTrigger={centrarTrigger}
         />
       ) : (
         <CameraDirector
@@ -141,6 +171,7 @@ const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
                 onSelect={onSelectProyecto}
                 showOverlay={nivel === 'galaxia' && !isDimmed}
                 projectIndex={projectIndex}
+                ocultarChipPorColision={ocultarChipIds.has(proyecto.id)}
               />
             </group>
 

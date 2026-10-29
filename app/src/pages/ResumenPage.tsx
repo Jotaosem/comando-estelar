@@ -7,13 +7,15 @@ import type { UsuarioPrueba } from '../components/DevUserSelector';
 import { SemanticGalaxyDirector } from '../components/space/SemanticGalaxyDirector';
 import { GalaxySearchBar } from '../components/space/GalaxySearchBar';
 import { CompartirPopover } from '../components/CompartirPopover';
+import { useNavigationStore } from '../components/space/navigationStore';
 import {
   ShieldAlert,
-  Compass,
   User,
   Filter,
   ChevronRight,
-  Sparkles,
+  Crosshair,
+  Layers,
+  LayoutGrid,
 } from 'lucide-react';
 
 interface ResumenPageProps {
@@ -23,12 +25,14 @@ interface ResumenPageProps {
 export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
   useRegistrarVista('resumen');
   const navigate = useNavigate();
+  const triggerCentrar = useNavigationStore((s) => s.triggerCentrar);
 
   const [filtroSemaforo, setFiltroSemaforo] = useState<string>('todos');
   const [filtroArea, setFiltroArea] = useState<string>('todas');
   const [focoIndex, setFocoIndex] = useState<number>(0);
   const [esVistaLista, setEsVistaLista] = useState<boolean>(false);
   const [matchingIds, setMatchingIds] = useState<Set<string> | null>(null);
+  const [mostrarFiltrosMobile, setMostrarFiltrosMobile] = useState<boolean>(false);
 
   const proyectos = obtenerProyectosSeed(usuarioActual);
 
@@ -79,101 +83,167 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
 
   return (
     <div
-      className="space-y-8 outline-none"
-      tabIndex={0}
       onKeyDown={handleKeyDown}
-      role="region"
-      aria-label="Director de Misiones - Navegación por teclado disponible con flechas y Enter"
+      tabIndex={0}
+      className={`outline-none w-full flex flex-col ${
+        !esVistaLista ? 'h-[calc(100vh-5rem)] overflow-hidden' : 'space-y-6'
+      }`}
     >
-      {/* HUD Header Bar */}
-      <div className="hud-glass p-6 rounded-2xl border border-cyan-500/20 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl -z-10" />
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <div className="flex items-center gap-2 mb-2 font-mono text-[11px] text-cyan-400 uppercase tracking-widest">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_#00f2fe]" />
-              <span>DIRECTOR GALÁCTICO DE MISIONES // SEGUIMIENTO EN TIEMPO REAL</span>
-            </div>
-            <h1 className="text-3xl sm:text-4xl font-display font-black tracking-wider text-white uppercase flex items-center gap-3">
-              <span>Comando Estelar</span>
-              <span className="text-xs font-mono font-normal px-2.5 py-1 rounded bg-cyan-950/80 border border-cyan-500/40 text-cyan-300">
-                {proyectosFiltrados.length} ACTIVAS
-              </span>
-            </h1>
-            <p className="text-xs sm:text-sm font-sans text-slate-400 mt-1 max-w-2xl">
-              Navega las misiones con mando/teclado (<kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-cyan-300 font-mono text-[10px]">←</kbd> <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-cyan-300 font-mono text-[10px]">→</kbd> + <kbd className="px-1.5 py-0.5 rounded bg-slate-800 border border-slate-700 text-cyan-300 font-mono text-[10px]">ENTER</kbd>). Priorización por vector de riesgo y bloqueo.
-            </p>
-          </div>
-
-          {/* Filtros Tácticos */}
-          <div className="flex flex-wrap items-center gap-3 font-mono text-xs">
-            {/* Buscador unificado presente en vista lista */}
-            {esVistaLista && (
-              <div className="w-56 sm:w-72">
-                <GalaxySearchBar
-                  proyectos={proyectos}
-                  onSelectProyecto={(p) => navigate(`/proyectos/${p.id}`)}
-                  onFilterChange={(_q, ids) => setMatchingIds(ids)}
-                />
-              </div>
-            )}
-
-            <div className="flex items-center bg-slate-900/90 border border-cyan-500/30 rounded-xl px-3 py-1.5 shadow-inner">
-              <Filter className="w-3.5 h-3.5 text-cyan-400 mr-2" />
-              <select
-                className="bg-transparent border-0 focus:ring-0 text-slate-200 text-xs pr-4 cursor-pointer outline-none font-mono"
-                value={filtroSemaforo}
-                onChange={(e) => setFiltroSemaforo(e.target.value)}
-              >
-                <option value="todos" className="bg-slate-950 text-slate-200">TODOS LOS ESTADOS</option>
-                <option value="rojo" className="bg-slate-950 text-red-400">🔴 ESTADO CRÍTICO (ROJO)</option>
-                <option value="amarillo" className="bg-slate-950 text-amber-400">🟡 EN RIESGO (ÁMBAR)</option>
-                <option value="verde" className="bg-slate-950 text-emerald-400">🟢 NOMINAL (VERDE)</option>
-              </select>
-            </div>
-
-            <div className="flex items-center bg-slate-900/90 border border-cyan-500/30 rounded-xl px-3 py-1.5 shadow-inner">
-              <Compass className="w-3.5 h-3.5 text-purple-400 mr-2" />
-              <select
-                className="bg-transparent border-0 focus:ring-0 text-slate-200 text-xs pr-4 cursor-pointer outline-none font-mono"
-                value={filtroArea}
-                onChange={(e) => setFiltroArea(e.target.value)}
-              >
-                <option value="todas" className="bg-slate-950 text-slate-200">TODOS LOS SECTORES</option>
-                <option value="Operaciones" className="bg-slate-950 text-slate-200">Operaciones</option>
-                <option value="Comercial" className="bg-slate-950 text-slate-200">Comercial</option>
-                <option value="Compliance" className="bg-slate-950 text-slate-200">Compliance</option>
-                <option value="Seguridad" className="bg-slate-950 text-slate-200">Seguridad</option>
-                <option value="BI & Analítica" className="bg-slate-950 text-slate-200">BI & Analítica</option>
-              </select>
-            </div>
-
-            {/* Toggle Navegación Espacial 3D vs Lista */}
-            <button
-              onClick={() => setEsVistaLista(!esVistaLista)}
-              className={`px-3 py-1.5 rounded-xl border text-xs font-mono transition-all flex items-center gap-2 shadow-inner ${
-                !esVistaLista
-                  ? 'bg-cyan-500/20 text-cyan-300 border-cyan-400 shadow-[0_0_15px_rgba(0,242,254,0.3)]'
-                  : 'bg-slate-900 border-slate-700 text-slate-300 hover:text-white'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-              <span>{esVistaLista ? 'ACTIVAR MAPA GALÁCTICO' : 'MAPA GALÁCTICO ACTIVO'}</span>
-            </button>
+      {/* TOOLBAR COMPACTA DE 56px (Única para Galaxia y Lista) */}
+      <header className="h-14 min-h-[56px] w-full px-3 sm:px-4 rounded-xl bg-slate-950/80 backdrop-blur-md border border-cyan-500/25 flex items-center justify-between gap-2 sm:gap-3 z-30 shrink-0 select-none">
+        {/* Izquierda: Badge de misiones activas */}
+        <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-950/80 border border-cyan-500/30 text-cyan-300 font-mono text-xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#00f2fe]" />
+            <span className="font-bold">Misiones</span>
+            <span className="text-slate-500">·</span>
+            <span>{proyectosFiltrados.length} activas</span>
           </div>
         </div>
-      </div>
 
-      {/* Vista Principal: Mapa Galáctico 3D con Zoom Semántico */}
+        {/* Centro: Buscador unificado con Fuse y Dropdown en Portal */}
+        <div className="flex-1 max-w-xs sm:max-w-md mx-1">
+          <GalaxySearchBar
+            proyectos={proyectos}
+            onSelectProyecto={(p) => navigate(`/proyectos/${p.id}`)}
+            onFilterChange={(_q, ids) => setMatchingIds(ids)}
+            placeholder="Buscar proyecto… ⌘K"
+          />
+        </div>
+
+        {/* Derecha: Filtros tácticos, Toggle Segmentado y Botón Centrar */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 font-mono text-xs">
+          {/* Botón Filtros en Mobile */}
+          <button
+            onClick={() => setMostrarFiltrosMobile(!mostrarFiltrosMobile)}
+            className="sm:hidden px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 text-xs flex items-center gap-1"
+          >
+            <Filter className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Filtros</span>
+          </button>
+
+          {/* Filtro Estado */}
+          <div className="hidden sm:flex items-center bg-slate-900/90 border border-cyan-500/30 rounded-lg px-2 py-1 shadow-inner">
+            <select
+              className="bg-transparent border-0 focus:ring-0 text-slate-200 text-xs pr-3 cursor-pointer outline-none font-mono"
+              value={filtroSemaforo}
+              onChange={(e) => setFiltroSemaforo(e.target.value)}
+              aria-label="Filtrar por estado"
+            >
+              <option value="todos" className="bg-slate-950 text-slate-200">Estado ▾</option>
+              <option value="rojo" className="bg-slate-950 text-red-400">🔴 Crítico (Rojo)</option>
+              <option value="amarillo" className="bg-slate-950 text-amber-400">🟡 En riesgo (Ámbar)</option>
+              <option value="verde" className="bg-slate-950 text-emerald-400">🟢 Nominal (Verde)</option>
+            </select>
+          </div>
+
+          {/* Filtro Área */}
+          <div className="hidden sm:flex items-center bg-slate-900/90 border border-cyan-500/30 rounded-lg px-2 py-1 shadow-inner">
+            <select
+              className="bg-transparent border-0 focus:ring-0 text-slate-200 text-xs pr-3 cursor-pointer outline-none font-mono"
+              value={filtroArea}
+              onChange={(e) => setFiltroArea(e.target.value)}
+              aria-label="Filtrar por área"
+            >
+              <option value="todas" className="bg-slate-950 text-slate-200">Área ▾</option>
+              <option value="Operaciones" className="bg-slate-950 text-slate-200">Operaciones</option>
+              <option value="Comercial" className="bg-slate-950 text-slate-200">Comercial</option>
+              <option value="Compliance" className="bg-slate-950 text-slate-200">Compliance</option>
+              <option value="Seguridad" className="bg-slate-950 text-slate-200">Seguridad</option>
+              <option value="BI & Analítica" className="bg-slate-950 text-slate-200">BI & Analítica</option>
+            </select>
+          </div>
+
+          {/* Toggle Segmentado: [◉ Galaxia | ☰ Lista] */}
+          <div className="flex items-center p-0.5 rounded-lg bg-slate-900 border border-slate-700/80">
+            <button
+              type="button"
+              onClick={() => setEsVistaLista(false)}
+              className={`px-2.5 py-1 rounded-md text-xs font-mono transition-all flex items-center gap-1.5 ${
+                !esVistaLista
+                  ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-400/40 shadow-[0_0_10px_rgba(0,242,254,0.3)]'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+              title="Vista Galaxia 3D"
+            >
+              <Layers className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden xs:inline">Galaxia</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setEsVistaLista(true)}
+              className={`px-2.5 py-1 rounded-md text-xs font-mono transition-all flex items-center gap-1.5 ${
+                esVistaLista
+                  ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-400/40 shadow-[0_0_10px_rgba(0,242,254,0.3)]'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+              title="Vista Lista"
+            >
+              <LayoutGrid className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden xs:inline">Lista</span>
+            </button>
+          </div>
+
+          {/* Botón Centrar: solo visible en Galaxia */}
+          {!esVistaLista && (
+            <button
+              type="button"
+              onClick={() => triggerCentrar()}
+              className="px-2.5 py-1 rounded-lg bg-slate-900/90 border border-cyan-500/30 text-slate-300 hover:text-cyan-300 hover:border-cyan-400 text-xs font-mono transition-all flex items-center gap-1.5 shadow-inner"
+              title="Centrar galaxia (ajustar vista)"
+            >
+              <Crosshair className="w-3.5 h-3.5 text-cyan-400" />
+              <span className="hidden sm:inline">Centrar</span>
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* Menú desplegable de filtros en mobile */}
+      {mostrarFiltrosMobile && (
+        <div className="sm:hidden p-3 rounded-xl bg-slate-950 border border-cyan-500/30 flex flex-col gap-2 font-mono text-xs z-20 shrink-0">
+          <div className="flex items-center justify-between">
+            <span className="text-slate-400">Estado:</span>
+            <select
+              className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-200 text-xs"
+              value={filtroSemaforo}
+              onChange={(e) => setFiltroSemaforo(e.target.value)}
+            >
+              <option value="todos">Todos</option>
+              <option value="rojo">🔴 Crítico</option>
+              <option value="amarillo">🟡 En riesgo</option>
+              <option value="verde">🟢 Nominal</option>
+            </select>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-slate-400">Área:</span>
+            <select
+              className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-200 text-xs"
+              value={filtroArea}
+              onChange={(e) => setFiltroArea(e.target.value)}
+            >
+              <option value="todas">Todas</option>
+              <option value="Operaciones">Operaciones</option>
+              <option value="Comercial">Comercial</option>
+              <option value="Compliance">Compliance</option>
+              <option value="Seguridad">Seguridad</option>
+              <option value="BI & Analítica">BI & Analítica</option>
+            </select>
+          </div>
+        </div>
+      )}
+
+      {/* Vista Principal: Mapa Galáctico 3D o Grid de Lista */}
       {!esVistaLista ? (
-        <SemanticGalaxyDirector
-          proyectos={proyectosFiltrados}
-          onToggleLista={() => setEsVistaLista(true)}
-          esVistaLista={esVistaLista}
-        />
+        <div className="flex-1 w-full h-[calc(100vh-56px-64px)] min-h-[540px] overflow-hidden rounded-2xl">
+          <SemanticGalaxyDirector
+            proyectos={proyectosFiltrados}
+            matchingIds={matchingIds}
+          />
+        </div>
       ) : (
-        /* Grid de Misiones alternativo (Vista Lista) */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        /* Grid de Misiones (Vista Lista) */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
         {proyectosFiltrados.map((p, idx) => {
           const isFocused = idx === focoIndex;
 
@@ -208,6 +278,13 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
           const radius = 28;
           const circumference = 2 * Math.PI * radius;
           const strokeDashoffset = circumference - (p.avance_pct / 100) * circumference;
+
+          // Formateo de fechas para punto 6: "Estimada 19/11 · Compromiso 06/11"
+          const fmtCorto = (f?: string | null) => {
+            if (!f) return 'S/D';
+            const m = f.match(/(\d{4})-(\d{2})-(\d{2})/);
+            return m ? `${m[3]}/${m[2]}` : f;
+          };
 
           return (
             <motion.div
@@ -249,8 +326,8 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
                   {p.nombre}
                 </h3>
 
-                {/* Columna / Campo Descripción truncada a 1 línea */}
-                <p className="text-xs text-slate-300 font-sans truncate mb-3" title={p.descripcion || 'Sin descripción'}>
+                {/* Descripción (máx. 2 líneas) */}
+                <p className="text-xs text-slate-300 font-sans line-clamp-2 mb-3" title={p.descripcion || 'Sin descripción'}>
                   {p.descripcion ? (
                     <span>{p.descripcion}</span>
                   ) : (
@@ -326,31 +403,30 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
                     </div>
                   </div>
 
-                  {/* Fechas Clave (Comprometida vs Estimada) */}
+                  {/* Fechas en una sola línea sin cortes: "Estimada 19/11 · Compromiso 06/11" */}
                   <div className="text-right font-mono">
-                    <div className="text-[10px] text-slate-400 uppercase">
-                      Estimada: <span className="text-white font-bold">{p.fecha_reproyectada || 'S/D'}</span>
-                    </div>
-                    <div className="text-[10px] text-slate-500 uppercase mt-0.5">
-                      Compromiso: <span className="text-slate-300">{p.fecha_comprometida || 'S/D'}</span>
+                    <div className="text-[11px] text-slate-300 whitespace-nowrap">
+                      Estimada <span className="text-white font-bold">{fmtCorto(p.fecha_reproyectada)}</span>
+                      <span className="text-slate-500 mx-1">·</span>
+                      Compromiso <span className="text-slate-300 font-semibold">{fmtCorto(p.fecha_comprometida)}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Sprints en vista lista (3 columnas cortas: Ingreso · Compromiso · Producción) */}
+                {/* Sprints en vista lista (3 columnas iguales con wrap, sin "…") */}
                 <div className="mt-3 pt-2.5 border-t border-slate-900 grid grid-cols-3 gap-2 font-mono text-[10px]">
-                  <div>
+                  <div className="min-w-0">
                     <span className="text-slate-500 block text-[9px] uppercase">Ingreso</span>
-                    <span className="text-slate-300 font-bold">{p.sprint_ingreso || '—'}</span>
+                    <span className="text-slate-300 font-bold block break-words">{p.sprint_ingreso || '—'}</span>
                   </div>
-                  <div className="text-center">
+                  <div className="min-w-0 text-center">
                     <span className="text-slate-500 block text-[9px] uppercase">Compromiso</span>
-                    <span className="text-slate-300 font-bold">{p.sprint_comprometido || '—'}</span>
+                    <span className="text-slate-300 font-bold block break-words">{p.sprint_comprometido || '—'}</span>
                   </div>
-                  <div className="text-right">
+                  <div className="min-w-0 text-right">
                     <span className="text-slate-500 block text-[9px] uppercase">Producción</span>
-                    <span className="text-cyan-300 font-bold block truncate">
-                      {p.fecha_produccion ? `${p.fecha_produccion} (${p.sprint_estimado || 'est.'})` : '—'}
+                    <span className="text-cyan-300 font-bold block break-words">
+                      {p.fecha_produccion ? `${fmtCorto(p.fecha_produccion)}${p.sprint_estimado ? ` · ${p.sprint_estimado}` : ''}` : '—'}
                     </span>
                   </div>
                 </div>

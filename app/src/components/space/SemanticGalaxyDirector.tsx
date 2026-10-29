@@ -2,16 +2,13 @@ import React, { useState, useEffect, useMemo, Suspense, lazy, useRef } from 'rea
 import {
   ChevronRight,
   ArrowLeft,
-  List,
   Compass,
-  Crosshair,
 } from 'lucide-react';
 import * as THREE from 'three';
 import type { ProyectoResumenUI } from '../../lib/proyectosData';
 import { calcularPosicionPlaneta, calcularGalaxiaBox } from './galaxyData';
 import { PlanetHUDCard } from './PlanetHUDCard';
 import { StageGlassPanel } from './StageGlassPanel';
-import { GalaxySearchBar } from './GalaxySearchBar';
 import { GalaxyMinimap } from './GalaxyMinimap';
 import { StageScreenTooltip, type StageTooltipData } from './StageScreenTooltip';
 import { useNavigationStore } from './navigationStore';
@@ -20,14 +17,12 @@ const GalaxyCanvas3D = lazy(() => import('./GalaxyCanvas3D'));
 
 interface SemanticGalaxyDirectorProps {
   proyectos: ProyectoResumenUI[];
-  onToggleLista: () => void;
-  esVistaLista: boolean;
+  matchingIds?: Set<string> | null;
 }
 
 export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
   proyectos,
-  onToggleLista,
-  esVistaLista,
+  matchingIds = null,
 }) => {
   // REQUERIMIENTO 6: Estado de navegación 100% derivado del Store Único
   const {
@@ -39,6 +34,7 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
     seleccionarProyecto,
     seleccionarEtapa,
     volverUnNivel,
+    centrarTrigger,
   } = useNavigationStore();
 
   const [hoverStageData, setHoverStageData] = useState<StageTooltipData | null>(null);
@@ -48,26 +44,10 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
   const [currentCamera, setCurrentCamera] = useState<THREE.Camera | null>(null);
   const [targetFocusPos, setTargetFocusPos] = useState<[number, number, number] | null>(null);
 
-  const [matchingIds, setMatchingIds] = useState<Set<string> | null>(null);
   const [healthFilter, setHealthFilter] = useState<string | null>(null);
 
   const [reducedMotion, setReducedMotion] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
-
-  // REQUERIMIENTO 4 (BUG FIX): Medir altura real del header
-  const [headerRealHeight, setHeaderRealHeight] = useState<number>(64);
-
-  useEffect(() => {
-    const updateHeaderHeight = () => {
-      const headerElement = document.querySelector('header');
-      if (headerElement) {
-        setHeaderRealHeight(headerElement.offsetHeight);
-      }
-    };
-    updateHeaderHeight();
-    window.addEventListener('resize', updateHeaderHeight);
-    return () => window.removeEventListener('resize', updateHeaderHeight);
-  }, []);
 
   useEffect(() => {
     const mqMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -125,14 +105,6 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
     }
   };
 
-  const handleSelectFromSearch = (p: ProyectoResumenUI) => {
-    const sectorList = proyectosPorSector.get(p.area_solicitante) || [p];
-    const sIdx = sectorList.findIndex((it) => it.id === p.id);
-    const pos = calcularPosicionPlaneta(p.area_solicitante, Math.max(0, sIdx), sectorList.length);
-    setTargetFocusPos(pos);
-    seleccionarProyecto(p);
-  };
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -147,115 +119,61 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
   return (
     <div
       style={{
-        marginTop: `${headerRealHeight > 64 ? 8 : 4}px`,
+        height: 'calc(100vh - 120px)',
       }}
-      className="relative w-full h-[85vh] min-h-[580px] rounded-3xl overflow-hidden hud-glass border border-cyan-500/30 bg-[#020510] shadow-[0_0_50px_rgba(0,0,0,0.9)] flex flex-col select-none"
+      className="relative w-full min-h-[580px] rounded-2xl overflow-hidden hud-glass border border-cyan-500/30 bg-[#020510] shadow-[0_0_50px_rgba(0,0,0,0.9)] flex flex-col select-none"
     >
-      {/* 1. TOP BAR HUD FIJA: 48px con pointer-events-auto */}
-      <div className="absolute top-0 left-0 right-0 h-12 z-40 px-3 sm:px-4 bg-[#020510]/95 backdrop-blur-xl border-b border-cyan-500/20 flex items-center justify-between gap-3 pointer-events-auto">
-        
-        {/* REQUERIMIENTO 6: Breadcrumb derivado SOLO del store de navegación
-            En nivel 'galaxia' muestra estrictamente solo 'Galaxia' */}
-        <div className="flex items-center gap-1 sm:gap-2 text-xs font-mono shrink-0">
+      {/* Breadcrumb en una fila de 32px bajo la toolbar, solo dentro de un planeta */}
+      {nivel !== 'galaxia' && selectedProyecto && (
+        <div className="h-8 px-4 bg-[#020510]/90 backdrop-blur-md border-b border-cyan-500/20 flex items-center gap-1.5 text-xs font-mono z-30 pointer-events-auto">
           <button
             onClick={irAGalaxia}
-            className={`flex items-center gap-1.5 transition-colors ${
-              nivel === 'galaxia' ? 'text-cyan-300 font-bold' : 'text-slate-400 hover:text-white'
-            }`}
+            className="text-slate-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
           >
             <Compass className="w-3.5 h-3.5 text-cyan-400" />
-            <span>GALAXIA</span>
+            <span>Galaxia</span>
           </button>
 
-          {nivel !== 'galaxia' && areaId && (
+          {areaId && (
             <>
               <ChevronRight className="w-3 h-3 text-slate-600" />
-              <span className="text-slate-300">
-                {areaId}
-              </span>
+              <span className="text-slate-400">{areaId}</span>
             </>
           )}
 
-          {nivel !== 'galaxia' && selectedProyecto && (
-            <>
-              <ChevronRight className="w-3 h-3 text-slate-600" />
-              <button
-                onClick={() => seleccionarProyecto(selectedProyecto)}
-                className={`transition-colors ${
-                  nivel === 'planeta' ? 'text-cyan-300 font-bold' : 'text-slate-300 hover:text-white'
-                }`}
-              >
-                {selectedProyecto.callsign || selectedProyecto.nombre.split('(')[0].trim()}
-              </button>
-            </>
-          )}
+          <ChevronRight className="w-3 h-3 text-slate-600" />
+          <span className="text-cyan-300 font-bold truncate">
+            {selectedProyecto.callsign || selectedProyecto.nombre.split('(')[0].trim()}
+          </span>
 
           {nivel === 'etapa' && selectedEtapa && (
             <>
               <ChevronRight className="w-3 h-3 text-slate-600" />
-              <span className="text-cyan-400 font-bold truncate max-w-[110px] sm:max-w-none">
+              <span className="text-cyan-400 font-bold truncate">
                 {selectedEtapa.orden}. {selectedEtapa.nombre}
               </span>
             </>
           )}
-        </div>
 
-        {/* Buscador Difuso fuse.js con atajo Ctrl+K */}
-        <div className="flex-1 max-w-sm hidden md:block">
-          <GalaxySearchBar
-            proyectos={proyectos}
-            onSelectProyecto={handleSelectFromSearch}
-            onFilterChange={(_q, ids) => setMatchingIds(ids)}
-          />
-        </div>
-
-        {/* Controles de la Top Bar */}
-        <div className="flex items-center gap-2 shrink-0">
-          {nivel === 'galaxia' && (
-            <button
-              onClick={() => {
-                setPanOffset([0, 0]);
-                setTargetFocusPos(null);
-              }}
-              className="px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-cyan-500/30 text-cyan-300 text-xs font-mono transition-all flex items-center gap-1 shadow-sm"
-              title="Centrar galaxia (fit-to-view)"
-            >
-              <Crosshair className="w-3 h-3" />
-              <span className="hidden sm:inline">CENTRAR</span>
-            </button>
-          )}
-
-          {nivel !== 'galaxia' && (
+          <div className="ml-auto">
             <button
               onClick={volverUnNivel}
-              className="px-2.5 py-1 rounded-lg bg-slate-900/90 hover:bg-slate-800 border border-cyan-500/40 text-cyan-300 text-xs font-mono transition-all flex items-center gap-1.5"
-              title="Volver un nivel (Esc)"
+              className="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 hover:border-cyan-400 text-slate-300 hover:text-white text-[10px] font-mono transition-all flex items-center gap-1"
+              title="Volver (Esc)"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
+              <ArrowLeft className="w-3 h-3" />
               <span>VOLVER (ESC)</span>
             </button>
-          )}
-
-          <button
-            onClick={onToggleLista}
-            className={`px-2.5 py-1 rounded-lg border text-xs font-mono transition-all flex items-center gap-1.5 ${
-              esVistaLista
-                ? 'bg-cyan-500 text-slate-950 border-cyan-400 font-bold'
-                : 'bg-slate-900/90 border-slate-700 text-slate-300 hover:text-white'
-            }`}
-          >
-            <List className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">VISTA LISTA</span>
-          </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* 2. Capa de oscurecimiento: pointer-events: none garantizado */}
       <div className="absolute inset-0 bg-black/20 pointer-events-none z-10" />
 
-      {/* 3. HUD compacto de 320px arriba a la izquierda en niveles planeta/etapa */}
+      {/* 3. HUD compacto de 340px arriba a la izquierda en niveles planeta/etapa */}
       {nivel !== 'galaxia' && selectedProyecto && (
-        <div className="absolute top-16 left-4 z-30 animate-in fade-in slide-in-from-left-2 pointer-events-auto">
+        <div className="absolute top-12 left-4 z-30 animate-in fade-in slide-in-from-left-2 pointer-events-auto">
           <PlanetHUDCard proyecto={selectedProyecto} />
         </div>
       )}
@@ -291,6 +209,7 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
             healthFilter={healthFilter}
             onCameraUpdate={(cam) => setCurrentCamera(cam)}
             targetFocusPos={targetFocusPos}
+            centrarTrigger={centrarTrigger}
           />
         </Suspense>
       </div>
