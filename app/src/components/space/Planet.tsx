@@ -5,6 +5,7 @@ import type { ProyectoResumenUI } from '../../lib/proyectosData';
 import { AlertTriangle, Flame, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { EarthPlanetMesh } from './EarthPlanetMesh';
 import { useNavigationStore } from './navigationStore';
+import { Z_LAYERS } from '../../constants/zLayers';
 
 interface PlanetProps {
   proyecto: ProyectoResumenUI;
@@ -90,12 +91,14 @@ export const Planet: React.FC<PlanetProps> = ({
         <Html
           position={[0, planetRadius + 1.25, 0]}
           center
+          zIndexRange={Z_LAYERS.LABELS_3D}
           style={{
             pointerEvents: isSearchDropdownOpen ? 'none' : hovered ? 'auto' : 'none',
             userSelect: 'none',
           }}
         >
           <div
+            data-planet-chip="true"
             onClick={(e) => {
               if (isSearchDropdownOpen) return;
               e.stopPropagation();

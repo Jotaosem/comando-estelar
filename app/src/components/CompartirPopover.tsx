@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { ProyectoResumenUI } from '../lib/proyectosData';
 import { Share2, Download, Copy, Link as LinkIcon, X } from 'lucide-react';
+import { Z_LAYERS } from '../constants/zLayers';
 
 interface CompartirPopoverProps {
   proyecto: ProyectoResumenUI;
@@ -107,7 +108,8 @@ export const CompartirPopover: React.FC<CompartirPopoverProps> = ({
       {abierto && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="absolute right-0 bottom-full mb-2 w-64 rounded-xl bg-[#030919]/95 border border-cyan-400/50 p-3 shadow-2xl backdrop-blur-xl z-50 text-xs font-mono text-slate-200 animate-in fade-in zoom-in-95"
+          style={{ zIndex: Z_LAYERS.POPOVER_DROPDOWN }}
+          className="absolute right-0 bottom-full mb-2 w-64 rounded-xl bg-[#030919]/95 border border-cyan-400/50 p-3 shadow-2xl backdrop-blur-xl text-xs font-mono text-slate-200 animate-in fade-in zoom-in-95"
         >
           <div className="flex items-center justify-between pb-2 mb-2 border-b border-cyan-500/20 text-cyan-400 font-bold">
             <span className="text-[11px] uppercase tracking-wider">Compartir resumen</span>

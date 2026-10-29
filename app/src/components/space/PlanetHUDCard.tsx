@@ -3,6 +3,7 @@ import type { ProyectoResumenUI } from '../../lib/proyectosData';
 import { HelpCircle, User, X, ChevronDown, ChevronUp, MessageSquareQuote } from 'lucide-react';
 import { CompartirPopover } from '../CompartirPopover';
 import { useNavigationStore } from './navigationStore';
+import { Z_LAYERS } from '../../constants/zLayers';
 
 interface PlanetHUDCardProps {
   proyecto: ProyectoResumenUI;
@@ -43,7 +44,8 @@ export const PlanetHUDCard: React.FC<PlanetHUDCardProps> = ({ proyecto }) => {
   return (
     <div
       id="planet-hud-card-container"
-      className="relative w-[340px] max-w-[340px] pointer-events-auto z-40 select-none"
+      style={{ zIndex: Z_LAYERS.HUD }}
+      className="relative w-[340px] max-w-[340px] pointer-events-auto select-none"
     >
       <div className="hud-glass rounded-2xl p-4 border border-cyan-500/30 shadow-[0_15px_45px_rgba(0,0,0,0.9)] backdrop-blur-2xl space-y-3 font-sans">
         
@@ -211,7 +213,10 @@ export const PlanetHUDCard: React.FC<PlanetHUDCardProps> = ({ proyecto }) => {
 
           {/* Menú desplegable con los 3 atajos */}
           {menuCopilotoAbierto && (
-            <div className="mt-1.5 p-1.5 rounded-xl bg-[#030919]/98 border border-cyan-500/40 shadow-xl space-y-1 animate-in fade-in zoom-in-95">
+            <div
+              style={{ zIndex: Z_LAYERS.POPOVER_DROPDOWN }}
+              className="relative mt-1.5 p-1.5 rounded-xl bg-[#030919]/98 border border-cyan-500/40 shadow-xl space-y-1 animate-in fade-in zoom-in-95"
+            >
               <button
                 onClick={() => {
                   abrirChatConProyecto(proyecto.id, '¿Por qué está atrasado?');
@@ -246,7 +251,10 @@ export const PlanetHUDCard: React.FC<PlanetHUDCardProps> = ({ proyecto }) => {
 
       {/* Popover flotante Fórmula */}
       {mostrarPopover && (
-        <div className="absolute bottom-full left-0 mb-2 w-80 rounded-xl bg-[#030919]/98 border border-cyan-400/50 p-3.5 shadow-2xl backdrop-blur-xl z-50 text-xs font-mono text-slate-300 animate-in fade-in zoom-in-95">
+        <div
+          style={{ zIndex: Z_LAYERS.POPOVER_DROPDOWN }}
+          className="absolute bottom-full left-0 mb-2 w-80 rounded-xl bg-[#030919]/98 border border-cyan-400/50 p-3.5 shadow-2xl backdrop-blur-xl text-xs font-mono text-slate-300 animate-in fade-in zoom-in-95"
+        >
           <div className="flex items-center justify-between pb-2 mb-2 border-b border-cyan-500/20 text-cyan-400 font-bold">
             <span className="text-[11px] uppercase tracking-wider">Proyección Auditada (dh)</span>
             <button onClick={() => setMostrarPopover(false)} className="text-slate-400 hover:text-white">

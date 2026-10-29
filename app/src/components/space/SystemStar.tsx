@@ -3,6 +3,7 @@ import { useFrame } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import type { SectorSystem } from './galaxyData';
+import { Z_LAYERS } from '../../constants/zLayers';
 
 interface SystemStarProps {
   system: SectorSystem;
@@ -69,9 +70,10 @@ export const SystemStar: React.FC<SystemStarProps> = ({
           position={[0, system.starSize + 1.2, 0]}
           center
           occlude
+          zIndexRange={Z_LAYERS.LABELS_3D}
           style={{ pointerEvents: 'none' }}
         >
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950/85 border border-slate-700/80 backdrop-blur-md shadow-md whitespace-nowrap">
+          <div data-planet-chip="true" className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950/85 border border-slate-700/80 backdrop-blur-md shadow-md whitespace-nowrap">
             <span
               className="w-1.5 h-1.5 rounded-full"
               style={{ backgroundColor: system.color }}

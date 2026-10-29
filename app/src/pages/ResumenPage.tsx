@@ -107,7 +107,7 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
             proyectos={proyectos}
             onSelectProyecto={(p) => navigate(`/proyectos/${p.id}`)}
             onFilterChange={(_q, ids) => setMatchingIds(ids)}
-            placeholder="Buscar proyecto… ⌘K"
+            placeholder="Buscar proyecto…"
           />
         </div>
 
@@ -125,7 +125,7 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
           {/* Filtro Estado */}
           <div className="hidden sm:flex items-center bg-slate-900/90 border border-cyan-500/30 rounded-lg px-2 py-1 shadow-inner">
             <select
-              className="bg-transparent border-0 focus:ring-0 text-slate-200 text-xs pr-3 cursor-pointer outline-none font-mono"
+              className="bg-transparent border-0 focus:ring-0 text-slate-200 text-xs pr-2 cursor-pointer outline-none font-mono appearance-none"
               value={filtroSemaforo}
               onChange={(e) => setFiltroSemaforo(e.target.value)}
               aria-label="Filtrar por estado"
@@ -140,7 +140,7 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
           {/* Filtro Área */}
           <div className="hidden sm:flex items-center bg-slate-900/90 border border-cyan-500/30 rounded-lg px-2 py-1 shadow-inner">
             <select
-              className="bg-transparent border-0 focus:ring-0 text-slate-200 text-xs pr-3 cursor-pointer outline-none font-mono"
+              className="bg-transparent border-0 focus:ring-0 text-slate-200 text-xs pr-2 cursor-pointer outline-none font-mono appearance-none"
               value={filtroArea}
               onChange={(e) => setFiltroArea(e.target.value)}
               aria-label="Filtrar por área"

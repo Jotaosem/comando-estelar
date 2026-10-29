@@ -5,6 +5,7 @@ import Fuse from 'fuse.js';
 import type { ProyectoResumenUI } from '../../lib/proyectosData';
 import { Search, Command } from 'lucide-react';
 import { useNavigationStore } from './navigationStore';
+import { Z_LAYERS } from '../../constants/zLayers';
 
 interface GalaxySearchBarProps {
   proyectos: ProyectoResumenUI[];
@@ -213,7 +214,7 @@ export const GalaxySearchBar: React.FC<GalaxySearchBarProps> = ({
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleInputKeyDown}
-          placeholder={`${placeholder} (⌘K)`}
+          placeholder={placeholder || "Buscar proyecto…"}
           className="w-full h-8 pl-8 pr-10 rounded-lg bg-slate-900/90 border border-cyan-500/30 text-xs font-mono text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-400 transition-all shadow-inner"
         />
         <div className="absolute right-2 flex items-center gap-0.5 text-[9px] font-mono text-slate-500 px-1 py-0.5 rounded border border-slate-700 bg-black/40 pointer-events-none">
@@ -231,7 +232,7 @@ export const GalaxySearchBar: React.FC<GalaxySearchBarProps> = ({
               top: `${portalPosition.top}px`,
               left: `${portalPosition.left}px`,
               width: `${portalPosition.width}px`,
-              zIndex: 1000,
+              zIndex: Z_LAYERS.POPOVER_DROPDOWN,
             }}
             className="rounded-2xl bg-[#030919]/98 border border-cyan-500/50 shadow-[0_20px_50px_rgba(0,0,0,0.95)] backdrop-blur-2xl p-2 animate-in fade-in zoom-in-95"
           >

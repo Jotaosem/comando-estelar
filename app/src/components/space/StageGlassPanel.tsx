@@ -9,6 +9,7 @@ import {
   MessageSquareQuote,
 } from 'lucide-react';
 import { useNavigationStore } from './navigationStore';
+import { Z_LAYERS } from '../../constants/zLayers';
 
 interface StageGlassPanelProps {
   etapa: any;
@@ -49,11 +50,13 @@ export const StageGlassPanel: React.FC<StageGlassPanelProps> = ({
   return (
     <AnimatePresence>
       <motion.div
+        id="stage-glass-panel-container"
+        style={{ zIndex: Z_LAYERS.HUD }}
         initial={isMobile ? { y: '100%' } : { x: '100%', opacity: 0 }}
         animate={isMobile ? { y: 0 } : { x: 0, opacity: 1 }}
         exit={isMobile ? { y: '100%' } : { x: '100%', opacity: 0 }}
         transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-        className={`fixed z-50 hud-glass border-cyan-500/40 shadow-[0_0_50px_rgba(0,0,0,0.95)] backdrop-blur-2xl text-slate-100 overflow-y-auto ${
+        className={`fixed hud-glass border-cyan-500/40 shadow-[0_0_50px_rgba(0,0,0,0.95)] backdrop-blur-2xl text-slate-100 overflow-y-auto ${
           isMobile
             ? 'bottom-0 left-0 right-0 max-h-[85vh] rounded-t-3xl border-t p-5'
             : 'top-16 right-4 bottom-12 w-[380px] rounded-2xl border p-5'

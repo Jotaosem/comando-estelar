@@ -194,6 +194,7 @@ const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
                   onHoverStage={onHoverStage}
                   worldPos={position}
                   radius={5.2}
+                  nivel={nivel}
                 />
               </group>
             )}

@@ -3,6 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import type { StageTooltipData } from './StageScreenTooltip';
+import { Z_LAYERS } from '../../constants/zLayers';
 
 interface StageScreenData {
   index: number;
@@ -175,6 +176,7 @@ export const OrbitStation: React.FC<OrbitStationProps> = ({
         position={[0, -0.65, 0]}
         center
         occlude={false}
+        zIndexRange={Z_LAYERS.LABELS_3D}
         style={{
           pointerEvents: 'none',
           userSelect: 'none',
@@ -182,7 +184,7 @@ export const OrbitStation: React.FC<OrbitStationProps> = ({
           transition: 'opacity 0.15s ease',
         }}
       >
-        <div className="flex flex-col items-center pointer-events-none select-none">
+        <div data-orbit-label="true" className="flex flex-col items-center pointer-events-none select-none">
           {isActual ? (
             <div className="h-7 px-3 rounded-full bg-[#030d22]/95 border border-cyan-400 text-cyan-200 text-xs font-display font-bold shadow-[0_0_15px_rgba(0,242,254,0.35)] flex items-center gap-1.5 whitespace-nowrap">
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping shrink-0" />
@@ -210,6 +212,7 @@ export const OrbitStationsRing: React.FC<{
   onHoverStage: (data: StageTooltipData | null) => void;
   worldPos: [number, number, number];
   radius?: number;
+  nivel?: string;
 }> = ({
   etapas,
   etapaActualIdx,
@@ -218,6 +221,7 @@ export const OrbitStationsRing: React.FC<{
   onHoverStage,
   worldPos,
   radius = 5.2,
+  nivel,
 }) => {
   const groupRef = useRef<THREE.Group>(null);
   const { gl, camera, size } = useThree();
@@ -388,6 +392,26 @@ export const OrbitStationsRing: React.FC<{
       const minDistancePx = isMobileDevice ? 70 : 85;
 
       for (const item of sortedByFront) {
+        // En nivel 'etapa' muestra solo el label de la etapa seleccionada; el resto se oculta
+        if (nivel === 'etapa') {
+          const isSelectedStage = selectedEtapaId
+            ? etapas[item.index]?.id === selectedEtapaId
+            : item.index === etapaActualIdx;
+
+          if (!isSelectedStage) {
+            newScreenData[item.index] = {
+              index: item.index,
+              screenX: item.screenX,
+              screenY: item.screenY,
+              depthZ: item.depthZ,
+              visible: false,
+              opacity: 0,
+              fontSize: 10,
+            };
+            continue;
+          }
+        }
+
         // En mobile verificar filtro
         if (isMobileDevice && !mobileAllowedSet.has(item.index)) {
           newScreenData[item.index] = {

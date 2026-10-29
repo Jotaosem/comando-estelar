@@ -12,6 +12,8 @@ import { StageGlassPanel } from './StageGlassPanel';
 import { GalaxyMinimap } from './GalaxyMinimap';
 import { StageScreenTooltip, type StageTooltipData } from './StageScreenTooltip';
 import { useNavigationStore } from './navigationStore';
+import { useHideLabelsUnderHud } from '../../hooks/useHideLabelsUnderHud';
+import { Z_LAYERS } from '../../constants/zLayers';
 
 const GalaxyCanvas3D = lazy(() => import('./GalaxyCanvas3D'));
 
@@ -48,6 +50,9 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
 
   const [reducedMotion, setReducedMotion] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
+
+  // Hook para ocultar labels 3D debajo de cualquier panel HUD visible
+  useHideLabelsUnderHud(['planet-hud-card-container', 'stage-glass-panel-container']);
 
   useEffect(() => {
     const mqMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -171,18 +176,11 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
       {/* 2. Capa de oscurecimiento: pointer-events: none garantizado */}
       <div className="absolute inset-0 bg-black/20 pointer-events-none z-10" />
 
-      {/* 3. HUD compacto de 340px arriba a la izquierda en niveles planeta/etapa */}
-      {nivel !== 'galaxia' && selectedProyecto && (
-        <div className="absolute top-12 left-4 z-30 animate-in fade-in slide-in-from-left-2 pointer-events-auto">
-          <PlanetHUDCard proyecto={selectedProyecto} />
-        </div>
-      )}
-
-      {/* 4. Tooltip en capa DOM proyectado */}
-      <StageScreenTooltip data={hoverStageData} />
-
-      {/* 5. Escena 3D WebGL con Controles 2.5D desacoplados */}
-      <div className="flex-1 w-full h-full relative cursor-grab active:cursor-grabbing">
+      {/* 3. Escena 3D WebGL con Controles 2.5D desacoplados */}
+      <div
+        style={{ zIndex: Z_LAYERS.CANVAS }}
+        className="flex-1 w-full h-full relative cursor-grab active:cursor-grabbing"
+      >
         <Suspense
           fallback={
             <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-[#020510]">
@@ -214,6 +212,36 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
         </Suspense>
       </div>
 
+      {/* 4. Contenedor Overlay Hermano del Canvas para los HUDs (z-index >= 40) */}
+      <div
+        style={{ zIndex: Z_LAYERS.HUD }}
+        className="absolute inset-0 pointer-events-none"
+      >
+        {/* HUD compacto de 340px arriba a la izquierda en niveles planeta/etapa */}
+        {nivel !== 'galaxia' && selectedProyecto && (
+          <div className="absolute top-12 left-4 pointer-events-auto animate-in fade-in slide-in-from-left-2">
+            <PlanetHUDCard proyecto={selectedProyecto} />
+          </div>
+        )}
+
+        {/* Panel Lateral de 380px (Solo en nivel etapa) */}
+        {nivel === 'etapa' && selectedEtapa && selectedProyecto && (
+          <div className="pointer-events-auto">
+            <StageGlassPanel
+              etapa={selectedEtapa}
+              proyecto={selectedProyecto}
+              onClose={() => {
+                seleccionarProyecto(selectedProyecto);
+              }}
+              isMobile={isMobile}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* 5. Tooltip en capa DOM proyectado */}
+      <StageScreenTooltip data={hoverStageData} />
+
       {/* 6. Minimapa con Box3 real y rectángulo de cámara (Nivel Galaxia) */}
       <GalaxyMinimap
         galaxyBox={galaxyBox}
@@ -225,19 +253,7 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
         visible={nivel === 'galaxia'}
       />
 
-      {/* 7. Panel Lateral de 380px (Solo en nivel etapa) */}
-      {nivel === 'etapa' && selectedEtapa && selectedProyecto && (
-        <StageGlassPanel
-          etapa={selectedEtapa}
-          proyecto={selectedProyecto}
-          onClose={() => {
-            seleccionarProyecto(selectedProyecto);
-          }}
-          isMobile={isMobile}
-        />
-      )}
-
-      {/* 8. Leyenda inferior con filtros toggle de salud */}
+      {/* 7. Leyenda inferior con filtros toggle de salud */}
       <div className="absolute bottom-0 left-0 right-0 h-8 z-30 px-4 bg-[#020510]/90 backdrop-blur-md border-t border-cyan-500/15 flex items-center justify-between text-[11px] font-mono text-slate-400 pointer-events-auto">
         <div className="flex items-center gap-2 sm:gap-3">
           <span className="text-[10px] uppercase text-slate-500 hidden sm:inline">Filtro:</span>
