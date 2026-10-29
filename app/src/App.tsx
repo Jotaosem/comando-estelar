@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { ResumenPage } from './pages/ResumenPage';
 import { DetallePage } from './pages/DetallePage';
+import { ImprimirPage } from './pages/ImprimirPage';
 import { AvisosPage } from './pages/AvisosPage';
 import { EncuestaPage } from './pages/EncuestaPage';
 import { AdminPage } from './pages/AdminPage';
@@ -132,6 +133,7 @@ export const App: React.FC = () => {
           <Routes>
             <Route path="/" element={<ResumenPage usuarioActual={usuarioActual} />} />
             <Route path="/proyectos/:id" element={<DetallePage usuarioActual={usuarioActual} />} />
+            <Route path="/proyectos/:id/imprimir" element={<ImprimirPage />} />
             <Route path="/avisos" element={<AvisosPage />} />
             <Route path="/encuesta" element={<EncuestaPage usuarioActual={usuarioActual} />} />
             <Route path="/admin" element={<AdminPage />} />

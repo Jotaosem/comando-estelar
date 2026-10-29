@@ -6,6 +6,7 @@ import { obtenerProyectosSeed, type ProyectoResumenUI } from '../lib/proyectosDa
 import type { UsuarioPrueba } from '../components/DevUserSelector';
 import { SemanticGalaxyDirector } from '../components/space/SemanticGalaxyDirector';
 import { GalaxySearchBar } from '../components/space/GalaxySearchBar';
+import { CompartirPopover } from '../components/CompartirPopover';
 import { useNavigationStore } from '../components/space/navigationStore';
 import {
   ShieldAlert,
@@ -377,7 +378,20 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
               </div>
 
               {/* Botón de acceso a mapa con foco de consola */}
-              <div className="mt-4 pt-2 flex items-center justify-end">
+              <div className="mt-4 pt-2 flex items-center justify-between">
+                <CompartirPopover
+                  proyecto={p}
+                  onToast={(msg) => {
+                    const el = document.createElement('div');
+                    el.innerText = msg;
+                    el.className = 'fixed bottom-6 right-6 z-50 px-4 py-2 rounded-xl bg-cyan-500 text-slate-950 font-mono font-bold text-xs shadow-2xl animate-in fade-in zoom-in-95';
+                    document.body.appendChild(el);
+                    setTimeout(() => {
+                      el.remove();
+                    }, 2200);
+                  }}
+                />
+
                 <div
                   className={`inline-flex items-center gap-1.5 text-xs font-mono font-bold uppercase tracking-wider transition-all ${
                     isFocused ? 'text-cyan-300' : 'text-slate-500 group-hover:text-cyan-400'

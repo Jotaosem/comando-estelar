@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { ProyectoResumenUI } from '../../lib/proyectosData';
 import { HelpCircle, AlertTriangle, User, X } from 'lucide-react';
+import { CompartirPopover } from '../CompartirPopover';
 
 interface PlanetHUDCardProps {
   proyecto: ProyectoResumenUI;
@@ -178,19 +179,34 @@ export const PlanetHUDCard: React.FC<PlanetHUDCardProps> = ({ proyecto }) => {
 
         {/* Fila 5: Responsable de comunicar + Botón Popover */}
         <div className="pt-2 border-t border-cyan-500/15 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-1.5 text-slate-300 truncate max-w-[190px]">
+          <div className="flex items-center gap-1.5 text-slate-300 truncate max-w-[125px]">
             <User className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
             <span className="truncate font-sans font-medium">{proyecto.responsable_comunicar_nombre}</span>
           </div>
 
-          <button
-            onClick={() => setMostrarPopover(!mostrarPopover)}
-            className="flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-950/80 hover:bg-cyan-900/90 border border-cyan-500/40 text-cyan-300 font-mono text-[11px] transition-all"
-            title="Ver cálculo de fecha"
-          >
-            <HelpCircle className="w-3 h-3" />
-            <span>Fórmula</span>
-          </button>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <button
+              onClick={() => setMostrarPopover(!mostrarPopover)}
+              className="flex items-center gap-1 px-2 py-0.5 rounded bg-cyan-950/80 hover:bg-cyan-900/90 border border-cyan-500/40 text-cyan-300 font-mono text-[11px] transition-all"
+              title="Ver cálculo de fecha"
+            >
+              <HelpCircle className="w-3 h-3" />
+              <span>Fórmula</span>
+            </button>
+
+            <CompartirPopover
+              proyecto={proyecto}
+              onToast={(msg) => {
+                const el = document.createElement('div');
+                el.innerText = msg;
+                el.className = 'fixed bottom-6 right-6 z-50 px-4 py-2 rounded-xl bg-cyan-500 text-slate-950 font-mono font-bold text-xs shadow-2xl animate-in fade-in zoom-in-95';
+                document.body.appendChild(el);
+                setTimeout(() => {
+                  el.remove();
+                }, 2200);
+              }}
+            />
+          </div>
         </div>
       </div>
 
