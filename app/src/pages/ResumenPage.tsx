@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useRegistrarVista } from '../hooks/useRegistrarVista';
-import { obtenerProyectosSeed } from '../lib/proyectosData';
+import { obtenerProyectosSeed, type ProyectoResumenUI } from '../lib/proyectosData';
 import type { UsuarioPrueba } from '../components/DevUserSelector';
 import { SemanticGalaxyDirector } from '../components/space/SemanticGalaxyDirector';
+import { GalaxySearchBar } from '../components/space/GalaxySearchBar';
+import { useNavigationStore } from '../components/space/navigationStore';
 import {
   ShieldAlert,
   Compass,
@@ -26,6 +28,9 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
   const [filtroArea, setFiltroArea] = useState<string>('todas');
   const [focoIndex, setFocoIndex] = useState<number>(0);
   const [esVistaLista, setEsVistaLista] = useState<boolean>(false);
+  const [matchingIds, setMatchingIds] = useState<Set<string> | null>(null);
+
+  const { seleccionarProyecto } = useNavigationStore();
 
   const proyectos = obtenerProyectosSeed(usuarioActual);
 
@@ -39,6 +44,7 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
   const proyectosFiltrados = proyectos
     .filter((p) => (filtroSemaforo === 'todos' ? true : p.semaforo === filtroSemaforo))
     .filter((p) => (filtroArea === 'todas' ? true : p.area_solicitante === filtroArea))
+    .filter((p) => (esVistaLista && matchingIds ? matchingIds.has(p.id) : true))
     .sort((a, b) => (semaforoScore[a.semaforo] || 5) - (semaforoScore[b.semaforo] || 5));
 
   // Manejo de teclado estilo consola (flechas para navegar misiones, Enter para ingresar)
@@ -103,6 +109,17 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
 
           {/* Filtros Tácticos */}
           <div className="flex flex-wrap items-center gap-3 font-mono text-xs">
+            {/* Buscador unificado presente en vista lista */}
+            {esVistaLista && (
+              <div className="w-56 sm:w-72">
+                <GalaxySearchBar
+                  proyectos={proyectos}
+                  onSelectProyecto={(p) => navigate(`/proyectos/${p.id}`)}
+                  onFilterChange={(_q, ids) => setMatchingIds(ids)}
+                />
+              </div>
+            )}
+
             <div className="flex items-center bg-slate-900/90 border border-cyan-500/30 rounded-xl px-3 py-1.5 shadow-inner">
               <Filter className="w-3.5 h-3.5 text-cyan-400 mr-2" />
               <select

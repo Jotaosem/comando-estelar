@@ -8,6 +8,7 @@ interface NavigationState {
   areaId: string | null;
   proyecto: ProyectoResumenUI | null;
   etapa: any | null;
+  searchQuery: string;
 
   // Acciones puras de navegación
   irAGalaxia: () => void;
@@ -15,6 +16,7 @@ interface NavigationState {
   seleccionarProyecto: (proyecto: ProyectoResumenUI) => void;
   seleccionarEtapa: (etapa: any) => void;
   volverUnNivel: () => void;
+  setSearchQuery: (query: string) => void;
 }
 
 export const useNavigationStore = create<NavigationState>((set, get) => ({
@@ -22,6 +24,11 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
   areaId: null,
   proyecto: null,
   etapa: null,
+  searchQuery: '',
+
+  setSearchQuery: (query: string) => {
+    set({ searchQuery: query });
+  },
 
   irAGalaxia: () => {
     set({
