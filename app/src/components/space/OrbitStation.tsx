@@ -4,6 +4,16 @@ import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import type { StageTooltipData } from './StageScreenTooltip';
 
+interface StageScreenData {
+  index: number;
+  screenX: number;
+  screenY: number;
+  depthZ: number;
+  visible: boolean;
+  opacity: number;
+  fontSize: number;
+}
+
 interface OrbitStationProps {
   etapa: any;
   index: number;
@@ -15,6 +25,7 @@ interface OrbitStationProps {
   isFrontSnapped: boolean;
   onHoverStage: (data: StageTooltipData | null) => void;
   worldPos: [number, number, number];
+  screenData?: StageScreenData;
 }
 
 export const OrbitStation: React.FC<OrbitStationProps> = ({
@@ -27,6 +38,7 @@ export const OrbitStation: React.FC<OrbitStationProps> = ({
   isSelected,
   onHoverStage,
   worldPos,
+  screenData,
 }) => {
   const meshRef = useRef<THREE.Mesh>(null);
   const ringPulseRef = useRef<THREE.Mesh>(null);
@@ -102,6 +114,15 @@ export const OrbitStation: React.FC<OrbitStationProps> = ({
     }
   });
 
+  // Truncado a máx 14 caracteres con "…"
+  const truncateNombre = (name: string, maxLen = 14) => {
+    if (!name) return '';
+    return name.length > maxLen ? `${name.slice(0, maxLen - 1)}…` : name;
+  };
+
+  const nombreCorto = truncateNombre(etapa.nombre);
+  const statusIcon = isBloqueada ? ' 🔒' : isCompletada ? ' ✓' : isFutura ? ' 🔒' : '';
+
   return (
     <group position={[x, 0, z]}>
       {/* 1. ESFERA INVISIBLE DE HIT (Radio 2x el visual = 0.85) PARA HOVER 100% CONFIABLE */}
@@ -128,10 +149,7 @@ export const OrbitStation: React.FC<OrbitStationProps> = ({
         </mesh>
       )}
 
-      {/* Geometría distintiva por forma:
-          - Completada: hexágono (cilindro 6 caras)
-          - Futura: candado gris con borde visible
-          - Actual / Reabierta: octaedro / anillo pulsante */}
+      {/* Geometría distintiva por forma */}
       <mesh ref={meshRef}>
         {isCompletada ? (
           <cylinderGeometry args={[0.42, 0.42, 0.22, 6]} />
@@ -152,32 +170,30 @@ export const OrbitStation: React.FC<OrbitStationProps> = ({
         />
       </mesh>
 
-      {/* Chip informativo con pointer-events: none (el hover lo maneja la esfera de hit) */}
+      {/* Chip informativo actual y etiqueta fija debajo de cada estación */}
       <Html
-        position={[0, 0.7, 0]}
+        position={[0, -0.65, 0]}
         center
-        occlude
-        style={{ pointerEvents: 'none', userSelect: 'none' }}
+        occlude={false}
+        style={{
+          pointerEvents: 'none',
+          userSelect: 'none',
+          opacity: screenData ? (screenData.visible ? screenData.opacity : 0) : 1,
+          transition: 'opacity 0.15s ease',
+        }}
       >
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center pointer-events-none select-none">
           {isActual ? (
             <div className="h-7 px-3 rounded-full bg-[#030d22]/95 border border-cyan-400 text-cyan-200 text-xs font-display font-bold shadow-[0_0_15px_rgba(0,242,254,0.35)] flex items-center gap-1.5 whitespace-nowrap">
               <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping shrink-0" />
-              <span>{index + 1} · {etapa.nombre} · Estás aquí</span>
+              <span>{index + 1} · {nombreCorto} · Estás aquí</span>
             </div>
           ) : (
             <div
-              className={`w-7 h-7 rounded-full backdrop-blur-md border text-xs font-mono font-bold shadow-md flex items-center justify-center ${
-                isBloqueada
-                  ? 'bg-rose-950/90 border-rose-500 text-rose-200'
-                  : isCompletada
-                  ? 'bg-emerald-950/90 border-emerald-500 text-emerald-200'
-                  : isReabierta
-                  ? 'bg-amber-950/90 border-amber-500 text-amber-200'
-                  : 'bg-slate-900/90 border-slate-500 text-slate-200'
-              }`}
+              style={{ fontSize: `${screenData ? screenData.fontSize : 11}px` }}
+              className="px-2 py-0.5 rounded-md bg-[#040817]/85 border border-slate-700/60 text-slate-200 font-mono whitespace-nowrap shadow-md flex items-center gap-1"
             >
-              {isCompletada ? '✓' : isFutura ? '🔒' : isBloqueada ? '!' : `${index + 1}`}
+              <span>{index + 1} · {nombreCorto}{statusIcon}</span>
             </div>
           )}
         </div>
@@ -204,7 +220,7 @@ export const OrbitStationsRing: React.FC<{
   radius = 5.2,
 }) => {
   const groupRef = useRef<THREE.Group>(null);
-  const { gl } = useThree();
+  const { gl, camera, size } = useThree();
 
   const total = etapas.length;
   const stepAngle = (Math.PI * 2) / Math.max(1, total);
@@ -218,6 +234,9 @@ export const OrbitStationsRing: React.FC<{
   const previousX = useRef(0);
   const velocity = useRef(0);
   const [frontIndex, setFrontIndex] = useState<number>(etapaActualIdx);
+
+  // Datos calculados por frame para visibilidad, opacidad y anti-colisión de labels
+  const [screenStages, setScreenStages] = useState<Record<number, StageScreenData>>({});
 
   useEffect(() => {
     targetRotation.current = -(etapaActualIdx * stepAngle) + Math.PI / 2;
@@ -305,6 +324,131 @@ export const OrbitStationsRing: React.FC<{
         );
       }
       groupRef.current.rotation.y = currentRotation.current;
+
+      // Calcular posiciones de pantalla para cada estación orbital
+      const isMobileDevice = size.width < 768;
+      const rotY = groupRef.current.rotation.y;
+
+      const rawItems: {
+        index: number;
+        screenX: number;
+        screenY: number;
+        depthZ: number; // en coordenadas de cámara (más negativo = más al fondo)
+        frontDist: number; // distancia al frente en ángulo
+      }[] = [];
+
+      for (let i = 0; i < total; i++) {
+        const localAngle = (i / total) * Math.PI * 2;
+        const effectiveAngle = localAngle + rotY;
+        const wx = worldPos[0] + Math.cos(effectiveAngle) * radius;
+        const wy = worldPos[1];
+        const wz = worldPos[2] + Math.sin(effectiveAngle) * radius;
+
+        const p3 = new THREE.Vector3(wx, wy, wz);
+        p3.project(camera);
+
+        const screenX = (p3.x * 0.5 + 0.5) * size.width;
+        const screenY = (-(p3.y * 0.5) + 0.5) * size.height;
+
+        // Frontalidad: wz respecto al observador o p3.z
+        // En Three.js project, p3.z va de -1 (cerca) a +1 (lejos)
+        rawItems.push({
+          index: i,
+          screenX,
+          screenY,
+          depthZ: p3.z,
+          frontDist: p3.z, // menor = más al frente
+        });
+      }
+
+      // Ordenar de más al frente a más atrás (menor p3.z = más al frente)
+      const sortedByFront = [...rawItems].sort((a, b) => a.depthZ - b.depthZ);
+      const minZ = sortedByFront[0]?.depthZ ?? 0;
+      const maxZ = sortedByFront[sortedByFront.length - 1]?.depthZ ?? 1;
+      const zRange = Math.max(0.001, maxZ - minZ);
+
+      // Determinar permitidos en mobile (solo la actual y las 2 más cercanas al frente)
+      let mobileAllowedSet = new Set<number>();
+      if (isMobileDevice) {
+        mobileAllowedSet.add(etapaActualIdx);
+        // Las 2 más al frente
+        let count = 0;
+        for (const item of sortedByFront) {
+          if (!mobileAllowedSet.has(item.index)) {
+            mobileAllowedSet.add(item.index);
+            count++;
+            if (count >= 2) break;
+          }
+        }
+      }
+
+      // Chequeo de colisión en pantalla: procesamos de frente hacia atrás
+      const placedLabels: { x: number; y: number }[] = [];
+      const newScreenData: Record<number, StageScreenData> = {};
+      const minDistancePx = isMobileDevice ? 70 : 85;
+
+      for (const item of sortedByFront) {
+        // En mobile verificar filtro
+        if (isMobileDevice && !mobileAllowedSet.has(item.index)) {
+          newScreenData[item.index] = {
+            index: item.index,
+            screenX: item.screenX,
+            screenY: item.screenY,
+            depthZ: item.depthZ,
+            visible: false,
+            opacity: 0,
+            fontSize: 10,
+          };
+          continue;
+        }
+
+        // ¿Choca con un label ya colocado más al frente?
+        let collides = false;
+        // La estación actual siempre tiene prioridad absoluta
+        const isActualStage = item.index === etapaActualIdx;
+
+        if (!isActualStage) {
+          for (const placed of placedLabels) {
+            const dx = Math.abs(placed.x - item.screenX);
+            const dy = Math.abs(placed.y - item.screenY);
+            if (dx < minDistancePx && dy < 35) {
+              collides = true;
+              break;
+            }
+          }
+        }
+
+        if (collides) {
+          newScreenData[item.index] = {
+            index: item.index,
+            screenX: item.screenX,
+            screenY: item.screenY,
+            depthZ: item.depthZ,
+            visible: false,
+            opacity: 0,
+            fontSize: 10,
+          };
+        } else {
+          placedLabels.push({ x: item.screenX, y: item.screenY });
+          // Normalizar posición relativa de frente (0 = al frente, 1 = atrás)
+          const relZ = Math.max(0, Math.min(1, (item.depthZ - minZ) / zRange));
+          // Frente: 100% opacidad, 12px; Atrás: 40% opacidad, 10px
+          const opacity = isActualStage ? 1 : 1 - relZ * 0.6; // 1.0 -> 0.4
+          const fontSize = isActualStage ? 12 : Math.round(12 - relZ * 2); // 12 -> 10
+
+          newScreenData[item.index] = {
+            index: item.index,
+            screenX: item.screenX,
+            screenY: item.screenY,
+            depthZ: item.depthZ,
+            visible: true,
+            opacity,
+            fontSize,
+          };
+        }
+      }
+
+      setScreenStages(newScreenData);
     }
   });
 
@@ -351,6 +495,7 @@ export const OrbitStationsRing: React.FC<{
           isFrontSnapped={idx === frontIndex}
           onHoverStage={onHoverStage}
           worldPos={worldPos}
+          screenData={screenStages[idx]}
         />
       ))}
     </group>
