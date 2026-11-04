@@ -98,39 +98,15 @@ export const StageGlassPanel: React.FC<StageGlassPanelProps> = ({
           <span className="leading-snug">{fraseResumen}</span>
         </div>
 
-        {/* Botón Preguntar al copiloto y Atajos desde el panel de etapa */}
-        <div className="mt-3 p-2.5 rounded-xl bg-slate-950/80 border border-cyan-500/20 space-y-1.5">
+        {/* Botón Preguntar al copiloto (Sin atajos/sugerencias) */}
+        <div className="mt-3 p-2.5 rounded-xl bg-slate-950/80 border border-cyan-500/20">
           <button
             onClick={() => abrirChatConProyecto(proyecto.id)}
-            className="w-full flex items-center justify-center gap-1.5 py-1 px-2.5 rounded-lg bg-gradient-to-r from-cyan-500/20 to-blue-600/20 hover:from-cyan-500/30 hover:to-blue-600/30 border border-cyan-400/40 text-cyan-200 font-mono text-xs font-bold transition-all"
+            className="w-full flex items-center justify-center gap-1.5 py-1.5 px-2.5 rounded-lg bg-gradient-to-r from-cyan-500/20 to-blue-600/20 hover:from-cyan-500/30 hover:to-blue-600/30 border border-cyan-400/40 text-cyan-200 font-mono text-xs font-bold transition-all"
           >
             <MessageSquareQuote className="w-3.5 h-3.5 text-cyan-400" />
             <span>Preguntar al copiloto</span>
           </button>
-
-          <div className="grid grid-cols-3 gap-1">
-            <button
-              onClick={() => abrirChatConProyecto(proyecto.id, '¿Por qué está atrasado?')}
-              className="text-[10px] font-mono p-1 rounded bg-slate-900/90 hover:bg-cyan-950/80 border border-slate-700/80 hover:border-cyan-400/50 text-cyan-300 truncate"
-              title="¿Por qué está atrasado?"
-            >
-              ¿Atrasado?
-            </button>
-            <button
-              onClick={() => abrirChatConProyecto(proyecto.id, 'Historial de bloqueos')}
-              className="text-[10px] font-mono p-1 rounded bg-slate-900/90 hover:bg-cyan-950/80 border border-slate-700/80 hover:border-cyan-400/50 text-cyan-300 truncate"
-              title="Historial de bloqueos"
-            >
-              Bloqueos
-            </button>
-            <button
-              onClick={() => abrirChatConProyecto(proyecto.id, '¿Quién es responsable?')}
-              className="text-[10px] font-mono p-1 rounded bg-slate-900/90 hover:bg-cyan-950/80 border border-slate-700/80 hover:border-cyan-400/50 text-cyan-300 truncate"
-              title="¿Quién es responsable?"
-            >
-              Responsable
-            </button>
-          </div>
         </div>
 
         {/* Responsable */}

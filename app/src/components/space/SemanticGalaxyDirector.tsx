@@ -13,6 +13,7 @@ import { GalaxyMinimap } from './GalaxyMinimap';
 import { StageScreenTooltip, type StageTooltipData } from './StageScreenTooltip';
 import { useNavigationStore } from './navigationStore';
 import { useHideLabelsUnderHud } from '../../hooks/useHideLabelsUnderHud';
+import { isEditableElement } from '../../lib/keyboardUtils';
 import { Z_LAYERS } from '../../constants/zLayers';
 
 const GalaxyCanvas3D = lazy(() => import('./GalaxyCanvas3D'));
@@ -50,9 +51,29 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
 
   const [reducedMotion, setReducedMotion] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
+
+  // Soporte rueda de mouse para zoom en nivel planeta sin romper drag
+  useEffect(() => {
+    if (nivel !== 'planeta') return;
+
+    const handleWheel = (e: WheelEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && target.closest('#planet-hud-card-container, #stage-glass-panel-container, .hud-glass, button')) {
+        return;
+      }
+
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.12 : -0.12;
+      setZoomLevel((prev) => Math.max(0.65, Math.min(2.0, prev + delta)));
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+    return () => window.removeEventListener('wheel', handleWheel);
+  }, [nivel]);
 
   // Hook para ocultar labels 3D debajo de cualquier panel HUD visible
-  useHideLabelsUnderHud(['planet-hud-card-container', 'stage-glass-panel-container']);
+  useHideLabelsUnderHud(['planet-hud-card-container', 'stage-glass-panel-container'], nivel);
 
   useEffect(() => {
     const mqMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -112,6 +133,7 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (isEditableElement(e.target)) return;
       if (e.key === 'Escape') {
         e.preventDefault();
         volverUnNivel();
@@ -123,10 +145,7 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
 
   return (
     <div
-      style={{
-        height: 'calc(100vh - 120px)',
-      }}
-      className="relative w-full min-h-[580px] rounded-2xl overflow-hidden hud-glass border border-cyan-500/30 bg-[#020510] shadow-[0_0_50px_rgba(0,0,0,0.9)] flex flex-col select-none"
+      className="relative w-full flex-1 min-h-0 bg-[#020510] flex flex-col select-none overflow-hidden"
     >
       {/* Breadcrumb en una fila de 32px bajo la toolbar, solo dentro de un planeta */}
       {nivel !== 'galaxia' && selectedProyecto && (
@@ -208,6 +227,7 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
             onCameraUpdate={(cam) => setCurrentCamera(cam)}
             targetFocusPos={targetFocusPos}
             centrarTrigger={centrarTrigger}
+            zoomLevel={zoomLevel}
           />
         </Suspense>
       </div>
@@ -217,10 +237,10 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
         style={{ zIndex: Z_LAYERS.HUD }}
         className="absolute inset-0 pointer-events-none"
       >
-        {/* HUD compacto de 340px arriba a la izquierda en niveles planeta/etapa */}
+        {/* HUD compacto de 340px a la izquierda en desktop, bottom sheet en mobile/tablet */}
         {nivel !== 'galaxia' && selectedProyecto && (
           <div className="absolute top-12 left-4 pointer-events-auto animate-in fade-in slide-in-from-left-2">
-            <PlanetHUDCard proyecto={selectedProyecto} />
+            <PlanetHUDCard proyecto={selectedProyecto} isMobile={isMobile} />
           </div>
         )}
 
@@ -242,19 +262,52 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
       {/* 5. Tooltip en capa DOM proyectado */}
       <StageScreenTooltip data={hoverStageData} />
 
-      {/* 6. Minimapa con Box3 real y rectángulo de cámara (Nivel Galaxia) */}
-      <GalaxyMinimap
-        galaxyBox={galaxyBox}
-        camera={currentCamera}
-        onPanTo={(x, z) => {
-          setPanOffset([x, z]);
-          setTargetFocusPos(null);
-        }}
-        visible={nivel === 'galaxia'}
-      />
+      {/* Botones flotantes [+] [-] [⟳ Encuadrar] en nivel planeta */}
+      {nivel === 'planeta' && (
+        <div
+          style={{ zIndex: Z_LAYERS.HUD }}
+          className="absolute bottom-12 right-4 flex items-center gap-1.5 p-1 rounded-xl bg-slate-950/85 border border-cyan-500/30 backdrop-blur-md shadow-xl text-xs font-mono select-none"
+        >
+          <button
+            onClick={() => setZoomLevel((prev) => Math.min(2.0, prev + 0.2))}
+            className="w-7 h-7 rounded-lg bg-slate-900 hover:bg-cyan-950/80 border border-slate-700/60 hover:border-cyan-400 text-cyan-300 font-bold flex items-center justify-center transition-all"
+            title="Acercar (+)"
+          >
+            +
+          </button>
+          <button
+            onClick={() => setZoomLevel((prev) => Math.max(0.65, prev - 0.2))}
+            className="w-7 h-7 rounded-lg bg-slate-900 hover:bg-cyan-950/80 border border-slate-700/60 hover:border-cyan-400 text-cyan-300 font-bold flex items-center justify-center transition-all"
+            title="Alejar (-)"
+          >
+            −
+          </button>
+          <button
+            onClick={() => setZoomLevel(1)}
+            className="px-2 h-7 rounded-lg bg-slate-900 hover:bg-cyan-950/80 border border-slate-700/60 hover:border-cyan-400 text-cyan-300 flex items-center gap-1 transition-all"
+            title="Restablecer encuadre"
+          >
+            <span>⟳</span>
+            <span className="hidden sm:inline text-[11px]">Encuadrar</span>
+          </button>
+        </div>
+      )}
 
-      {/* 7. Leyenda inferior con filtros toggle de salud */}
-      <div className="absolute bottom-0 left-0 right-0 h-8 z-30 px-4 bg-[#020510]/90 backdrop-blur-md border-t border-cyan-500/15 flex items-center justify-between text-[11px] font-mono text-slate-400 pointer-events-auto">
+      {/* 6. Minimapa con Box3 real y rectángulo de cámara (Nivel Galaxia, oculto en <768px) */}
+      {!isMobile && (
+        <GalaxyMinimap
+          galaxyBox={galaxyBox}
+          camera={currentCamera}
+          onPanTo={(x, z) => {
+            setPanOffset([x, z]);
+            setTargetFocusPos(null);
+          }}
+          visible={nivel === 'galaxia'}
+        />
+      )}
+
+      {/* 7. Barra Leyenda inferior (40px) con texto de fuente auditable a la derecha */}
+      <div className="h-10 min-h-[40px] z-30 px-4 bg-[#020510]/95 backdrop-blur-md border-t border-cyan-500/15 flex items-center justify-between text-[11px] font-mono text-slate-400 pointer-events-auto shrink-0 select-none">
         <div className="flex items-center gap-2 sm:gap-3">
           <span className="text-[10px] uppercase text-slate-500 hidden sm:inline">Filtro:</span>
           
@@ -299,10 +352,13 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
           </button>
         </div>
 
-        <div className="flex items-center gap-3 text-slate-500">
+        {/* Texto fuente auditable Notion a la derecha */}
+        <div className="flex items-center gap-2 sm:gap-3 text-slate-500 text-[10px] truncate">
+          <span className="hidden md:inline">Fuente auditable: Notion vía sync</span>
+          <span className="hidden md:inline">·</span>
           <span>NIVEL: <strong className="text-cyan-400 uppercase">{nivel}</strong></span>
           <span>·</span>
-          <span>ESC: VOLVER</span>
+          <span className="hidden sm:inline">ESC: VOLVER</span>
         </div>
       </div>
     </div>

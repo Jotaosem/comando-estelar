@@ -47,9 +47,26 @@ export const Galaxy25DControls: React.FC<Galaxy25DControlsProps> = ({
     }
   }, [enabled, galaxyBox, size.width, size.height, camera, panOffset]);
 
-  // Centrar y encuadrar fit-to-view al inicio y en resize
+  // Centrar y encuadrar fit-to-view al inicio y en resize con debounce 150ms
   useEffect(() => {
+    let timeout: any = null;
+    const debouncedEncuadrar = () => {
+      clearTimeout(timeout);
+      timeout = setTimeout(() => {
+        encuadrarGalaxia();
+      }, 150);
+    };
+
     encuadrarGalaxia();
+
+    window.addEventListener('resize', debouncedEncuadrar);
+    window.addEventListener('orientationchange', debouncedEncuadrar);
+
+    return () => {
+      clearTimeout(timeout);
+      window.removeEventListener('resize', debouncedEncuadrar);
+      window.removeEventListener('orientationchange', debouncedEncuadrar);
+    };
   }, [encuadrarGalaxia]);
 
   // Ejecutar fitToBox cuando el usuario presiona "Centrar" desde cualquier parte

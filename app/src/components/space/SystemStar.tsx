@@ -73,7 +73,7 @@ export const SystemStar: React.FC<SystemStarProps> = ({
           zIndexRange={Z_LAYERS.LABELS_3D}
           style={{ pointerEvents: 'none' }}
         >
-          <div data-planet-chip="true" className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950/85 border border-slate-700/80 backdrop-blur-md shadow-md whitespace-nowrap">
+          <div data-sector-label="true" className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950/85 border border-slate-700/80 backdrop-blur-md shadow-md whitespace-nowrap">
             <span
               className="w-1.5 h-1.5 rounded-full"
               style={{ backgroundColor: system.color }}

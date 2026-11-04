@@ -6,7 +6,6 @@ import {
   ThumbsUp,
   ThumbsDown,
   Terminal,
-  Zap,
 } from 'lucide-react';
 import type { UsuarioPrueba } from './DevUserSelector';
 import { useNavigationStore } from './space/navigationStore';
@@ -51,14 +50,6 @@ export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
     },
   ]);
   const [cargando, setCargando] = useState<boolean>(false);
-
-  // Atajos requeridos por Punto 7:
-  // [¿Por qué está atrasado?] [Historial de bloqueos] [¿Quién es responsable?]
-  const ATAJOS = [
-    { label: '¿Por qué está atrasado?', query: '¿Por qué está atrasado?' },
-    { label: 'Historial de bloqueos', query: 'Historial de bloqueos' },
-    { label: '¿Quién es responsable?', query: '¿Quién es responsable?' },
-  ];
 
   const handleCerrar = () => {
     setAbiertoLocal(false);
@@ -176,22 +167,6 @@ export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
             >
               <X className="w-5 h-5" />
             </button>
-          </div>
-
-          {/* Atajos Rápidos */}
-          <div className="p-3 border-b border-slate-800/80 bg-slate-950/60 flex items-center gap-2 overflow-x-auto">
-            <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider flex items-center gap-1 shrink-0">
-              <Zap className="w-3 h-3 text-cyan-400" /> Atajos:
-            </span>
-            {ATAJOS.map((a, idx) => (
-              <button
-                key={idx}
-                onClick={() => enviarPregunta(a.query)}
-                className="shrink-0 text-[11px] font-mono bg-cyan-950/50 hover:bg-cyan-900/60 text-cyan-300 border border-cyan-500/30 px-2.5 py-1 rounded-md transition-all hover:border-cyan-400 active:scale-95"
-              >
-                {a.label}
-              </button>
-            ))}
           </div>
 
           {/* Mensajes */}

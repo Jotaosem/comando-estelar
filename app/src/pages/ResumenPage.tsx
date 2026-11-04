@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useRegistrarVista } from '../hooks/useRegistrarVista';
 import { obtenerProyectosSeed } from '../lib/proyectosData';
@@ -8,6 +8,10 @@ import { SemanticGalaxyDirector } from '../components/space/SemanticGalaxyDirect
 import { GalaxySearchBar } from '../components/space/GalaxySearchBar';
 import { CompartirPopover } from '../components/CompartirPopover';
 import { useNavigationStore } from '../components/space/navigationStore';
+import { SceneLayout } from '../layouts/SceneLayout';
+import { PageLayout } from '../layouts/PageLayout';
+import { ProyectosTabla } from '../components/ProyectosTabla';
+import { isEditableElement } from '../lib/keyboardUtils';
 import {
   ShieldAlert,
   User,
@@ -16,21 +20,55 @@ import {
   Crosshair,
   Layers,
   LayoutGrid,
+  Table,
 } from 'lucide-react';
 
 interface ResumenPageProps {
   usuarioActual?: UsuarioPrueba;
+  onCambiarUsuario?: (u: UsuarioPrueba) => void;
+  vistaInicialLista?: boolean;
 }
 
-export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
+export const ResumenPage: React.FC<ResumenPageProps> = ({
+  usuarioActual,
+  onCambiarUsuario,
+  vistaInicialLista = false,
+}) => {
   useRegistrarVista('resumen');
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const triggerCentrar = useNavigationStore((s) => s.triggerCentrar);
 
   const [filtroSemaforo, setFiltroSemaforo] = useState<string>('todos');
   const [filtroArea, setFiltroArea] = useState<string>('todas');
   const [focoIndex, setFocoIndex] = useState<number>(0);
-  const [esVistaLista, setEsVistaLista] = useState<boolean>(false);
+
+  // Toggle de vistas: 'galaxia' | 'tarjetas' | 'tabla', persistido en URL y localStorage
+  const [vista, setVista] = useState<'galaxia' | 'tarjetas' | 'tabla'>(() => {
+    const urlVista = searchParams.get('vista');
+    if (urlVista === 'galaxia' || urlVista === 'tarjetas' || urlVista === 'tabla') return urlVista;
+    if (urlVista === 'lista') return 'tarjetas';
+    try {
+      const saved = localStorage.getItem('vista_proyectos');
+      if (saved === 'galaxia' || saved === 'tarjetas' || saved === 'tabla') return saved;
+    } catch {
+      // ignore
+    }
+    return vistaInicialLista ? 'tarjetas' : 'galaxia';
+  });
+
+  const cambiarVista = (nuevaVista: 'galaxia' | 'tarjetas' | 'tabla') => {
+    setVista(nuevaVista);
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.set('vista', nuevaVista);
+    setSearchParams(nextParams, { replace: true });
+    try {
+      localStorage.setItem('vista_proyectos', nuevaVista);
+    } catch {
+      // ignore
+    }
+  };
+
   const [matchingIds, setMatchingIds] = useState<Set<string> | null>(null);
   const [mostrarFiltrosMobile, setMostrarFiltrosMobile] = useState<boolean>(false);
 
@@ -43,14 +81,17 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
     verde: 4,
   };
 
+  const esModoListaOTabla = vista === 'tarjetas' || vista === 'tabla';
+
   const proyectosFiltrados = proyectos
     .filter((p) => (filtroSemaforo === 'todos' ? true : p.semaforo === filtroSemaforo))
     .filter((p) => (filtroArea === 'todas' ? true : p.area_solicitante === filtroArea))
-    .filter((p) => (esVistaLista && matchingIds ? matchingIds.has(p.id) : true))
+    .filter((p) => (esModoListaOTabla && matchingIds ? matchingIds.has(p.id) : true))
     .sort((a, b) => (semaforoScore[a.semaforo] || 5) - (semaforoScore[b.semaforo] || 5));
 
   // Manejo de teclado estilo consola (flechas para navegar misiones, Enter para ingresar)
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (isEditableElement(e.target)) return;
     if (proyectosFiltrados.length === 0) return;
     if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
       e.preventDefault();
@@ -69,181 +110,255 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
 
   if (proyectos.length === 0) {
     return (
-      <div className="hud-glass rounded-2xl p-12 text-center max-w-lg mx-auto border border-red-500/30 my-16 shadow-[0_0_40px_rgba(255,51,102,0.15)]">
-        <ShieldAlert className="w-16 h-16 text-red-400 mx-auto mb-4 animate-pulse" />
-        <h2 className="text-xl font-display font-bold text-white tracking-wider uppercase">
-          Acceso No Autorizado
-        </h2>
-        <p className="text-sm font-mono text-slate-400 mt-2">
-          El usuario activo ({usuarioActual?.email}) no cuenta con credenciales tácticas asignadas para consultar las misiones en curso.
-        </p>
+      <PageLayout usuarioActual={usuarioActual!} onCambiarUsuario={onCambiarUsuario || (() => {})}>
+        <div className="hud-glass rounded-2xl p-12 text-center max-w-lg mx-auto border border-red-500/30 my-16 shadow-[0_0_40px_rgba(255,51,102,0.15)]">
+          <ShieldAlert className="w-16 h-16 text-red-400 mx-auto mb-4 animate-pulse" />
+          <h2 className="text-xl font-display font-bold text-white tracking-wider uppercase">
+            Acceso No Autorizado
+          </h2>
+          <p className="text-sm font-mono text-slate-400 mt-2">
+            El usuario activo ({usuarioActual?.email}) no cuenta con credenciales tácticas asignadas para consultar las misiones en curso.
+          </p>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  const renderToolbar = () => (
+    <header className="h-14 min-h-[56px] w-full px-3 sm:px-4 bg-slate-950/80 backdrop-blur-md border-b border-cyan-500/25 flex items-center justify-between gap-2 sm:gap-3 z-30 shrink-0 select-none">
+      {/* Izquierda: Badge de misiones activas */}
+      <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-950/80 border border-cyan-500/30 text-cyan-300 font-mono text-xs">
+          <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#00f2fe]" />
+          <span className="font-bold">Misiones</span>
+          <span className="text-slate-500">·</span>
+          <span>{proyectosFiltrados.length} activas</span>
+        </div>
       </div>
+
+      {/* Centro: Buscador unificado con Fuse y Dropdown en Portal */}
+      <div className="flex-1 max-w-xs sm:max-w-md mx-1">
+        <GalaxySearchBar
+          proyectos={proyectos}
+          onSelectProyecto={(p) => navigate(`/proyectos/${p.id}`)}
+          onFilterChange={(_q, ids) => setMatchingIds(ids)}
+          placeholder="Buscar proyecto…"
+        />
+      </div>
+
+      {/* Derecha: Filtros tácticos, Toggle Segmentado y Botón Centrar */}
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 font-mono text-xs">
+        {/* Botón Filtros en Mobile */}
+        <button
+          onClick={() => setMostrarFiltrosMobile(!mostrarFiltrosMobile)}
+          className="sm:hidden px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 text-xs flex items-center gap-1"
+        >
+          <Filter className="w-3.5 h-3.5 text-cyan-400" />
+          <span>Filtros</span>
+        </button>
+
+        {/* Filtro Estado */}
+        <div className="hidden sm:flex items-center bg-slate-900/90 border border-cyan-500/30 rounded-lg px-2 py-1 shadow-inner">
+          <select
+            className="bg-transparent border-0 focus:ring-0 text-slate-200 text-xs pr-2 cursor-pointer outline-none font-mono appearance-none"
+            value={filtroSemaforo}
+            onChange={(e) => setFiltroSemaforo(e.target.value)}
+            aria-label="Filtrar por estado"
+          >
+            <option value="todos" className="bg-slate-950 text-slate-200">Estado ▾</option>
+            <option value="rojo" className="bg-slate-950 text-red-400">🔴 Crítico (Rojo)</option>
+            <option value="amarillo" className="bg-slate-950 text-amber-400">🟡 En riesgo (Ámbar)</option>
+            <option value="verde" className="bg-slate-950 text-emerald-400">🟢 Nominal (Verde)</option>
+          </select>
+        </div>
+
+        {/* Filtro Área */}
+        <div className="hidden sm:flex items-center bg-slate-900/90 border border-cyan-500/30 rounded-lg px-2 py-1 shadow-inner">
+          <select
+            className="bg-transparent border-0 focus:ring-0 text-slate-200 text-xs pr-2 cursor-pointer outline-none font-mono appearance-none"
+            value={filtroArea}
+            onChange={(e) => setFiltroArea(e.target.value)}
+            aria-label="Filtrar por área"
+          >
+            <option value="todas" className="bg-slate-950 text-slate-200">Área ▾</option>
+            <option value="Operaciones" className="bg-slate-950 text-slate-200">Operaciones</option>
+            <option value="Comercial" className="bg-slate-950 text-slate-200">Comercial</option>
+            <option value="Compliance" className="bg-slate-950 text-slate-200">Compliance</option>
+            <option value="Seguridad" className="bg-slate-950 text-slate-200">Seguridad</option>
+            <option value="BI & Analítica" className="bg-slate-950 text-slate-200">BI & Analítica</option>
+          </select>
+        </div>
+
+        {/* Toggle Segmentado de 3 vistas: [◉ Galaxia | ▦ Tarjetas | ☰ Tabla] */}
+        <div className="flex items-center p-0.5 rounded-lg bg-slate-900 border border-slate-700/80">
+          <button
+            type="button"
+            onClick={() => cambiarVista('galaxia')}
+            className={`px-2.5 py-1 rounded-md text-xs font-mono transition-all flex items-center gap-1.5 ${
+              vista === 'galaxia'
+                ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-400/40 shadow-[0_0_10px_rgba(0,242,254,0.3)]'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+            title="Vista Galaxia 3D"
+          >
+            <Layers className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden xs:inline">Galaxia</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => cambiarVista('tarjetas')}
+            className={`px-2.5 py-1 rounded-md text-xs font-mono transition-all flex items-center gap-1.5 ${
+              vista === 'tarjetas'
+                ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-400/40 shadow-[0_0_10px_rgba(0,242,254,0.3)]'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+            title="Vista Lista"
+          >
+            <LayoutGrid className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden xs:inline">Tarjetas</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => cambiarVista('tabla')}
+            className={`px-2.5 py-1 rounded-md text-xs font-mono transition-all flex items-center gap-1.5 ${
+              vista === 'tabla'
+                ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-400/40 shadow-[0_0_10px_rgba(0,242,254,0.3)]'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+            title="Vista Tabla"
+          >
+            <Table className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden xs:inline">Tabla</span>
+          </button>
+        </div>
+
+        {/* Botón Centrar: solo visible en Galaxia */}
+        {vista === 'galaxia' && (
+          <button
+            type="button"
+            onClick={() => triggerCentrar()}
+            className="px-2.5 py-1 rounded-lg bg-slate-900/90 border border-cyan-500/30 text-slate-300 hover:text-cyan-300 hover:border-cyan-400 text-xs font-mono transition-all flex items-center gap-1.5 shadow-inner"
+            title="Centrar galaxia (ajustar vista)"
+          >
+            <Crosshair className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden sm:inline">Centrar</span>
+          </button>
+        )}
+      </div>
+    </header>
+  );
+
+  const renderFiltrosMobile = () => (
+    mostrarFiltrosMobile && (
+      <div className="sm:hidden p-3 rounded-xl bg-slate-950 border border-cyan-500/30 flex flex-col gap-2 font-mono text-xs z-20 shrink-0">
+        <div className="flex items-center justify-between">
+          <span className="text-slate-400">Estado:</span>
+          <select
+            className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-200 text-xs"
+            value={filtroSemaforo}
+            onChange={(e) => setFiltroSemaforo(e.target.value)}
+          >
+            <option value="todos">Todos</option>
+            <option value="rojo">🔴 Crítico</option>
+            <option value="amarillo">🟡 En riesgo</option>
+            <option value="verde">🟢 Nominal</option>
+          </select>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-slate-400">Área:</span>
+          <select
+            className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-200 text-xs"
+            value={filtroArea}
+            onChange={(e) => setFiltroArea(e.target.value)}
+          >
+            <option value="todas">Todas</option>
+            <option value="Operaciones">Operaciones</option>
+            <option value="Comercial">Comercial</option>
+            <option value="Compliance">Compliance</option>
+            <option value="Seguridad">Seguridad</option>
+            <option value="BI & Analítica">BI & Analítica</option>
+          </select>
+        </div>
+      </div>
+    )
+  );
+
+  if (vista === 'galaxia') {
+    return (
+      <SceneLayout usuarioActual={usuarioActual!} onCambiarUsuario={onCambiarUsuario || (() => {})}>
+        <div
+          onKeyDown={handleKeyDown}
+          tabIndex={0}
+          className="outline-none w-full h-full flex flex-col flex-1 min-h-0 overflow-hidden"
+        >
+          {renderToolbar()}
+          {renderFiltrosMobile()}
+
+          {/* Vista Principal: Mapa Galáctico 3D */}
+          <div className="flex-1 w-full min-h-0 overflow-hidden flex flex-col">
+            <SemanticGalaxyDirector
+              proyectos={proyectosFiltrados}
+              matchingIds={matchingIds}
+            />
+          </div>
+        </div>
+      </SceneLayout>
+    );
+  }
+
+  if (vista === 'tabla') {
+    return (
+      <PageLayout usuarioActual={usuarioActual!} onCambiarUsuario={onCambiarUsuario || (() => {})}>
+        <div
+          onKeyDown={handleKeyDown}
+          tabIndex={0}
+          className="outline-none w-full space-y-6 pb-16"
+        >
+          {renderToolbar()}
+          {renderFiltrosMobile()}
+
+          <ProyectosTabla
+            proyectos={proyectosFiltrados}
+            onSelectProyecto={(p) => navigate(`/proyectos/${p.id}`)}
+            onLimpiarFiltros={() => {
+              setFiltroSemaforo('todos');
+              setFiltroArea('todas');
+            }}
+          />
+        </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-      className={`outline-none w-full flex flex-col ${
-        !esVistaLista ? 'h-[calc(100vh-5rem)] overflow-hidden' : 'space-y-6'
-      }`}
-    >
-      {/* TOOLBAR COMPACTA DE 56px (Única para Galaxia y Lista) */}
-      <header className="h-14 min-h-[56px] w-full px-3 sm:px-4 rounded-xl bg-slate-950/80 backdrop-blur-md border border-cyan-500/25 flex items-center justify-between gap-2 sm:gap-3 z-30 shrink-0 select-none">
-        {/* Izquierda: Badge de misiones activas */}
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-cyan-950/80 border border-cyan-500/30 text-cyan-300 font-mono text-xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#00f2fe]" />
-            <span className="font-bold">Misiones</span>
-            <span className="text-slate-500">·</span>
-            <span>{proyectosFiltrados.length} activas</span>
-          </div>
-        </div>
+    <PageLayout usuarioActual={usuarioActual!} onCambiarUsuario={onCambiarUsuario || (() => {})}>
+      <div
+        onKeyDown={handleKeyDown}
+        tabIndex={0}
+        className="outline-none w-full space-y-6"
+      >
+        {renderToolbar()}
+        {renderFiltrosMobile()}
 
-        {/* Centro: Buscador unificado con Fuse y Dropdown en Portal */}
-        <div className="flex-1 max-w-xs sm:max-w-md mx-1">
-          <GalaxySearchBar
-            proyectos={proyectos}
-            onSelectProyecto={(p) => navigate(`/proyectos/${p.id}`)}
-            onFilterChange={(_q, ids) => setMatchingIds(ids)}
-            placeholder="Buscar proyecto…"
-          />
-        </div>
-
-        {/* Derecha: Filtros tácticos, Toggle Segmentado y Botón Centrar */}
-        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 font-mono text-xs">
-          {/* Botón Filtros en Mobile */}
-          <button
-            onClick={() => setMostrarFiltrosMobile(!mostrarFiltrosMobile)}
-            className="sm:hidden px-2 py-1 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 text-xs flex items-center gap-1"
-          >
-            <Filter className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Filtros</span>
-          </button>
-
-          {/* Filtro Estado */}
-          <div className="hidden sm:flex items-center bg-slate-900/90 border border-cyan-500/30 rounded-lg px-2 py-1 shadow-inner">
-            <select
-              className="bg-transparent border-0 focus:ring-0 text-slate-200 text-xs pr-2 cursor-pointer outline-none font-mono appearance-none"
-              value={filtroSemaforo}
-              onChange={(e) => setFiltroSemaforo(e.target.value)}
-              aria-label="Filtrar por estado"
-            >
-              <option value="todos" className="bg-slate-950 text-slate-200">Estado ▾</option>
-              <option value="rojo" className="bg-slate-950 text-red-400">🔴 Crítico (Rojo)</option>
-              <option value="amarillo" className="bg-slate-950 text-amber-400">🟡 En riesgo (Ámbar)</option>
-              <option value="verde" className="bg-slate-950 text-emerald-400">🟢 Nominal (Verde)</option>
-            </select>
-          </div>
-
-          {/* Filtro Área */}
-          <div className="hidden sm:flex items-center bg-slate-900/90 border border-cyan-500/30 rounded-lg px-2 py-1 shadow-inner">
-            <select
-              className="bg-transparent border-0 focus:ring-0 text-slate-200 text-xs pr-2 cursor-pointer outline-none font-mono appearance-none"
-              value={filtroArea}
-              onChange={(e) => setFiltroArea(e.target.value)}
-              aria-label="Filtrar por área"
-            >
-              <option value="todas" className="bg-slate-950 text-slate-200">Área ▾</option>
-              <option value="Operaciones" className="bg-slate-950 text-slate-200">Operaciones</option>
-              <option value="Comercial" className="bg-slate-950 text-slate-200">Comercial</option>
-              <option value="Compliance" className="bg-slate-950 text-slate-200">Compliance</option>
-              <option value="Seguridad" className="bg-slate-950 text-slate-200">Seguridad</option>
-              <option value="BI & Analítica" className="bg-slate-950 text-slate-200">BI & Analítica</option>
-            </select>
-          </div>
-
-          {/* Toggle Segmentado: [◉ Galaxia | ☰ Lista] */}
-          <div className="flex items-center p-0.5 rounded-lg bg-slate-900 border border-slate-700/80">
+        {proyectosFiltrados.length === 0 ? (
+          <div className="hud-glass rounded-2xl p-8 text-center space-y-4 border border-cyan-500/30 my-6">
+            <p className="font-mono text-sm text-slate-300">
+              No hay proyectos con estos filtros
+            </p>
             <button
               type="button"
-              onClick={() => setEsVistaLista(false)}
-              className={`px-2.5 py-1 rounded-md text-xs font-mono transition-all flex items-center gap-1.5 ${
-                !esVistaLista
-                  ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-400/40 shadow-[0_0_10px_rgba(0,242,254,0.3)]'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-              title="Vista Galaxia 3D"
+              onClick={() => {
+                setFiltroSemaforo('todos');
+                setFiltroArea('todas');
+              }}
+              className="px-4 py-2 rounded-lg text-xs font-mono bg-cyan-500/20 text-cyan-300 border border-cyan-400/40 hover:bg-cyan-500/30 transition-colors shadow-[0_0_15px_rgba(0,242,254,0.2)]"
             >
-              <Layers className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="hidden xs:inline">Galaxia</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setEsVistaLista(true)}
-              className={`px-2.5 py-1 rounded-md text-xs font-mono transition-all flex items-center gap-1.5 ${
-                esVistaLista
-                  ? 'bg-cyan-500/20 text-cyan-300 font-bold border border-cyan-400/40 shadow-[0_0_10px_rgba(0,242,254,0.3)]'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-              title="Vista Lista"
-            >
-              <LayoutGrid className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="hidden xs:inline">Lista</span>
+              Limpiar filtros
             </button>
           </div>
-
-          {/* Botón Centrar: solo visible en Galaxia */}
-          {!esVistaLista && (
-            <button
-              type="button"
-              onClick={() => triggerCentrar()}
-              className="px-2.5 py-1 rounded-lg bg-slate-900/90 border border-cyan-500/30 text-slate-300 hover:text-cyan-300 hover:border-cyan-400 text-xs font-mono transition-all flex items-center gap-1.5 shadow-inner"
-              title="Centrar galaxia (ajustar vista)"
-            >
-              <Crosshair className="w-3.5 h-3.5 text-cyan-400" />
-              <span className="hidden sm:inline">Centrar</span>
-            </button>
-          )}
-        </div>
-      </header>
-
-      {/* Menú desplegable de filtros en mobile */}
-      {mostrarFiltrosMobile && (
-        <div className="sm:hidden p-3 rounded-xl bg-slate-950 border border-cyan-500/30 flex flex-col gap-2 font-mono text-xs z-20 shrink-0">
-          <div className="flex items-center justify-between">
-            <span className="text-slate-400">Estado:</span>
-            <select
-              className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-200 text-xs"
-              value={filtroSemaforo}
-              onChange={(e) => setFiltroSemaforo(e.target.value)}
-            >
-              <option value="todos">Todos</option>
-              <option value="rojo">🔴 Crítico</option>
-              <option value="amarillo">🟡 En riesgo</option>
-              <option value="verde">🟢 Nominal</option>
-            </select>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-slate-400">Área:</span>
-            <select
-              className="bg-slate-900 border border-slate-700 rounded px-2 py-1 text-slate-200 text-xs"
-              value={filtroArea}
-              onChange={(e) => setFiltroArea(e.target.value)}
-            >
-              <option value="todas">Todas</option>
-              <option value="Operaciones">Operaciones</option>
-              <option value="Comercial">Comercial</option>
-              <option value="Compliance">Compliance</option>
-              <option value="Seguridad">Seguridad</option>
-              <option value="BI & Analítica">BI & Analítica</option>
-            </select>
-          </div>
-        </div>
-      )}
-
-      {/* Vista Principal: Mapa Galáctico 3D o Grid de Lista */}
-      {!esVistaLista ? (
-        <div className="flex-1 w-full h-[calc(100vh-56px-64px)] min-h-[540px] overflow-hidden rounded-2xl">
-          <SemanticGalaxyDirector
-            proyectos={proyectosFiltrados}
-            matchingIds={matchingIds}
-          />
-        </div>
-      ) : (
-        /* Grid de Misiones (Vista Lista) */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+        ) : (
+          /* Grid de Misiones (Vista Tarjetas) */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2 pb-16">
         {proyectosFiltrados.map((p, idx) => {
           const isFocused = idx === focoIndex;
 
@@ -289,6 +404,7 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
           return (
             <motion.div
               key={p.id}
+              tabIndex={0}
               layout
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -477,8 +593,9 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({ usuarioActual }) => {
             </motion.div>
           );
         })}
-        </div>
-      )}
-    </div>
+          </div>
+        )}
+      </div>
+    </PageLayout>
   );
 };

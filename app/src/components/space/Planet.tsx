@@ -14,6 +14,7 @@ interface PlanetProps {
   showOverlay?: boolean;
   projectIndex?: number;
   ocultarChipPorColision?: boolean;
+  onOpenStage?: (etapa: any) => void;
 }
 
 export const Planet: React.FC<PlanetProps> = ({
@@ -23,14 +24,22 @@ export const Planet: React.FC<PlanetProps> = ({
   showOverlay = true,
   projectIndex = 0,
   ocultarChipPorColision = false,
+  onOpenStage,
 }) => {
   const meshRef = useRef<THREE.Group>(null);
   const [hovered, setHovered] = useState(false);
-  const { isSearchDropdownOpen } = useNavigationStore();
+  const [showStatusMobile, setShowStatusMobile] = useState(false);
+  const { isSearchDropdownOpen, nivel } = useNavigationStore();
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   const isCritico = proyecto.semaforo === 'rojo';
   const isAlerta = proyecto.semaforo === 'amarillo';
   const isCerrado = proyecto.cerrado;
+
+  // Etapa actual o última si está cerrado
+  const etapaActual =
+    proyecto.etapas.find((e: any) => e.nombre === proyecto.etapa_actual_nombre) ||
+    (isCerrado ? proyecto.etapas[proyecto.etapas.length - 1] : proyecto.etapas[0]);
 
   const baseColor = isCritico
     ? '#ff3366'
@@ -61,20 +70,32 @@ export const Planet: React.FC<PlanetProps> = ({
   // Si colisiona, se oculta salvo que tenga hover
   const chipVisible = showOverlay && (!ocultarChipPorColision || hovered);
 
+  const handleClickPlaneta = (e: any) => {
+    e.stopPropagation();
+    if (nivel === 'planeta' && onOpenStage && etapaActual) {
+      onOpenStage(etapaActual);
+    } else {
+      onSelect(proyecto);
+    }
+  };
+
   return (
     <group position={position}>
       {/* Contenedor interactivo del planeta */}
       <group
         ref={meshRef}
-        onClick={(e) => {
-          e.stopPropagation();
-          onSelect(proyecto);
-        }}
+        onClick={handleClickPlaneta}
         onPointerOver={(e) => {
           e.stopPropagation();
           setHovered(true);
+          if (nivel === 'planeta') {
+            document.body.style.cursor = 'pointer';
+          }
         }}
-        onPointerOut={() => setHovered(false)}
+        onPointerOut={() => {
+          setHovered(false);
+          document.body.style.cursor = 'auto';
+        }}
       >
         <EarthPlanetMesh
           area={proyecto.area_solicitante}
@@ -86,6 +107,20 @@ export const Planet: React.FC<PlanetProps> = ({
 
       <pointLight color={baseColor} intensity={1.2} distance={10} />
 
+      {/* Tooltip en nivel planeta al hacer hover sobre el planeta */}
+      {nivel === 'planeta' && hovered && etapaActual && (
+        <Html
+          position={[0, planetRadius + 1.2, 0]}
+          center
+          zIndexRange={Z_LAYERS.LABELS_3D}
+          style={{ pointerEvents: 'none', userSelect: 'none' }}
+        >
+          <div className="px-3 py-1.5 rounded-xl bg-[#030d22]/95 border border-cyan-400/70 text-cyan-200 text-xs font-mono font-bold shadow-[0_0_20px_rgba(0,242,254,0.4)] whitespace-nowrap">
+            Ver etapa actual: {etapaActual.orden} · {etapaActual.nombre}
+          </div>
+        </Html>
+      )}
+
       {/* REQUERIMIENTO: Chip anclado arriba sin descripción (solo anillo %, código y estado). pointer-events: none cuando dropdown está abierto */}
       {chipVisible && (
         <Html
@@ -93,7 +128,7 @@ export const Planet: React.FC<PlanetProps> = ({
           center
           zIndexRange={Z_LAYERS.LABELS_3D}
           style={{
-            pointerEvents: isSearchDropdownOpen ? 'none' : hovered ? 'auto' : 'none',
+            pointerEvents: isSearchDropdownOpen ? 'none' : 'auto',
             userSelect: 'none',
           }}
         >
@@ -105,11 +140,14 @@ export const Planet: React.FC<PlanetProps> = ({
               onSelect(proyecto);
             }}
             onMouseEnter={() => setHovered(true)}
-            onMouseLeave={() => setHovered(false)}
+            onMouseLeave={() => {
+              setHovered(false);
+              setShowStatusMobile(false);
+            }}
             className="cursor-pointer transition-transform duration-150 hover:scale-105"
             style={{ pointerEvents: isSearchDropdownOpen ? 'none' : 'auto' }}
           >
-            <div className="relative px-3 py-1.5 rounded-xl hud-glass border border-cyan-500/40 backdrop-blur-md shadow-xl min-w-[155px]">
+            <div className={`relative px-2.5 py-1.5 rounded-xl hud-glass border border-cyan-500/40 backdrop-blur-md shadow-xl ${isMobile && !showStatusMobile ? 'min-w-[110px]' : 'min-w-[155px]'}`}>
               <div className="flex items-center gap-2">
                 {/* Anillo de avance */}
                 <div className="relative w-7 h-7 flex items-center justify-center shrink-0">
@@ -140,20 +178,22 @@ export const Planet: React.FC<PlanetProps> = ({
                   </span>
                 </div>
 
-                {/* Código / Nombre corto + Estado */}
+                {/* Código / Nombre corto + Estado (en mobile oculto salvo tap) */}
                 <div className="flex-1 min-w-0">
                   <div className="font-display font-black text-[11px] text-white truncate uppercase tracking-wide">
                     {proyecto.callsign || proyecto.nombre.split('(')[0].trim()}
                   </div>
-                  <div className="flex items-center gap-1 mt-0.5">
-                    <HealthIcon className="w-2.5 h-2.5 shrink-0" style={{ color: baseColor }} />
-                    <span
-                      className="font-mono text-[9px] font-bold tracking-wider uppercase truncate"
-                      style={{ color: baseColor }}
-                    >
-                      {healthText}
-                    </span>
-                  </div>
+                  {(!isMobile || showStatusMobile) && (
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <HealthIcon className="w-2.5 h-2.5 shrink-0" style={{ color: baseColor }} />
+                      <span
+                        className="font-mono text-[9px] font-bold tracking-wider uppercase truncate"
+                        style={{ color: baseColor }}
+                      >
+                        {healthText}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

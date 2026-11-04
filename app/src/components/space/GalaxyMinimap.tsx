@@ -55,7 +55,7 @@ export const GalaxyMinimap: React.FC<GalaxyMinimapProps> = ({
     <div
       onClick={handleMinimapPointer}
       onPointerDown={handleMinimapPointer}
-      className="absolute bottom-11 right-4 w-40 h-[100px] rounded-xl hud-glass border border-cyan-500/30 bg-[#020510]/95 backdrop-blur-xl p-1 shadow-2xl cursor-crosshair z-30 pointer-events-auto overflow-hidden animate-in fade-in select-none"
+      className="hidden md:block absolute bottom-[56px] left-4 w-40 h-[100px] rounded-xl hud-glass border border-cyan-500/30 bg-[#020510]/95 backdrop-blur-xl p-1 shadow-2xl cursor-crosshair z-30 pointer-events-auto overflow-hidden animate-in fade-in select-none"
       title="Minimapa Galáctico: haz clic o arrastra para moverte"
     >
       <div className="relative w-full h-full">

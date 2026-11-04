@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRegistrarVista } from '../hooks/useRegistrarVista';
 import { obtenerProyectosSeed } from '../lib/proyectosData';
+import { isEditableElement } from '../lib/keyboardUtils';
+import { GalaxySearchBar } from '../components/space/GalaxySearchBar';
 import type { UsuarioPrueba } from '../components/DevUserSelector';
 import {
   ArrowLeft,
@@ -24,15 +26,21 @@ interface DetallePageProps {
 
 export const DetallePage: React.FC<DetallePageProps> = ({ usuarioActual }) => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   useRegistrarVista('detalle', id);
 
   const proyectos = obtenerProyectosSeed(usuarioActual);
-  const proyecto = proyectos.find((p) => p.id === id);
+  const proyecto = proyectos.find((p) => p.id === id) || (id === 'proy-1' ? proyectos[0] : undefined);
 
   // Nodo seleccionado en la ruta holográfica
   const [nodoSeleccionadoIndex, setNodoSeleccionadoIndex] = useState<number>(0);
   const [mostrarCalculo, setMostrarCalculo] = useState<boolean>(false);
   const [tabBitacora, setTabBitacora] = useState<'mapa' | 'bitacora'>('mapa');
+
+  // Scroll inicial arriba al montar o cambiar de proyecto
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [id]);
 
   // Inicializar en el nodo actual del proyecto
   useEffect(() => {
@@ -44,6 +52,7 @@ export const DetallePage: React.FC<DetallePageProps> = ({ usuarioActual }) => {
 
   // Soporte de teclado (flechas izquierda/derecha entre nodos)
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (isEditableElement(e.target)) return;
     if (!proyecto) return;
     if (e.key === 'ArrowRight') {
       e.preventDefault();
@@ -79,7 +88,7 @@ export const DetallePage: React.FC<DetallePageProps> = ({ usuarioActual }) => {
 
   return (
     <div
-      className="space-y-6 outline-none"
+      className="space-y-6 outline-none pb-[96px]"
       tabIndex={0}
       onKeyDown={handleKeyDown}
       role="region"
@@ -89,31 +98,38 @@ export const DetallePage: React.FC<DetallePageProps> = ({ usuarioActual }) => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <Link
           to="/"
-          className="inline-flex items-center gap-2 text-xs font-mono text-slate-400 hover:text-cyan-300 transition-colors uppercase tracking-wider"
+          className="inline-flex items-center gap-2 text-xs font-mono text-slate-400 hover:text-cyan-300 transition-colors uppercase tracking-wider shrink-0"
         >
           <ArrowLeft className="w-4 h-4" />
           <span>Volver a Selección de Misiones</span>
         </Link>
 
+        {/* Buscador de proyectos en detalle */}
+        <div className="flex-1 max-w-xs sm:max-w-md mx-2">
+          <GalaxySearchBar
+            proyectos={proyectos}
+            onSelectProyecto={(p) => navigate(`/proyectos/${p.id}`)}
+            placeholder="Buscar proyecto…"
+          />
+        </div>
+
         {/* Tabs: Mapa Táctico vs Bitácora de Misión */}
         <div className="flex items-center bg-slate-900/90 border border-cyan-500/30 rounded-xl p-1 font-mono text-xs">
           <button
             onClick={() => setTabBitacora('mapa')}
-            className={`px-4 py-1.5 rounded-lg font-bold tracking-wider uppercase transition-all ${
-              tabBitacora === 'mapa'
+            className={`px-4 py-1.5 rounded-lg font-bold tracking-wider uppercase transition-all ${tabBitacora === 'mapa'
                 ? 'bg-cyan-500 text-slate-950 shadow-[0_0_15px_rgba(0,242,254,0.3)]'
                 : 'text-slate-400 hover:text-white'
-            }`}
+              }`}
           >
             Ruta Holográfica 3D
           </button>
           <button
             onClick={() => setTabBitacora('bitacora')}
-            className={`px-4 py-1.5 rounded-lg font-bold tracking-wider uppercase transition-all flex items-center gap-1.5 ${
-              tabBitacora === 'bitacora'
+            className={`px-4 py-1.5 rounded-lg font-bold tracking-wider uppercase transition-all flex items-center gap-1.5 ${tabBitacora === 'bitacora'
                 ? 'bg-cyan-500 text-slate-950 shadow-[0_0_15px_rgba(0,242,254,0.3)]'
                 : 'text-slate-400 hover:text-white'
-            }`}
+              }`}
           >
             <History className="w-3.5 h-3.5" />
             Bitácora de Eventos
@@ -148,13 +164,12 @@ export const DetallePage: React.FC<DetallePageProps> = ({ usuarioActual }) => {
           <div className="flex flex-wrap items-center gap-3 font-mono">
             {/* Semáforo HUD */}
             <div
-              className={`px-4 py-2.5 rounded-xl border flex items-center gap-2 font-bold text-xs uppercase tracking-wider ${
-                proyecto.semaforo === 'rojo'
+              className={`px-4 py-2.5 rounded-xl border flex items-center gap-2 font-bold text-xs uppercase tracking-wider ${proyecto.semaforo === 'rojo'
                   ? 'bg-rose-500/10 border-rose-500/40 text-rose-400 shadow-[0_0_20px_rgba(255,51,102,0.25)]'
                   : proyecto.semaforo === 'amarillo'
-                  ? 'bg-amber-500/10 border-amber-500/40 text-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.2)]'
-                  : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300 shadow-[0_0_20px_rgba(16,227,150,0.2)]'
-              }`}
+                    ? 'bg-amber-500/10 border-amber-500/40 text-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.2)]'
+                    : 'bg-emerald-500/10 border-emerald-500/40 text-emerald-300 shadow-[0_0_20px_rgba(16,227,150,0.2)]'
+                }`}
             >
               <span className="w-2.5 h-2.5 rounded-full bg-current animate-pulse" />
               <span>SALUD: {proyecto.semaforo.toUpperCase()}</span>
@@ -176,9 +191,8 @@ export const DetallePage: React.FC<DetallePageProps> = ({ usuarioActual }) => {
             <div className="bg-slate-900/90 border border-slate-700/80 px-4 py-2 rounded-xl text-center">
               <div className="text-[10px] text-slate-400 uppercase">Desfase Hábiles</div>
               <div
-                className={`text-sm font-bold ${
-                  proyecto.atraso_dh > 0 ? 'text-rose-400' : 'text-emerald-400'
-                }`}
+                className={`text-sm font-bold ${proyecto.atraso_dh > 0 ? 'text-rose-400' : 'text-emerald-400'
+                  }`}
               >
                 {proyecto.atraso_dh > 0 ? `+${proyecto.atraso_dh} dh` : '0 dh'}
               </div>
@@ -300,19 +314,17 @@ export const DetallePage: React.FC<DetallePageProps> = ({ usuarioActual }) => {
 
                     {/* Nodo Holográfico */}
                     <div
-                      className={`relative w-11 h-11 rounded-full flex items-center justify-center font-mono font-bold text-sm transition-all duration-300 ${
-                        isSelected
+                      className={`relative w-11 h-11 rounded-full flex items-center justify-center font-mono font-bold text-sm transition-all duration-300 ${isSelected
                           ? 'ring-4 ring-cyan-400 ring-offset-4 ring-offset-[#070b18] scale-110'
                           : ''
-                      } ${
-                        isCompleted
+                        } ${isCompleted
                           ? 'bg-emerald-500 text-slate-950 shadow-[0_0_20px_rgba(16,227,150,0.6)]'
                           : isInProgress
-                          ? 'bg-cyan-500 text-slate-950 shadow-[0_0_25px_rgba(0,242,254,0.8)] animate-pulse'
-                          : isBlocked
-                          ? 'bg-rose-500 text-white shadow-[0_0_30px_rgba(255,51,102,0.9)] animate-pulse'
-                          : 'bg-slate-900 border border-slate-700/80 text-slate-500 hover:border-cyan-500/50'
-                      }`}
+                            ? 'bg-cyan-500 text-slate-950 shadow-[0_0_25px_rgba(0,242,254,0.8)] animate-pulse'
+                            : isBlocked
+                              ? 'bg-rose-500 text-white shadow-[0_0_30px_rgba(255,51,102,0.9)] animate-pulse'
+                              : 'bg-slate-900 border border-slate-700/80 text-slate-500 hover:border-cyan-500/50'
+                        }`}
                     >
                       {/* Marcador "Estás aquí" / Pulso de energía */}
                       {(isInProgress || isBlocked) && (
@@ -341,23 +353,21 @@ export const DetallePage: React.FC<DetallePageProps> = ({ usuarioActual }) => {
                     {/* Info del Nodo */}
                     <div className="text-left md:text-center">
                       <p
-                        className={`text-xs font-display font-bold uppercase tracking-wider transition-colors ${
-                          isSelected ? 'text-cyan-300' : 'text-slate-300 group-hover:text-cyan-400'
-                        }`}
+                        className={`text-xs font-display font-bold uppercase tracking-wider transition-colors ${isSelected ? 'text-cyan-300' : 'text-slate-300 group-hover:text-cyan-400'
+                          }`}
                       >
                         {etapa.nombre}
                       </p>
                       <div className="flex md:justify-center items-center gap-1.5 mt-0.5">
                         <span
-                          className={`text-[10px] font-mono uppercase ${
-                            isCompleted
+                          className={`text-[10px] font-mono uppercase ${isCompleted
                               ? 'text-emerald-400'
                               : isInProgress
-                              ? 'text-cyan-400 font-semibold'
-                              : isBlocked
-                              ? 'text-rose-400 font-semibold'
-                              : 'text-slate-500'
-                          }`}
+                                ? 'text-cyan-400 font-semibold'
+                                : isBlocked
+                                  ? 'text-rose-400 font-semibold'
+                                  : 'text-slate-500'
+                            }`}
                         >
                           {etapa.estado}
                         </span>
@@ -464,13 +474,12 @@ export const DetallePage: React.FC<DetallePageProps> = ({ usuarioActual }) => {
                         <div className="text-[10px] text-slate-400">Operador: {t.responsable_nombre}</div>
                       </div>
                       <span
-                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                          t.estado === 'Completada'
+                        className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${t.estado === 'Completada'
                             ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
                             : t.estado === 'Bloqueada'
-                            ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                            : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                        }`}
+                              ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                              : 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
+                          }`}
                       >
                         {t.estado}
                       </span>

@@ -29,6 +29,7 @@ interface GalaxyCanvas3DProps {
   onCameraUpdate?: (cam: THREE.Camera) => void;
   targetFocusPos?: [number, number, number] | null;
   centrarTrigger?: number;
+  zoomLevel?: number;
 }
 
 const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
@@ -48,6 +49,7 @@ const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
   onCameraUpdate,
   targetFocusPos = null,
   centrarTrigger = 0,
+  zoomLevel = 1,
 }) => {
   const proyectosConPosicion = useMemo(() => {
     const sectorCountMap = new Map<string, number>();
@@ -126,6 +128,7 @@ const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
           nivel={nivel}
           targetPosition={cameraTargetPos}
           reducedMotion={reducedMotion}
+          zoomLevel={zoomLevel}
         />
       )}
 
@@ -138,7 +141,7 @@ const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
             <group key={system.id}>
               <SystemStar
                 system={system}
-                onSelect={() => {}}
+                onSelect={() => { }}
                 active={selectedProyecto?.area_solicitante === system.id}
                 visible={true}
               />
@@ -156,7 +159,7 @@ const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
         }
 
         const isFilteredOutByHealth = healthFilter ? proyecto.semaforo !== healthFilter : false;
-        const isFilteredOutBySearch = matchingIds ? !matchingIds.has(proyecto.id) : false;
+        const isFilteredOutBySearch = matchingIds && matchingIds.size > 0 ? !matchingIds.has(proyecto.id) : false;
         const isDimmed = isFilteredOutByHealth || isFilteredOutBySearch;
 
         return (
@@ -172,6 +175,7 @@ const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
                 showOverlay={nivel === 'galaxia' && !isDimmed}
                 projectIndex={projectIndex}
                 ocultarChipPorColision={ocultarChipIds.has(proyecto.id)}
+                onOpenStage={onSelectEtapa}
               />
             </group>
 
@@ -185,15 +189,16 @@ const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
                       (e: any) => e.nombre === proyecto.etapa_actual_nombre
                     ) !== -1
                       ? proyecto.etapas.findIndex(
-                          (e: any) => e.nombre === proyecto.etapa_actual_nombre
-                        )
-                      : 2
+                        (e: any) => e.nombre === proyecto.etapa_actual_nombre
+                      )
+                      : Math.max(0, proyecto.etapas.length - 1)
                   }
                   onSelectEtapa={onSelectEtapa}
                   selectedEtapaId={selectedEtapa?.id || null}
                   onHoverStage={onHoverStage}
                   worldPos={position}
-                  radius={5.2}
+                  radius={4.8}
+                  planetRadius={1.42}
                   nivel={nivel}
                 />
               </group>

@@ -17,6 +17,7 @@ Reglas de trabajo (obligatorias, ahorran tokens):
 6. No agregues dependencias fuera de la sección 3 sin registrarlo en `DECISIONES.md` con motivo.
 7. Nunca escribas secretos en el repo. Usa `.env.example` con nombres de variables y valores vacíos.
 8. Notion es **solo lectura**. La app **no edita** proyectos, etapas, bloqueos ni tareas.
+9. Antes de reportar cualquier fix, corre npm run test:e2e. Si algo falla, no entregues.
 
 ---
 
