@@ -26,10 +26,10 @@ export const EncuestaPage: React.FC<EncuestaPageProps> = ({ usuarioActual }) => 
 
   if (enviado) {
     return (
-      <div className="bg-white border border-slate-200 rounded-2xl p-8 max-w-lg mx-auto text-center shadow-sm my-8">
-        <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto mb-3" />
-        <h2 className="text-xl font-bold text-slate-900">¡Gracias por tu respuesta!</h2>
-        <p className="text-sm text-slate-500 mt-2">
+      <div className="bg-card border border-border rounded-2xl p-8 max-w-lg mx-auto text-center shadow-sm my-8">
+        <CheckCircle2 className="w-12 h-12 text-health-green mx-auto mb-3" />
+        <h2 className="text-xl font-bold text-foreground">¡Gracias por tu respuesta!</h2>
+        <p className="text-sm text-muted-foreground mt-2">
           Tu retroalimentación ha sido guardada en las métricas de impacto del piloto (H1 y H2).
         </p>
       </div>
@@ -39,27 +39,27 @@ export const EncuestaPage: React.FC<EncuestaPageProps> = ({ usuarioActual }) => 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Encuesta de Percepción del Piloto</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Encuesta de Percepción del Piloto</h1>
+        <p className="text-sm text-muted-foreground">
           Medición de autonomía en la consulta y confiabilidad de las fechas (Línea Base / Semanal).
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+      <form onSubmit={handleSubmit} className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-6">
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+          <label className="block text-xs font-bold uppercase tracking-wider text-foreground mb-2">
             1. ¿Pudiste encontrar el avance de los proyectos sin preguntar a nadie?
           </label>
           <div className="flex gap-3">
             {['Sí', 'Parcialmente', 'No'].map((opc) => (
-              <label key={opc} className="flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer">
+              <label key={opc} className="flex items-center gap-1.5 text-xs text-foreground cursor-pointer">
                 <input
                   type="radio"
                   name="encontro"
                   value={opc}
                   checked={encontro === opc}
                   onChange={(e) => setEncontro(e.target.value)}
-                  className="text-blue-600 focus:ring-blue-500"
+                  className="text-terracotta accent-terracotta focus:ring-terracotta"
                 />
                 {opc}
               </label>
@@ -68,13 +68,13 @@ export const EncuestaPage: React.FC<EncuestaPageProps> = ({ usuarioActual }) => 
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+          <label className="block text-xs font-bold uppercase tracking-wider text-foreground mb-2">
             2. ¿Cuánto tiempo te tomó enterarte del estado de un proyecto?
           </label>
           <select
             value={tiempo}
             onChange={(e) => setTiempo(e.target.value)}
-            className="w-full text-xs border border-slate-200 rounded-lg p-2.5 bg-slate-50 text-slate-800"
+            className="w-full text-xs border border-border rounded-lg p-2.5 bg-surface text-foreground"
           >
             <option value="<1 min">&lt; 1 minuto</option>
             <option value="1-5 min">Entre 1 y 5 minutos</option>
@@ -83,7 +83,7 @@ export const EncuestaPage: React.FC<EncuestaPageProps> = ({ usuarioActual }) => 
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+          <label className="block text-xs font-bold uppercase tracking-wider text-foreground mb-2">
             3. Nivel de confianza en las fechas estimadas (1: Muy baja, 5: Muy alta): {confianza} / 5
           </label>
           <input
@@ -92,9 +92,9 @@ export const EncuestaPage: React.FC<EncuestaPageProps> = ({ usuarioActual }) => 
             max="5"
             value={confianza}
             onChange={(e) => setConfianza(parseInt(e.target.value, 10))}
-            className="w-full accent-blue-600"
+            className="w-full accent-terracotta"
           />
-          <div className="flex justify-between text-[10px] text-slate-400">
+          <div className="flex justify-between text-[10px] text-muted-foreground">
             <span>1 - No son confiables</span>
             <span>3 - Medianamente confiables</span>
             <span>5 - Muy confiables</span>
@@ -102,7 +102,7 @@ export const EncuestaPage: React.FC<EncuestaPageProps> = ({ usuarioActual }) => 
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+          <label className="block text-xs font-bold uppercase tracking-wider text-foreground mb-2">
             4. ¿Cuántas veces tuviste que preguntar por Slack o correo esta semana para saber cómo iba un proyecto?
           </label>
           <input
@@ -110,18 +110,18 @@ export const EncuestaPage: React.FC<EncuestaPageProps> = ({ usuarioActual }) => 
             min="0"
             value={preguntas}
             onChange={(e) => setPreguntas(parseInt(e.target.value, 10))}
-            className="w-full text-xs border border-slate-200 rounded-lg p-2.5 bg-slate-50 text-slate-800"
+            className="w-full text-xs border border-border rounded-lg p-2.5 bg-surface text-foreground"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+          <label className="block text-xs font-bold uppercase tracking-wider text-foreground mb-2">
             5. ¿Cómo te enteraste de los últimos cambios o atrasos?
           </label>
           <select
             value={comoSeEntero}
             onChange={(e) => setComoSeEntero(e.target.value)}
-            className="w-full text-xs border border-slate-200 rounded-lg p-2.5 bg-slate-50 text-slate-800"
+            className="w-full text-xs border border-border rounded-lg p-2.5 bg-surface text-foreground"
           >
             <option value="Aviso del responsable">Aviso del responsable en Slack</option>
             <option value="Revisando la app">Revisando directamente la app</option>
@@ -130,13 +130,13 @@ export const EncuestaPage: React.FC<EncuestaPageProps> = ({ usuarioActual }) => 
         </div>
 
         <div>
-          <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+          <label className="block text-xs font-bold uppercase tracking-wider text-foreground mb-2">
             6. ¿Qué vista o herramienta utilizas más frecuentemente?
           </label>
           <select
             value={vistaMasUsada}
             onChange={(e) => setVistaMasUsada(e.target.value)}
-            className="w-full text-xs border border-slate-200 rounded-lg p-2.5 bg-slate-50 text-slate-800"
+            className="w-full text-xs border border-border rounded-lg p-2.5 bg-surface text-foreground"
           >
             <option value="Resumen">Vista Resumen</option>
             <option value="Detalle">Detalle del Proyecto</option>
@@ -146,7 +146,7 @@ export const EncuestaPage: React.FC<EncuestaPageProps> = ({ usuarioActual }) => 
 
         {usuarioActual.rol === 'Ejecutor' && (
           <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
+            <label className="block text-xs font-bold uppercase tracking-wider text-foreground mb-2">
               7. (Solo Ejecutor) Minutos semanales dedicados a actualizar Notion
             </label>
             <input
@@ -154,14 +154,14 @@ export const EncuestaPage: React.FC<EncuestaPageProps> = ({ usuarioActual }) => 
               min="0"
               value={minutosNotion}
               onChange={(e) => setMinutosNotion(parseInt(e.target.value, 10))}
-              className="w-full text-xs border border-slate-200 rounded-lg p-2.5 bg-slate-50 text-slate-800"
+              className="w-full text-xs border border-border rounded-lg p-2.5 bg-surface text-foreground"
             />
           </div>
         )}
 
         <button
           type="submit"
-          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-blue-600 text-white font-semibold text-xs hover:bg-blue-700 shadow-sm"
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-terracotta text-white font-semibold text-xs hover:opacity-90 shadow-cta"
         >
           <Send className="w-4 h-4" />
           Enviar Respuestas

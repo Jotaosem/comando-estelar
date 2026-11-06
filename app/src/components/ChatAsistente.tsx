@@ -1,120 +1,118 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Sparkles,
-  X,
-  Send,
-  ThumbsUp,
-  ThumbsDown,
-  Terminal,
-} from 'lucide-react';
 import type { UsuarioPrueba } from './DevUserSelector';
+import { Sparkles, X, Send, ThumbsUp, ThumbsDown, MessageSquare } from 'lucide-react';
 import { useNavigationStore } from './space/navigationStore';
-import { obtenerProyectosSeed } from '../lib/proyectosData';
 
-interface MensajeChat {
+interface Mensaje {
   id: string;
   autor: 'user' | 'assistant';
   texto: string;
   timestamp: string;
-  valoracion?: number;
+  valoracion?: number; // 1 o -1
 }
 
 interface ChatAsistenteProps {
   usuarioActual: UsuarioPrueba;
-  proyectoId?: string;
-  proyectoNombre?: string;
+  proyectoIdInicial?: string;
 }
 
 export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
   usuarioActual,
-  proyectoId: propProyectoId,
-  proyectoNombre: propProyectoNombre,
+  proyectoIdInicial,
 }) => {
-  const { chatAbierto, chatProyectoId, chatPreguntaInicial, setChatAbierto, cerrarChat } = useNavigationStore();
-  const [abiertoLocal, setAbiertoLocal] = useState<boolean>(false);
-  const [input, setInput] = useState<string>('');
+  const {
+    chatAbierto: abierto,
+    abrirChatConProyecto,
+    cerrarChat,
+    chatProyectoId,
+  } = useNavigationStore();
 
-  const abierto = chatAbierto || abiertoLocal;
-  const activeProyectoId = chatProyectoId || propProyectoId;
-
-  const proyectos = obtenerProyectosSeed(usuarioActual);
-  const activeProyecto = proyectos.find((p) => p.id === activeProyectoId);
-  const activeProyectoNombre = activeProyecto ? activeProyecto.nombre : propProyectoNombre;
-
-  const [mensajes, setMensajes] = useState<MensajeChat[]>([
+  const [input, setInput] = useState('');
+  const [cargando, setCargando] = useState(false);
+  const [mensajes, setMensajes] = useState<Mensaje[]>([
     {
       id: 'm-1',
       autor: 'assistant',
-      texto: `[COPILOTO TÁCTICO IA ONLINE]\nOperador ${usuarioActual.nombre} autenticado (${usuarioActual.rol}). Sistema listo para consultas sobre misiones, bloqueos en nodos y proyecciones auditables.`,
-      timestamp: '00:01',
+      texto: `Hola ${usuarioActual.nombre.split(' ')[0]}. Soy el asistente de seguimiento de proyectos. Pregúntame sobre el estado de un proyecto, qué bloqueos tiene o cuándo se proyecta su término.\n\nFuente: Notion · actualizado 29/10 09:15`,
+      timestamp: '09:15',
     },
   ]);
-  const [cargando, setCargando] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (chatProyectoId && abierto) {
+      setMensajes((prev) => [
+        ...prev,
+        {
+          id: `m-ctx-${Date.now()}`,
+          autor: 'assistant',
+          texto: `Contexto sincronizado con la misión seleccionada (${chatProyectoId}). ¿Deseas consultar sobre su fecha estimada, el bloqueo activo o el desglose de días hábiles?\n\nFuente: Notion · actualizado hoy`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        },
+      ]);
+    }
+  }, [chatProyectoId, abierto]);
+
+  const handleAbrir = () => {
+    if (proyectoIdInicial) {
+      abrirChatConProyecto(proyectoIdInicial);
+    } else {
+      abrirChatConProyecto('');
+    }
+  };
 
   const handleCerrar = () => {
-    setAbiertoLocal(false);
     cerrarChat();
   };
 
-  const handleAbrir = () => {
-    setAbiertoLocal(true);
-    setChatAbierto(true);
-  };
+  const enviarPregunta = async () => {
+    if (!input.trim() || cargando) return;
 
-  const enviarPregunta = (textoPregunta?: string) => {
-    const q = textoPregunta || input;
-    if (!q.trim() || cargando) return;
-
-    const nuevoUserMsg: MensajeChat = {
-      id: `u-${Date.now()}`,
-      autor: 'user',
-      texto: q,
-      timestamp: 'NOW',
-    };
-
-    setMensajes((prev) => [...prev, nuevoUserMsg]);
+    const textoUsuario = input.trim();
     setInput('');
+    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    setMensajes((prev) => [
+      ...prev,
+      {
+        id: `m-${Date.now()}`,
+        autor: 'user',
+        texto: textoUsuario,
+        timestamp: now,
+      },
+    ]);
+
     setCargando(true);
 
     setTimeout(() => {
-      let resp = '';
-      const qLower = q.toLowerCase();
+      let respuestaMock = '';
+      const pLower = textoUsuario.toLowerCase();
 
-      if (
-        usuarioActual.rol === 'Solicitante' &&
-        usuarioActual.area === 'Comercial' &&
-        (qLower.includes('orion') || qLower.includes('proyecto a') || activeProyectoNombre?.includes('Proyecto A'))
-      ) {
-        resp = `[PROTOCOLO DE ACCESO RESTRINGIDO]\nNo tienes credenciales de visualización para consultar la misión Portal Proveedores (restringido a Operaciones).\nResponsable de enlace: Jose Miguel (jose.miguel@empresa.cl).\n\nFuente: Notion vía sync · actualizado 21/10 09:00`;
-      } else if (qLower.includes('por qué está atrasado') || qLower.includes('atrasado') || qLower.includes('atraso')) {
-        resp = `[ANÁLISIS DE ATRASO AUDITABLE]\n• Misión: ${activeProyectoNombre || 'Portal Proveedores (OP-ORION-01)'}\n• Causa raíz: Bloqueo de QA abierto hace 6 días hábiles (supera el umbral crítico de 5 dh).\n• Desfase: +7 días hábiles respecto a fecha comprometida.\n\nFuente: Notion vía sync · actualizado 21/10 09:00`;
-      } else if (qLower.includes('historial de bloqueos') || qLower.includes('bloqueo')) {
-        resp = `[HISTORIAL DE BLOQUEOS]\n• Misión: ${activeProyectoNombre || 'Portal Proveedores'}\n• Bloqueo 1 (Activo): Pendiente firma de matriz UAT de regresión · Área: QA Lead · Abierto hace 6 dh.\n• No registra bloqueos cerrados anteriores en esta fase.\n\nFuente: Notion vía sync · actualizado 21/10 09:00`;
-      } else if (qLower.includes('responsable') || qLower.includes('quién es')) {
-        resp = `[RESPONSABILIDAD Y ENLACE]\n• Misión: ${activeProyectoNombre || 'Portal Proveedores'}\n• Responsable de comunicar: ${activeProyecto?.responsable_comunicar_nombre || 'Jose Miguel'}\n• Solicitante: ${activeProyecto?.solicitante_nombre || 'Valeria Soto'} (${activeProyecto?.area_solicitante || 'Operaciones'})\n\nFuente: Notion vía sync · actualizado 21/10 09:00`;
+      if (pLower.includes('bloqueo') || pLower.includes('bloquea')) {
+        respuestaMock =
+          'El proyecto presenta un bloqueo activo por "Aprobación QA" abierto hace 6 días hábiles por el área de Calidad. La penalización automática aplicada en la proyección es de +5 días hábiles.\n\nFuente: Notion · actualizado 29/10 09:15';
+      } else if (pLower.includes('cuándo') || pLower.includes('fecha') || pLower.includes('termina')) {
+        respuestaMock =
+          'La fecha proyectada auditada es el 12/11/2026. Se calcula desde hoy (29/10) + 3 días hábiles restantes de QA + 8 días de etapas pendientes + 5 días por 1 bloqueo = 16 días hábiles en total.\n\nFuente: Notion · actualizado 29/10 09:15';
+      } else if (pLower.includes('responsable')) {
+        respuestaMock =
+          'El responsable de comunicar el estado es José Miguel (lider.tecnico@empresa.com). Para destrabar el bloqueo actual, el área a contactar es Calidad y Testing.\n\nFuente: Notion · actualizado 29/10 09:15';
       } else {
-        resp = `[ESTADO GENERAL DE LA MISIÓN]\n• Misión en foco: ${activeProyectoNombre || 'Portal Proveedores'}\n• Avance: ${activeProyecto?.avance_pct || 43}% completado · Nodo activo: ${activeProyecto?.etapa_actual_nombre || 'QA'}\n• Semáforo: ${activeProyecto?.semaforo?.toUpperCase() || 'ROJO'}\n\nFuente: Notion vía sync · actualizado 21/10 09:00`;
+        respuestaMock =
+          'El proyecto se encuentra en la etapa 03 (Pruebas de Calidad) con un 60% de avance auditado. Semáforo actual: Crítico por bloqueo de QA superior a 5 días hábiles.\n\nFuente: Notion · actualizado 29/10 09:15';
       }
 
       setMensajes((prev) => [
         ...prev,
         {
-          id: `a-${Date.now()}`,
+          id: `m-bot-${Date.now()}`,
           autor: 'assistant',
-          texto: resp,
-          timestamp: 'NOW',
+          texto: respuestaMock,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         },
       ]);
       setCargando(false);
-    }, 450);
+    }, 700);
   };
-
-  // Disparar pregunta inicial si viene precargada desde atajo
-  useEffect(() => {
-    if (chatPreguntaInicial && chatAbierto) {
-      enviarPregunta(chatPreguntaInicial);
-    }
-  }, [chatPreguntaInicial, chatAbierto]);
 
   const valorar = (id: string, val: number) => {
     setMensajes((prev) =>
@@ -124,46 +122,47 @@ export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
 
   return (
     <>
-      {/* Botón Flotante Holográfico */}
+      {/* Botón Flotante con estilo principal WWP (Terracota con sombra cta, sin azul/cian) */}
       <button
         onClick={handleAbrir}
-        className="fixed bottom-6 right-6 z-40 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 p-3.5 rounded-full shadow-[0_0_25px_rgba(0,242,254,0.45)] flex items-center gap-2.5 group transition-all transform hover:scale-105 active:scale-95 border border-cyan-300/40"
+        className="fixed bottom-6 right-6 z-40 bg-terracotta hover:opacity-90 text-white p-3.5 rounded-full shadow-cta flex items-center gap-2.5 transition-all transform hover:scale-105 active:scale-95 border border-terracotta"
         title="Activar Copiloto IA"
         aria-label="Abrir Copiloto IA"
       >
         <div className="relative">
-          <Terminal className="w-5 h-5 text-slate-950 stroke-[2.5]" />
-          <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          <MessageSquare className="w-5 h-5 text-white" />
+          <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-white animate-ping" />
         </div>
-        <span className="font-display tracking-widest uppercase font-bold text-xs pr-1">
+        <span className="font-sans tracking-wide uppercase font-bold text-xs pr-1">
           Copiloto IA
         </span>
       </button>
 
-      {/* Panel Lateral (HUD Holográfico) */}
+      {/* Panel Lateral */}
       {abierto && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-[420px] bg-[#070b18]/95 backdrop-blur-2xl shadow-[0_0_50px_rgba(0,0,0,0.9)] z-50 flex flex-col border-l border-cyan-500/30 text-slate-200">
-          {/* Header HUD */}
-          <div className="p-4 border-b border-cyan-500/20 flex items-center justify-between bg-gradient-to-r from-cyan-950/40 via-slate-900/60 to-purple-950/40">
+        <div className="fixed inset-y-0 right-0 w-full sm:w-[420px] bg-card text-foreground backdrop-blur-2xl shadow-panel z-50 flex flex-col border-l border-border">
+          {/* Header */}
+          <div className="p-4 border-b border-border flex items-center justify-between bg-surface">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg bg-cyan-500/10 border border-cyan-400/40 flex items-center justify-center text-cyan-400 shadow-[0_0_15px_rgba(0,242,254,0.25)]">
+              <div className="w-9 h-9 rounded-xl bg-card border border-border flex items-center justify-center text-terracotta shadow-sm">
                 <Sparkles className="w-5 h-5" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h3 className="font-display font-bold text-sm text-cyan-300 tracking-wider uppercase">
+                  <h3 className="font-sans font-bold text-sm text-foreground tracking-tight uppercase">
                     Copiloto Táctico IA
                   </h3>
-                  <span className="inline-block w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]" />
+                  <span className="inline-block w-2 h-2 rounded-full bg-health-green" />
                 </div>
-                <p className="text-[10px] font-mono text-cyan-400/60">
+                <p className="text-[10px] font-mono text-muted-foreground">
                   MOD: CLAUDE-SONNET-5 · LATENCY: 24ms
                 </p>
               </div>
             </div>
             <button
               onClick={handleCerrar}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors"
+              className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+              aria-label="Cerrar copiloto"
             >
               <X className="w-5 h-5" />
             </button>
@@ -180,17 +179,17 @@ export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
                     isAssistant ? 'items-start' : 'items-end'
                   }`}
                 >
-                  <div className="flex items-center gap-1.5 mb-1 text-[10px] text-slate-500 font-mono">
+                  <div className="flex items-center gap-1.5 mb-1 text-[10px] text-muted-foreground font-mono">
                     <span>{isAssistant ? 'MISSION_AI' : usuarioActual.nombre}</span>
                     <span>•</span>
                     <span>{m.timestamp}</span>
                   </div>
 
                   <div
-                    className={`p-3.5 rounded-xl max-w-[90%] leading-relaxed whitespace-pre-wrap ${
+                    className={`p-3.5 rounded-2xl max-w-[90%] leading-relaxed whitespace-pre-wrap ${
                       isAssistant
-                        ? 'bg-slate-900/90 text-cyan-100 border border-cyan-500/25 shadow-[0_4px_20px_rgba(0,0,0,0.5)]'
-                        : 'bg-cyan-500 text-slate-950 font-sans font-medium shadow-[0_0_15px_rgba(0,242,254,0.3)]'
+                        ? 'bg-surface text-foreground border border-border shadow-sm'
+                        : 'bg-terracotta text-white font-sans font-medium shadow-cta'
                     }`}
                   >
                     {m.texto}
@@ -198,12 +197,12 @@ export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
 
                   {/* Valoración para asistente */}
                   {isAssistant && m.id !== 'm-1' && (
-                    <div className="flex items-center gap-2 mt-1.5 text-[10px] text-slate-400">
-                      <span className="font-mono text-[9px] text-slate-500">¿Respuesta útil?</span>
+                    <div className="flex items-center gap-2 mt-1.5 text-[10px] text-muted-foreground">
+                      <span className="font-mono text-[9px]">¿Respuesta útil?</span>
                       <button
                         onClick={() => valorar(m.id, 1)}
-                        className={`p-1 rounded hover:text-cyan-300 transition-colors ${
-                          m.valoracion === 1 ? 'text-emerald-400' : ''
+                        className={`p-1 rounded-full hover:text-foreground transition-colors ${
+                          m.valoracion === 1 ? 'text-health-green' : ''
                         }`}
                         title="Respuesta útil"
                       >
@@ -211,8 +210,8 @@ export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
                       </button>
                       <button
                         onClick={() => valorar(m.id, -1)}
-                        className={`p-1 rounded hover:text-red-400 transition-colors ${
-                          m.valoracion === -1 ? 'text-red-400' : ''
+                        className={`p-1 rounded-full hover:text-foreground transition-colors ${
+                          m.valoracion === -1 ? 'text-health-red' : ''
                         }`}
                         title="Respuesta con errores"
                       >
@@ -225,15 +224,15 @@ export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
             })}
 
             {cargando && (
-              <div className="flex items-center gap-2 text-cyan-400 text-xs font-mono py-2">
-                <div className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+              <div className="flex items-center gap-2 text-terracotta text-xs font-mono py-2">
+                <div className="w-2 h-2 rounded-full bg-terracotta animate-ping" />
                 <span>Interrogando telemetría de Notion...</span>
               </div>
             )}
           </div>
 
           {/* Input Box */}
-          <div className="p-3 border-t border-cyan-500/20 bg-slate-950/90">
+          <div className="p-3 border-t border-border bg-surface">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
@@ -246,12 +245,13 @@ export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder="Pregunta sobre etapas, bloqueos, fechas..."
-                className="flex-1 bg-slate-900/80 border border-cyan-500/30 rounded-lg px-3 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 font-mono"
+                className="flex-1 bg-card border border-border rounded-xl px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta font-mono"
               />
               <button
                 type="submit"
                 disabled={!input.trim() || cargando}
-                className="bg-cyan-500 hover:bg-cyan-400 disabled:opacity-40 text-slate-950 p-2 rounded-lg transition-all shadow-[0_0_12px_rgba(0,242,254,0.3)]"
+                className="bg-terracotta hover:opacity-90 disabled:opacity-40 text-white p-2 rounded-xl transition-all shadow-cta"
+                aria-label="Enviar pregunta"
               >
                 <Send className="w-4 h-4 stroke-[2.5]" />
               </button>

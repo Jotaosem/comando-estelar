@@ -79,27 +79,27 @@ export const AvisosPage: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Bandeja de Avisos Asistidos</h1>
-        <p className="text-sm text-slate-500">
+        <h1 className="text-2xl font-bold tracking-tight text-foreground">Bandeja de Avisos Asistidos</h1>
+        <p className="text-sm text-muted-foreground">
           Avisos generados automáticamente ante cambios relevantes. Revisa, edita o publica en Slack con 1 clic.
         </p>
       </div>
 
       {notificacion && (
-        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-sm flex items-center gap-2">
-          <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+        <div className="p-4 bg-health-green-soft border border-health-green/40 text-health-green rounded-xl text-sm flex items-center gap-2">
+          <CheckCircle2 className="w-5 h-5 text-health-green flex-shrink-0" />
           <span>{notificacion}</span>
         </div>
       )}
 
       {/* Avisos Preparados */}
       <div className="space-y-4">
-        <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
+        <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">
           Avisos Preparados ({avisos.filter((a) => a.estado === 'preparado').length})
         </h2>
 
         {avisos.filter((a) => a.estado === 'preparado').length === 0 ? (
-          <div className="p-8 bg-white border border-slate-200 rounded-xl text-center text-slate-400 text-sm">
+          <div className="p-8 bg-card border border-border rounded-xl text-center text-muted-foreground text-sm">
             No hay avisos pendientes de publicación.
           </div>
         ) : (
@@ -108,34 +108,34 @@ export const AvisosPage: React.FC = () => {
             .map((aviso) => (
               <div
                 key={aviso.id}
-                className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm space-y-4"
+                className="bg-card border border-border rounded-xl p-5 shadow-sm space-y-4"
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
                   <div>
-                    <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider">
+                    <span className="text-xs font-semibold text-terracotta-text uppercase tracking-wider">
                       {aviso.proyecto}
                     </span>
-                    <div className="text-xs text-slate-500 mt-0.5">
-                      Para: <span className="font-medium text-slate-700">{aviso.responsable_email}</span> · {aviso.preparado_en}
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      Para: <span className="font-medium text-foreground">{aviso.responsable_email}</span> · {aviso.preparado_en}
                     </div>
                   </div>
-                  <span className="inline-flex items-center text-xs px-2.5 py-0.5 rounded-full font-medium bg-amber-50 text-amber-700 border border-amber-200">
+                  <span className="inline-flex items-center text-xs px-2.5 py-0.5 rounded-full font-medium bg-health-amber-soft text-health-amber border border-health-amber/40">
                     Pendiente de aprobación
                   </span>
                 </div>
 
                 {editandoId === aviso.id ? (
                   <div className="space-y-2">
-                    <label className="text-xs font-medium text-slate-600">Editar mensaje antes de enviar:</label>
+                    <label className="text-xs font-medium text-muted-foreground">Editar mensaje antes de enviar:</label>
                     <textarea
                       rows={4}
                       value={mensajeEditado}
                       onChange={(e) => setMensajeEditado(e.target.value)}
-                      className="w-full text-xs font-mono bg-slate-50 border border-slate-200 rounded-lg p-3 text-slate-800 focus:bg-white focus:ring-1 focus:ring-blue-500"
+                      className="w-full text-xs font-mono bg-muted border border-border rounded-lg p-3 text-foreground focus:bg-surface focus:ring-1 focus:ring-terracotta"
                     />
                   </div>
                 ) : (
-                  <pre className="text-xs font-mono bg-slate-50 p-3 rounded-lg border border-slate-100 text-slate-800 whitespace-pre-wrap">
+                  <pre className="text-xs font-mono bg-muted p-3 rounded-lg border border-border text-foreground whitespace-pre-wrap">
                     {aviso.mensaje}
                   </pre>
                 )}
@@ -144,14 +144,14 @@ export const AvisosPage: React.FC = () => {
                   {editandoId === aviso.id ? (
                     <button
                       onClick={() => setEditandoId(null)}
-                      className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
+                      className="text-xs px-3 py-1.5 rounded-lg border border-border text-muted-foreground hover:bg-muted"
                     >
                       Cancelar
                     </button>
                   ) : (
                     <button
                       onClick={() => iniciarEdicion(aviso)}
-                      className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-50"
+                      className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-border text-foreground hover:bg-muted"
                     >
                       <Edit3 className="w-3.5 h-3.5" />
                       Editar Mensaje
@@ -160,7 +160,7 @@ export const AvisosPage: React.FC = () => {
 
                   <button
                     onClick={() => handleDescartar(aviso.id)}
-                    className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-red-200 text-red-600 hover:bg-red-50"
+                    className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg border border-health-red/40 text-health-red hover:bg-health-red-soft"
                   >
                     <XCircle className="w-3.5 h-3.5" />
                     Descartar
@@ -168,7 +168,7 @@ export const AvisosPage: React.FC = () => {
 
                   <button
                     onClick={() => handlePublicar(aviso.id)}
-                    className="inline-flex items-center gap-1.5 text-xs px-4 py-1.5 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 shadow-sm"
+                    className="inline-flex items-center gap-1.5 text-xs px-4 py-1.5 rounded-lg bg-terracotta text-white font-semibold hover:opacity-90 shadow-cta"
                   >
                     <Send className="w-3.5 h-3.5" />
                     Publicar en Slack (1 clic)
@@ -181,7 +181,7 @@ export const AvisosPage: React.FC = () => {
 
       {/* Historial de Publicados */}
       <div className="space-y-4 pt-4">
-        <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
+        <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">
           Historial de Avisos Publicados y Descartados
         </h2>
 
@@ -191,24 +191,24 @@ export const AvisosPage: React.FC = () => {
             .map((aviso) => (
               <div
                 key={aviso.id}
-                className="bg-white border border-slate-200 rounded-xl p-4 flex items-start justify-between gap-4 text-xs"
+                className="bg-card border border-border rounded-xl p-4 flex items-start justify-between gap-4 text-xs"
               >
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-slate-900">{aviso.proyecto}</span>
+                    <span className="font-semibold text-foreground">{aviso.proyecto}</span>
                     <span
                       className={`px-2 py-0.5 rounded font-medium ${
                         aviso.estado === 'publicado'
-                          ? 'bg-emerald-50 text-emerald-700'
-                          : 'bg-slate-100 text-slate-500'
+                          ? 'bg-health-green-soft text-health-green border border-health-green/30'
+                          : 'bg-muted text-muted-foreground border border-border'
                       }`}
                     >
                       {aviso.estado === 'publicado' ? 'Publicado en Slack' : 'Descartado'}
                     </span>
                   </div>
-                  <pre className="font-mono text-slate-600 text-[11px] whitespace-pre-wrap">{aviso.mensaje}</pre>
+                  <pre className="font-mono text-muted-foreground text-[11px] whitespace-pre-wrap">{aviso.mensaje}</pre>
                 </div>
-                <div className="text-slate-400 whitespace-nowrap text-right">
+                <div className="text-muted-foreground whitespace-nowrap text-right">
                   {aviso.publicado_en || 'Hoy'}
                 </div>
               </div>

@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import type { UsuarioPrueba } from '../components/DevUserSelector';
 import { NavigationHeader } from '../components/NavigationHeader';
 import { ChatAsistente } from '../components/ChatAsistente';
@@ -14,15 +14,8 @@ export const SceneLayout: React.FC<SceneLayoutProps> = ({
   onCambiarUsuario,
   children,
 }) => {
-  useEffect(() => {
-    // Al desmontar, asegurar que estilos de body queden limpios
-    return () => {
-      document.body.style.cursor = 'auto';
-    };
-  }, []);
-
   return (
-    <div className="h-[100dvh] max-h-[100dvh] w-full flex flex-col bg-[#030712] text-slate-100 overflow-hidden font-sans relative selection:bg-cyan-500 selection:text-slate-950">
+    <div className="h-[100dvh] max-h-[100dvh] w-full flex flex-col bg-background text-foreground overflow-hidden font-sans relative selection:bg-terracotta selection:text-white">
       <NavigationHeader usuarioActual={usuarioActual} onCambiarUsuario={onCambiarUsuario} />
       <main className="flex-1 w-full min-h-0 overflow-hidden p-0 relative z-10 flex flex-col">
         {children}
@@ -31,4 +24,3 @@ export const SceneLayout: React.FC<SceneLayoutProps> = ({
     </div>
   );
 };
-

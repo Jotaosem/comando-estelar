@@ -106,7 +106,7 @@ const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
       gl={{ antialias: true, alpha: false, powerPreference: 'high-performance' }}
       className="w-full h-full"
     >
-      <color attach="background" args={['#020510']} />
+      <color attach="background" args={['#141312']} />
 
       {/* Proyector 3D -> 2D para tooltip en capa DOM */}
       <TooltipProjector data={hoverStageData} />

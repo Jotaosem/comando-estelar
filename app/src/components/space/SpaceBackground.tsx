@@ -2,19 +2,13 @@ import React, { useMemo } from 'react';
 import * as THREE from 'three';
 
 export const SpaceBackground: React.FC = () => {
-  // Generar constelación de estrellas para el fondo 3D con parallax
+  // Generar constelación de estrellas WWP: brand-white (#f5f5f3) a 30-60% opacidad, sin estrellas de colores
   const [starPositions, starColors] = useMemo(() => {
     const count = 1800;
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
 
-    const baseTones = [
-      new THREE.Color('#00f2fe'),
-      new THREE.Color('#a855f7'),
-      new THREE.Color('#ffffff'),
-      new THREE.Color('#38bdf8'),
-      new THREE.Color('#f59e0b'),
-    ];
+    const white = new THREE.Color('#f5f5f3');
 
     for (let i = 0; i < count; i++) {
       const i3 = i * 3;
@@ -27,10 +21,11 @@ export const SpaceBackground: React.FC = () => {
       positions[i3 + 1] = r * Math.sin(phi) * Math.sin(theta);
       positions[i3 + 2] = r * Math.cos(phi);
 
-      const color = baseTones[Math.floor(Math.random() * baseTones.length)];
-      colors[i3] = color.r;
-      colors[i3 + 1] = color.g;
-      colors[i3 + 2] = color.b;
+      // Variación sutil de intensidad entre 0.3 y 0.6
+      const intensity = 0.3 + Math.random() * 0.3;
+      colors[i3] = white.r * intensity;
+      colors[i3 + 1] = white.g * intensity;
+      colors[i3 + 2] = white.b * intensity;
     }
 
     return [positions, colors];
@@ -50,17 +45,17 @@ export const SpaceBackground: React.FC = () => {
           />
         </bufferGeometry>
         <pointsMaterial
-          size={1.2}
+          size={1.1}
           vertexColors
           transparent
-          opacity={0.8}
+          opacity={0.6}
           sizeAttenuation
         />
       </points>
 
-      {/* Nebulosas tenues ambientales */}
-      <ambientLight intensity={0.25} />
-      <directionalLight position={[10, 20, 15]} intensity={1.2} />
+      {/* Iluminación sobria WWP */}
+      <ambientLight intensity={0.35} />
+      <directionalLight position={[10, 20, 15]} intensity={1.1} color="#f5f5f3" />
     </group>
   );
 };

@@ -17,11 +17,11 @@ export const SECTOR_NAMES = [
 ];
 
 const SECTOR_COLORS: Record<string, string> = {
-  Operaciones: '#00f2fe',
-  Compliance: '#a855f7',
-  Seguridad: '#ff3366',
-  Comercial: '#38bdf8',
-  'BI & Analítica': '#f59e0b',
+  Operaciones: '#a9533a', // --terracotta
+  Compliance: '#7a5c6b',  // --mauve
+  Seguridad: '#ee8f88',   // --health-red
+  Comercial: '#4f6b78',   // --slate
+  'BI & Analítica': '#9c6b3c', // --ochre
 };
 
 // REQUERIMIENTO 2: Layout de sistemas según el aspect ratio:

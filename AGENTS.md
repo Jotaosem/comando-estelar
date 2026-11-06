@@ -78,6 +78,8 @@ Principios:
 | Hosting | Cloudflare Pages (SPA, `_redirects`: `/* /index.html 200`) |
 | Tests | `deno test` (reglas y ingesta), Vitest (utilidades front), scripts TS para RLS y eval del asistente |
 
+Identidad visual: docs/marca/MARCA.html es la referencia obligatoria. Colores, tipografía, radios y sombras salen de sus tokens (src/styles.css). Prohibido usar colores hardcodeados fuera de los tokens.
+
 ---
 
 ## 4. Estructura del repo
@@ -265,7 +267,7 @@ Input `{aviso_id, mensaje?}`. Valida que `app_email()` = responsable de comunica
 
 ## 10. Frontend
 
-Tono: claro, sobrio, móvil primero (resumen debe leerse bien en 375 px). Español de Chile, fechas `dd/mm/aaaa`, "días hábiles" explícito. Tema claro/oscuro con tokens CSS.
+Estética: tema oscuro de la marca WWP con galaxia 3D; acento único terracota; estados con colores health-*.
 
 Rutas:
 - `/` **Resumen**: tarjetas (móvil) / tabla (≥md). Por proyecto: nombre, área, etapa actual + avance, fecha comprometida vs estimada, atraso ±, semáforo (color **+ texto**, nunca solo color), responsable de comunicar, "Actualizado hace X" o badge "Sin actualizar desde dd/mm", ícono de alerta de gobierno con tooltip. Filtros: semáforo, área; orden por riesgo (rojo primero). Una sola query a `v_proyecto_resumen`.

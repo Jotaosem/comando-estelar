@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo, Suspense, lazy, useRef } from 'rea
 import {
   ChevronRight,
   ArrowLeft,
-  Compass,
 } from 'lucide-react';
 import * as THREE from 'three';
 import type { ProyectoResumenUI } from '../../lib/proyectosData';
@@ -13,7 +12,6 @@ import { GalaxyMinimap } from './GalaxyMinimap';
 import { StageScreenTooltip, type StageTooltipData } from './StageScreenTooltip';
 import { useNavigationStore } from './navigationStore';
 import { useHideLabelsUnderHud } from '../../hooks/useHideLabelsUnderHud';
-import { isEditableElement } from '../../lib/keyboardUtils';
 import { Z_LAYERS } from '../../constants/zLayers';
 
 const GalaxyCanvas3D = lazy(() => import('./GalaxyCanvas3D'));
@@ -27,10 +25,8 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
   proyectos,
   matchingIds = null,
 }) => {
-  // REQUERIMIENTO 6: Estado de navegación 100% derivado del Store Único
   const {
     nivel,
-    areaId,
     proyecto: selectedProyecto,
     etapa: selectedEtapa,
     irAGalaxia,
@@ -78,102 +74,94 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
   useEffect(() => {
     const mqMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     setReducedMotion(mqMotion.matches);
-    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
-    mqMotion.addEventListener('change', handler);
+    const motionHandler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
+    mqMotion.addEventListener('change', motionHandler);
 
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
 
     return () => {
-      mqMotion.removeEventListener('change', handler);
-      window.removeEventListener('resize', checkMobile);
+      mqMotion.removeEventListener('change', motionHandler);
+      window.removeEventListener('resize', handleResize);
     };
   }, []);
-
-  const proyectosPorSector = useMemo(() => {
-    const map = new Map<string, ProyectoResumenUI[]>();
-    proyectos.forEach((p) => {
-      const arr = map.get(p.area_solicitante) || [];
-      arr.push(p);
-      map.set(p.area_solicitante, arr);
-    });
-    return map;
-  }, [proyectos]);
-
-  const cameraTargetPos = useMemo<[number, number, number]>(() => {
-    if (nivel === 'galaxia') return [panOffset[0], 0, panOffset[1]];
-    if (selectedProyecto) {
-      const sectorList = proyectosPorSector.get(selectedProyecto.area_solicitante) || [selectedProyecto];
-      const idx = sectorList.findIndex((p) => p.id === selectedProyecto.id);
-      return calcularPosicionPlaneta(selectedProyecto.area_solicitante, Math.max(0, idx), sectorList.length);
-    }
-    return [0, 0, 0];
-  }, [nivel, selectedProyecto, proyectosPorSector, panOffset]);
-
-  const galaxyBox = useMemo(() => {
-    const list = proyectos.map((p) => {
-      const sectorList = proyectosPorSector.get(p.area_solicitante) || [p];
-      const sIdx = sectorList.findIndex((it) => it.id === p.id);
-      return { position: calcularPosicionPlaneta(p.area_solicitante, Math.max(0, sIdx), sectorList.length) };
-    });
-    return calcularGalaxiaBox(list);
-  }, [proyectos, proyectosPorSector]);
 
   const handleHoverStage = (data: StageTooltipData | null) => {
     if (tooltipTimeout.current) clearTimeout(tooltipTimeout.current);
     if (!data) {
-      setHoverStageData(null);
-    } else {
       tooltipTimeout.current = setTimeout(() => {
-        setHoverStageData(data);
-      }, 80);
+        setHoverStageData(null);
+      }, 100);
+    } else {
+      setHoverStageData(data);
     }
   };
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (isEditableElement(e.target)) return;
-      if (e.key === 'Escape') {
-        e.preventDefault();
-        volverUnNivel();
+  const cameraTargetPos = useMemo<[number, number, number]>(() => {
+    if (nivel === 'galaxia' || !selectedProyecto) {
+      return [0, 0, 0];
+    }
+    const sectorCountMap = new Map<string, number>();
+    proyectos.forEach((p) => {
+      sectorCountMap.set(p.area_solicitante, (sectorCountMap.get(p.area_solicitante) || 0) + 1);
+    });
+
+    const sectorIndices = new Map<string, number>();
+    let targetP: [number, number, number] = [0, 0, 0];
+
+    for (const p of proyectos) {
+      const total = sectorCountMap.get(p.area_solicitante) || 1;
+      const idx = sectorIndices.get(p.area_solicitante) || 0;
+      sectorIndices.set(p.area_solicitante, idx + 1);
+
+      if (p.id === selectedProyecto.id) {
+        targetP = calcularPosicionPlaneta(p.area_solicitante, idx, total);
+        break;
       }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [volverUnNivel]);
+    }
+    return targetP;
+  }, [nivel, selectedProyecto, proyectos]);
+
+  const galaxyBox = useMemo(() => {
+    const sectorCountMap = new Map<string, number>();
+    proyectos.forEach((p) => {
+      sectorCountMap.set(p.area_solicitante, (sectorCountMap.get(p.area_solicitante) || 0) + 1);
+    });
+    const sectorIndices = new Map<string, number>();
+    const proyectosConPosicion = proyectos.map((p) => {
+      const total = sectorCountMap.get(p.area_solicitante) || 1;
+      const idx = sectorIndices.get(p.area_solicitante) || 0;
+      sectorIndices.set(p.area_solicitante, idx + 1);
+      return { position: calcularPosicionPlaneta(p.area_solicitante, idx, total) };
+    });
+    return calcularGalaxiaBox(proyectosConPosicion);
+  }, [proyectos]);
 
   return (
-    <div
-      className="relative w-full flex-1 min-h-0 bg-[#020510] flex flex-col select-none overflow-hidden"
-    >
-      {/* Breadcrumb en una fila de 32px bajo la toolbar, solo dentro de un planeta */}
+    <div className="w-full h-full relative flex flex-col flex-1 min-h-0 overflow-hidden bg-background select-none">
+      {/* 1. Breadcrumb Táctico (Incluido en el flex natural, sin romper 100dvh) */}
       {nivel !== 'galaxia' && selectedProyecto && (
-        <div className="h-8 px-4 bg-[#020510]/90 backdrop-blur-md border-b border-cyan-500/20 flex items-center gap-1.5 text-xs font-mono z-30 pointer-events-auto">
+        <div className="h-10 min-h-[40px] px-4 bg-surface/90 border-b border-border flex items-center gap-2 text-xs font-mono text-muted-foreground shrink-0 z-20">
           <button
             onClick={irAGalaxia}
-            className="text-slate-400 hover:text-cyan-300 transition-colors flex items-center gap-1"
+            className="hover:text-foreground text-terracotta transition-colors flex items-center gap-1 font-semibold"
           >
-            <Compass className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Galaxia</span>
+            <span>MISIONES</span>
           </button>
-
-          {areaId && (
-            <>
-              <ChevronRight className="w-3 h-3 text-slate-600" />
-              <span className="text-slate-400">{areaId}</span>
-            </>
-          )}
-
-          <ChevronRight className="w-3 h-3 text-slate-600" />
-          <span className="text-cyan-300 font-bold truncate">
+          <ChevronRight className="w-3.5 h-3.5 text-border-strong" />
+          <span className="uppercase text-muted-foreground">{selectedProyecto.area_solicitante}</span>
+          <ChevronRight className="w-3.5 h-3.5 text-border-strong" />
+          <span className="text-foreground font-semibold truncate max-w-[200px]">
             {selectedProyecto.callsign || selectedProyecto.nombre.split('(')[0].trim()}
           </span>
 
           {nivel === 'etapa' && selectedEtapa && (
             <>
-              <ChevronRight className="w-3 h-3 text-slate-600" />
-              <span className="text-cyan-400 font-bold truncate">
+              <ChevronRight className="w-3.5 h-3.5 text-border-strong" />
+              <span className="text-terracotta font-semibold truncate">
                 {selectedEtapa.orden}. {selectedEtapa.nombre}
               </span>
             </>
@@ -182,7 +170,7 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
           <div className="ml-auto">
             <button
               onClick={volverUnNivel}
-              className="px-2 py-0.5 rounded bg-slate-900 border border-slate-700 hover:border-cyan-400 text-slate-300 hover:text-white text-[10px] font-mono transition-all flex items-center gap-1"
+              className="px-2.5 py-1 rounded-full bg-card border border-border hover:border-terracotta text-foreground text-[10px] font-mono transition-all flex items-center gap-1 shadow-sm"
               title="Volver (Esc)"
             >
               <ArrowLeft className="w-3 h-3" />
@@ -192,20 +180,20 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
         </div>
       )}
 
-      {/* 2. Capa de oscurecimiento: pointer-events: none garantizado */}
-      <div className="absolute inset-0 bg-black/20 pointer-events-none z-10" />
+      {/* 2. Capa ambiental sutil */}
+      <div className="absolute inset-0 bg-black/10 pointer-events-none z-10" />
 
       {/* 3. Escena 3D WebGL con Controles 2.5D desacoplados */}
       <div
         style={{ zIndex: Z_LAYERS.CANVAS }}
-        className="flex-1 w-full h-full relative cursor-grab active:cursor-grabbing"
+        className="flex-1 w-full h-full relative cursor-grab active:cursor-grabbing min-h-0"
       >
         <Suspense
           fallback={
-            <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-[#020510]">
-              <div className="w-10 h-10 rounded-full border-2 border-cyan-400 border-t-transparent animate-spin" />
-              <span className="font-mono text-xs text-cyan-400 uppercase tracking-widest animate-pulse">
-                INICIALIZANDO MOTOR GRAVITACIONAL...
+            <div className="w-full h-full flex flex-col items-center justify-center gap-4 bg-background">
+              <div className="w-10 h-10 rounded-full border-2 border-terracotta border-t-transparent animate-spin" />
+              <span className="font-mono text-xs text-terracotta uppercase tracking-widest animate-pulse">
+                INICIALIZANDO ESCENA...
               </span>
             </div>
           }
@@ -244,7 +232,7 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
           </div>
         )}
 
-        {/* Panel Lateral de 380px (Solo en nivel etapa) */}
+        {/* Panel Lateral de 390px (Solo en nivel etapa) con EtapaDetalle unificado */}
         {nivel === 'etapa' && selectedEtapa && selectedProyecto && (
           <div className="pointer-events-auto">
             <StageGlassPanel
@@ -262,30 +250,35 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
       {/* 5. Tooltip en capa DOM proyectado */}
       <StageScreenTooltip data={hoverStageData} />
 
-      {/* Botones flotantes [+] [-] [⟳ Encuadrar] en nivel planeta */}
+      {/* REQUERIMIENTO 3: Botones de zoom [+] [-] [⟳ Encuadrar] en nivel planeta
+          Movidos a la esquina inferior IZQUIERDA sobre la leyenda (donde en galaxia va el minimapa).
+          En planeta no hay minimapa. */}
       {nivel === 'planeta' && (
         <div
           style={{ zIndex: Z_LAYERS.HUD }}
-          className="absolute bottom-12 right-4 flex items-center gap-1.5 p-1 rounded-xl bg-slate-950/85 border border-cyan-500/30 backdrop-blur-md shadow-xl text-xs font-mono select-none"
+          className="absolute bottom-12 left-4 flex items-center gap-1.5 p-1 rounded-full bg-card/90 border border-border backdrop-blur-md shadow-panel text-xs font-mono select-none"
         >
           <button
             onClick={() => setZoomLevel((prev) => Math.min(2.0, prev + 0.2))}
-            className="w-7 h-7 rounded-lg bg-slate-900 hover:bg-cyan-950/80 border border-slate-700/60 hover:border-cyan-400 text-cyan-300 font-bold flex items-center justify-center transition-all"
+            className="w-7 h-7 rounded-full bg-surface hover:bg-muted border border-border text-foreground font-bold flex items-center justify-center transition-colors"
             title="Acercar (+)"
+            aria-label="Acercar zoom"
           >
             +
           </button>
           <button
             onClick={() => setZoomLevel((prev) => Math.max(0.65, prev - 0.2))}
-            className="w-7 h-7 rounded-lg bg-slate-900 hover:bg-cyan-950/80 border border-slate-700/60 hover:border-cyan-400 text-cyan-300 font-bold flex items-center justify-center transition-all"
+            className="w-7 h-7 rounded-full bg-surface hover:bg-muted border border-border text-foreground font-bold flex items-center justify-center transition-colors"
             title="Alejar (-)"
+            aria-label="Alejar zoom"
           >
             −
           </button>
           <button
             onClick={() => setZoomLevel(1)}
-            className="px-2 h-7 rounded-lg bg-slate-900 hover:bg-cyan-950/80 border border-slate-700/60 hover:border-cyan-400 text-cyan-300 flex items-center gap-1 transition-all"
+            className="px-2.5 h-7 rounded-full bg-surface hover:bg-muted border border-border text-foreground flex items-center gap-1 transition-colors"
             title="Restablecer encuadre"
+            aria-label="Restablecer encuadre"
           >
             <span>⟳</span>
             <span className="hidden sm:inline text-[11px]">Encuadrar</span>
@@ -293,7 +286,7 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
         </div>
       )}
 
-      {/* 6. Minimapa con Box3 real y rectángulo de cámara (Nivel Galaxia, oculto en <768px) */}
+      {/* 6. Minimapa con Box3 real y rectángulo de cámara (Solo en Nivel Galaxia, oculto en <768px) */}
       {!isMobile && (
         <GalaxyMinimap
           galaxyBox={galaxyBox}
@@ -306,57 +299,66 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
         />
       )}
 
-      {/* 7. Barra Leyenda inferior (40px) con texto de fuente auditable a la derecha */}
-      <div className="h-10 min-h-[40px] z-30 px-4 bg-[#020510]/95 backdrop-blur-md border-t border-cyan-500/15 flex items-center justify-between text-[11px] font-mono text-slate-400 pointer-events-auto shrink-0 select-none">
+      {/* 7. Barra Leyenda inferior (40px) con texto de fuente auditable a la derecha
+          Visible y completa tanto en galaxia como en nivel planeta */}
+      <div className="h-10 min-h-[40px] z-30 px-4 bg-surface/95 backdrop-blur-md border-t border-border flex items-center justify-between text-[11px] font-mono text-muted-foreground pointer-events-auto shrink-0 select-none">
         <div className="flex items-center gap-2 sm:gap-3">
-          <span className="text-[10px] uppercase text-slate-500 hidden sm:inline">Filtro:</span>
+          <span className="text-[10px] uppercase text-muted-foreground hidden sm:inline">Filtro:</span>
           
           <button
             onClick={() => setHealthFilter(healthFilter === 'rojo' ? null : 'rojo')}
-            className={`flex items-center gap-1 px-1.5 py-0.5 rounded transition-all ${
-              healthFilter === 'rojo' ? 'bg-rose-950 border border-rose-500 text-rose-200' : 'hover:text-white'
+            className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border transition-all ${
+              healthFilter === 'rojo'
+                ? 'bg-health-red-soft border-health-red text-health-red font-semibold'
+                : 'border-transparent hover:text-foreground'
             }`}
           >
-            <span className="w-2 h-2 rounded-full bg-[#ff3366]" />
+            <span className="w-2 h-2 rounded-full bg-health-red" />
             <span>Crítico</span>
           </button>
 
           <button
             onClick={() => setHealthFilter(healthFilter === 'amarillo' ? null : 'amarillo')}
-            className={`flex items-center gap-1 px-1.5 py-0.5 rounded transition-all ${
-              healthFilter === 'amarillo' ? 'bg-amber-950 border border-amber-500 text-amber-200' : 'hover:text-white'
+            className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border transition-all ${
+              healthFilter === 'amarillo'
+                ? 'bg-health-amber-soft border-health-amber text-health-amber font-semibold'
+                : 'border-transparent hover:text-foreground'
             }`}
           >
-            <span className="w-2 h-2 rounded-full bg-[#f59e0b]" />
+            <span className="w-2 h-2 rounded-full bg-health-amber" />
             <span>Alerta</span>
           </button>
 
           <button
             onClick={() => setHealthFilter(healthFilter === 'verde' ? null : 'verde')}
-            className={`flex items-center gap-1 px-1.5 py-0.5 rounded transition-all ${
-              healthFilter === 'verde' ? 'bg-cyan-950 border border-cyan-500 text-cyan-200' : 'hover:text-white'
+            className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border transition-all ${
+              healthFilter === 'verde'
+                ? 'bg-health-green-soft border-health-green text-health-green font-semibold'
+                : 'border-transparent hover:text-foreground'
             }`}
           >
-            <span className="w-2 h-2 rounded-full bg-[#00f2fe]" />
-            <span>En curso</span>
+            <span className="w-2 h-2 rounded-full bg-health-green" />
+            <span>Nominal</span>
           </button>
 
           <button
             onClick={() => setHealthFilter(healthFilter === 'gris' ? null : 'gris')}
-            className={`flex items-center gap-1 px-1.5 py-0.5 rounded transition-all ${
-              healthFilter === 'gris' ? 'bg-yellow-950 border border-yellow-500 text-yellow-200' : 'hover:text-white'
+            className={`flex items-center gap-1.5 px-2 py-0.5 rounded-full border transition-all ${
+              healthFilter === 'gris'
+                ? 'bg-muted border-border-strong text-foreground font-semibold'
+                : 'border-transparent hover:text-foreground'
             }`}
           >
-            <span className="w-2 h-2 rounded-full bg-[#eab308]" />
+            <span className="w-2 h-2 rounded-full bg-sand" />
             <span>Cerrado</span>
           </button>
         </div>
 
         {/* Texto fuente auditable Notion a la derecha */}
-        <div className="flex items-center gap-2 sm:gap-3 text-slate-500 text-[10px] truncate">
+        <div className="flex items-center gap-2 sm:gap-3 text-muted-foreground text-[10px] truncate">
           <span className="hidden md:inline">Fuente auditable: Notion vía sync</span>
           <span className="hidden md:inline">·</span>
-          <span>NIVEL: <strong className="text-cyan-400 uppercase">{nivel}</strong></span>
+          <span>NIVEL: <strong className="text-terracotta uppercase">{nivel}</strong></span>
           <span>·</span>
           <span className="hidden sm:inline">ESC: VOLVER</span>
         </div>

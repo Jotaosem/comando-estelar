@@ -15,6 +15,9 @@ export const Z_LAYERS = {
   MODAL_TOAST: 60,
 } as const;
 
+// Constante SAFE_ZONE_FAB requerida: ancho del botón del copiloto (aprox 136px) + 24px = 160px
+export const SAFE_ZONE_FAB = 160;
+
 export const SAFE_ZONES = {
   // Zona segura para botón copiloto abajo a la derecha
   COPILOTO: {
@@ -23,8 +26,9 @@ export const SAFE_ZONES = {
     width: 140, // aprox ancho del botón desplegado
     height: 48,
     clearanceBottom: 96, // margen para scroll/overlays
+    safeFabMargin: SAFE_ZONE_FAB,
   },
-  // Minimapa abajo a la izquierda, sobre la barra de leyenda (40px + 16px = 56px)
+  // Minimapa o controles zoom abajo a la izquierda, sobre la barra de leyenda (40px + 16px = 56px)
   MINIMAP: {
     bottom: 56, // 40px barra de leyenda + 16px margen
     left: 16,   // 16px margen

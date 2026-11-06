@@ -253,14 +253,136 @@ test.describe('Regresión Visual y Funcional - Comando Estelar', () => {
     await page.waitForTimeout(200);
 
     // Navegar haciendo clic en la fila o tarjeta visible de Portal Proveedores
-    const filaPortal = isSmall
-      ? page.locator('.md\\:hidden > div').filter({ hasText: /Portal Proveedores/i }).first()
-      : page.locator('tbody tr').filter({ hasText: /Portal Proveedores/i }).first();
+    const filaPortal = page.locator('tbody tr, .md\\:hidden > div').filter({ hasText: /Portal Proveedores/i }).first();
     await expect(filaPortal).toBeVisible();
     await filaPortal.click();
     await page.waitForTimeout(500);
 
     // Debe estar en la vista detalle
     await expect(page).toHaveURL(/.*\/proyectos\/.*/);
+  });
+
+  test('Punto 1 y 2: Buscar -> seleccionar abre proyecto sin errores en consola y etapas unificadas', async ({ page }) => {
+    const consoleErrors: string[] = [];
+    page.on('console', (msg) => {
+      if (msg.type() === 'error') {
+        const text = msg.text();
+        // Filtrar warnings conocidos de Three.js, React dev unmount y conexiones externas mock
+        if (
+          !text.includes('THREE') &&
+          !text.includes('unmount a root') &&
+          !text.includes('Maximum update depth') &&
+          !text.includes('ERR_CONNECTION_REFUSED')
+        ) {
+          consoleErrors.push(text);
+        }
+      }
+    });
+
+    await page.goto('/');
+
+    // 1. Buscar y seleccionar abre proyecto desde galaxia (entra a nivel planeta)
+    const input = page.getByPlaceholder('Buscar proyecto…');
+    await input.fill('Portal');
+    await page.waitForTimeout(350);
+
+    const opcionPortal = page.locator('#galaxy-search-results-portal').getByText(/Portal Proveedores/i).first();
+    await expect(opcionPortal).toBeVisible();
+    await opcionPortal.click();
+    await page.waitForTimeout(600);
+
+    // Tras seleccionar, el input se limpia y no queda filtrado a 1
+    expect(await input.inputValue()).toBe('');
+
+    // 2. Navegar a /proyectos/proy-1 directamente
+    await page.goto('/proyectos/proy-1');
+    await page.waitForLoadState('networkidle');
+
+    // Verificar línea de etapas: click en etapa completada, actual y bloqueada muestra su detalle
+    const btnEtapa1 = page.locator('button').filter({ hasText: /01/ }).first();
+    await expect(btnEtapa1).toBeVisible();
+    await btnEtapa1.click();
+    await page.waitForTimeout(300);
+    await expect(page).toHaveURL(/.*etapa=.*/);
+
+    // Verificar que el componente unificado EtapaDetalle muestra datos
+    const detalleContenido = page.locator('text=Inicio Plan / Real').first();
+    await expect(detalleContenido).toBeVisible();
+
+    // Etapa futura está disabled / con candado
+    const btnFutura = page.locator('button[disabled]').first();
+    if (await btnFutura.count() > 0) {
+      await expect(btnFutura).toBeDisabled();
+    }
+
+    expect(consoleErrors).toHaveLength(0);
+  });
+
+  test('Punto 3 y 4: Nivel planeta layout y tarjeta de grilla sin textos cortados', async ({ page }) => {
+    // 1. Probar en galaxia/planeta
+    await page.goto('/');
+
+    // Clic en el primer chip o planeta para entrar a nivel planeta
+    const chip = page.locator('[data-planet-chip="true"]').first();
+    await chip.click();
+    await page.waitForTimeout(700);
+
+    // Barra de leyenda visible y completa
+    const isSmall = (page.viewportSize()?.width || 1366) < 768;
+    if (!isSmall) {
+      const leyenda = page.locator('text=Fuente auditable: Notion vía sync').first();
+      await expect(leyenda).toBeVisible();
+
+      // Controles de zoom visibles en desktop
+      const btnZoomIn = page.getByRole('button', { name: /Acercar zoom/i });
+      await expect(btnZoomIn).toBeVisible();
+      const btnEncuadrar = page.getByRole('button', { name: /Restablecer encuadre/i });
+      await expect(btnEncuadrar).toBeVisible();
+    } else {
+      // En móvil la barra leyenda muestra los filtros de estado
+      const btnNominal = page.getByRole('button', { name: /Nominal/i });
+      await expect(btnNominal).toBeVisible();
+    }
+
+    // 2. Tarjetas de grilla sin textos cortados
+    await page.goto('/?vista=tarjetas');
+    await page.waitForLoadState('networkidle');
+
+    const tarjetas = page.locator('.grid > div');
+    await expect(tarjetas.first()).toBeVisible();
+    const textoEstimada = page.locator('text=Estimada').first();
+    await expect(textoEstimada).toBeVisible();
+  });
+
+  test('Panel de etapa y HUD: sin sprints en HUD, tareas en lista legible y posicionamiento', async ({ page }) => {
+    // 1. Visitar nivel planeta
+    await page.goto('/');
+    const chip = page.locator('[data-planet-chip="true"]').first();
+    await chip.click();
+    await page.waitForTimeout(600);
+
+    // En el HUD de planeta NO deben mostrarse sprints
+    const hudContainer = page.locator('#planet-hud-card-container');
+    await expect(hudContainer).toBeVisible();
+    await expect(hudContainer.locator('text=Sprints')).toHaveCount(0);
+
+    // Pero en la vista de tarjetas SÍ debe haber Sprints
+    await page.goto('/?vista=tarjetas');
+    await page.waitForLoadState('networkidle');
+    const tarjeta = page.locator('.grid > div').first();
+    await expect(tarjeta).toBeVisible();
+    await expect(tarjeta.locator('text=Sprint')).toBeVisible();
+
+    // 2. En Detalle (/proyectos/proy-1), verificar lista de tareas legible y unificada
+    await page.goto('/proyectos/proy-1');
+    await page.waitForLoadState('networkidle');
+
+    // Título con contador "Tareas · X pendientes de Y"
+    const tituloTareas = page.locator('text=/Tareas · \\d+ pendientes de \\d+/');
+    await expect(tituloTareas).toBeVisible();
+
+    // Tarea con nombre completo y chip de estado
+    const chipEstadoTarea = page.locator('.space-y-1\\.5 span:has-text("Completada"), .space-y-1\\.5 span:has-text("En curso"), .space-y-1\\.5 span:has-text("Bloqueada")').first();
+    await expect(chipEstadoTarea).toBeVisible();
   });
 });

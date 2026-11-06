@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronDown, Check, Shield } from 'lucide-react';
+import { Shield, ChevronDown, Check } from 'lucide-react';
 
 export interface UsuarioPrueba {
   email: string;
@@ -10,47 +10,42 @@ export interface UsuarioPrueba {
 
 export const USUARIOS_SEED: UsuarioPrueba[] = [
   {
-    email: 'admin@empresa.cl',
-    nombre: 'Comandante Supremo (Admin)',
+    email: 'admin@empresa.com',
+    nombre: 'Admin General',
     rol: 'Admin',
   },
   {
-    email: 'gerencia@empresa.cl',
-    nombre: 'Dirección Estratégica (Gerencia)',
+    email: 'gerente.general@empresa.com',
+    nombre: 'Valeria Castro',
     rol: 'Gerencia',
   },
   {
-    email: 'valeria.soto@empresa.cl',
-    nombre: 'Valeria Soto (Solicitante Operaciones)',
+    email: 'solicitante.ops@empresa.com',
+    nombre: 'Carlos Solís',
     rol: 'Solicitante',
     area: 'Operaciones',
   },
   {
-    email: 'esteban.lagos@empresa.cl',
-    nombre: 'Esteban Lagos (Solicitante Comercial)',
+    email: 'solicitante.comercial@empresa.com',
+    nombre: 'Mariana Duarte',
     rol: 'Solicitante',
     area: 'Comercial',
   },
   {
-    email: 'carlos.dev@empresa.cl',
-    nombre: 'Carlos Dev (Ejecutor Lead)',
+    email: 'lider.tecnico@empresa.com',
+    nombre: 'José Miguel (Líder)',
     rol: 'Ejecutor',
   },
   {
-    email: 'paula.qa@empresa.cl',
-    nombre: 'Paula QA (Ejecutora QA)',
-    rol: 'Ejecutor',
-  },
-  {
-    email: 'jose.miguel@empresa.cl',
-    nombre: 'Jose Miguel (Resp. Comunicar)',
+    email: 'dev.qa@empresa.com',
+    nombre: 'Francisca Morales (QA)',
     rol: 'Ejecutor',
   },
 ];
 
 interface DevUserSelectorProps {
   usuarioActual: UsuarioPrueba;
-  onCambiarUsuario: (usuario: UsuarioPrueba) => void;
+  onCambiarUsuario: (u: UsuarioPrueba) => void;
 }
 
 export const DevUserSelector: React.FC<DevUserSelectorProps> = ({
@@ -63,19 +58,19 @@ export const DevUserSelector: React.FC<DevUserSelectorProps> = ({
     <div className="relative">
       <button
         onClick={() => setDesplegado(!desplegado)}
-        className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg bg-slate-900/80 hover:bg-slate-800/90 border border-cyan-500/30 text-xs text-slate-200 transition-all shadow-[0_0_15px_rgba(0,242,254,0.1)] font-mono"
+        className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-card hover:bg-surface border border-border text-xs text-foreground transition-all shadow-sm font-mono"
         title="Cambiar perfil de acceso"
       >
-        <div className="w-5 h-5 rounded-md bg-cyan-500/20 border border-cyan-400/50 flex items-center justify-center text-cyan-300">
+        <div className="w-5 h-5 rounded-full bg-surface border border-border flex items-center justify-center text-terracotta">
           <Shield className="w-3 h-3" />
         </div>
         <div className="text-left hidden sm:block">
-          <div className="font-semibold text-cyan-300 leading-none">{usuarioActual.rol}</div>
-          <div className="text-[10px] text-slate-400 truncate max-w-[140px]">
+          <div className="font-semibold text-terracotta leading-none">{usuarioActual.rol}</div>
+          <div className="text-[10px] text-muted-foreground truncate max-w-[140px]">
             {usuarioActual.nombre}
           </div>
         </div>
-        <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+        <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
       </button>
 
       {desplegado && (
@@ -84,8 +79,8 @@ export const DevUserSelector: React.FC<DevUserSelectorProps> = ({
             className="fixed inset-0 z-40"
             onClick={() => setDesplegado(false)}
           />
-          <div className="absolute right-0 mt-2 w-72 rounded-xl bg-[#090e1c] border border-cyan-500/30 shadow-[0_10px_35px_rgba(0,0,0,0.8)] z-50 overflow-hidden font-mono text-xs">
-            <div className="px-3 py-2 bg-gradient-to-r from-cyan-950/40 to-purple-950/40 border-b border-cyan-500/20 text-[10px] text-cyan-400 font-bold uppercase tracking-widest">
+          <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-card border border-border shadow-panel z-50 overflow-hidden font-mono text-xs">
+            <div className="px-3 py-2 bg-surface border-b border-border text-[10px] text-terracotta font-bold uppercase tracking-wider">
               Conmutar Identificador Operativo
             </div>
             <div className="p-1 space-y-0.5">
@@ -98,19 +93,21 @@ export const DevUserSelector: React.FC<DevUserSelectorProps> = ({
                       onCambiarUsuario(u);
                       setDesplegado(false);
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-left transition-colors ${
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left transition-colors ${
                       isSelected
-                        ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/40'
-                        : 'text-slate-300 hover:bg-slate-800/60'
+                        ? 'bg-muted text-foreground border border-border-strong font-semibold'
+                        : 'text-foreground hover:bg-surface'
                     }`}
                   >
                     <div>
                       <div className="font-semibold">{u.nombre}</div>
-                      <div className="text-[10px] text-slate-500">
+                      <div className="text-[10px] text-muted-foreground">
                         {u.rol} {u.area ? `• Área: ${u.area}` : ''}
                       </div>
                     </div>
-                    {isSelected && <Check className="w-4 h-4 text-cyan-400" />}
+                    {isSelected && (
+                      <Check className="w-4 h-4 text-terracotta shrink-0" />
+                    )}
                   </button>
                 );
               })}

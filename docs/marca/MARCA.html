@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manual de marca WWP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Tokens copiados de src/styles.css. Si cambian allá, actualizarlos acá. */
+:root {
+  --radius: 1rem;
+  /* Colores de marca fijos: no cambian con el modo oscuro. */
+  --brand-carbon: #231f20; --brand-white: #f5f5f3; --brand-stone: #ebe9e5;
+  --font-heading: "Neue Montreal", "Inter Tight", "Helvetica Neue", Arial, sans-serif;
+  --font-body: "Neue Montreal", "Inter Tight", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --background: #f5f5f3; --foreground: #231f20; --surface: #ebe9e5; --card: #ffffff;
+  --primary: #231f20; --primary-foreground: #f5f5f3; --secondary: #dedbd5; --muted: #e9e7e2;
+  --muted-foreground: #625d59; --accent: #d9d0c0; --taupe: #6a5d56; --taupe-soft: #e8e2da;
+  --sand: #d9d0c0; --terracotta: #a9533a; --terracotta-text: #a14f33; --olive: #5a6553;
+  --ochre: #9c6b3c; --slate: #4f6b78; --mauve: #7a5c6b; --ink: #141312;
+  --destructive: #a53f3f; --border: #ddd9d2; --border-strong: #b7b0a9; --input: #d3cfc8; --ring: #9a908b;
+  --health-green: #37745a; --health-green-soft: #e3eee8; --health-amber: #8a5a16; --health-amber-soft: #f4ead4;
+  --health-red: #a53f3f; --health-red-soft: #f4e2df;
+  --chart-1: #231f20; --chart-2: #9a908b; --chart-3: #d9d0c0; --chart-4: #6f6560; --chart-5: #c1b9ae;
+  --sidebar: #141312; --sidebar-foreground: #f5f5f3; --sidebar-primary: #a9533a; --sidebar-accent: #2a2726;
+  --sidebar-border: #2f2b2a; --sidebar-ring: #e08c6c;
+  --viz-average: #a9533a; --viz-member: #2766a8; --viz-n1: #a9533a; --viz-n2: #d79a84; --viz-n3: #b5afa7;
+  --viz-n4: #8db0dc; --viz-n5: #2766a8;
+  --shadow-panel: 0 18px 50px rgb(35 31 32 / 0.045);
+  --shadow-cta: 0 10px 24px rgb(169 83 58 / 0.28);
+  color-scheme: light;
+}
+.dark {
+  --terracotta-text: #e08c6c; --background: #1b1819; --foreground: #f5f5f3; --surface: #2a2627; --card: #272324;
+  --primary: #f5f5f3; --primary-foreground: #231f20; --secondary: #393435; --muted: #332e2f;
+  --muted-foreground: #aaa19c; --accent: #554d48; --taupe: #afa39c; --taupe-soft: #40393a;
+  --border: rgb(255 255 255 / 10%); --border-strong: rgb(255 255 255 / 22%); --input: rgb(255 255 255 / 16%);
+  --health-green: #6fbf98; --health-green-soft: #1f3a2e; --health-amber: #e3b25f; --health-amber-soft: #3d301c;
+  --health-red: #ee8f88; --health-red-soft: #452826;
+  --viz-average: #c96f50; --viz-member: #4a8fd6; --viz-n1: #c96f50; --viz-n2: #8a4f3b; --viz-n3: #5f5859;
+  --viz-n4: #335c90; --viz-n5: #4a8fd6;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { background: var(--background); }
+body {
+  margin: 0; color: var(--foreground); font-family: var(--font-body); line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  background:
+    radial-gradient(circle at 92% 0%, rgb(169 83 58 / 9%), transparent 30rem),
+    radial-gradient(circle at 88% 2%, rgb(217 208 192 / 28%), transparent 26rem),
+    var(--background);
+}
+::selection { background: var(--sand); color: #231f20; }
+h1, h2, h3 { font-family: var(--font-heading); letter-spacing: -0.035em; margin: 0; }
+p { margin: 0; }
+a { color: var(--terracotta-text); }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 3px; }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 16px 96px; }
+@media (min-width: 720px) { .wrap { padding: 0 32px 120px; } }
+
+.label-caps { font-family: var(--font-heading); font-size: .6875rem; letter-spacing: .14em; text-transform: uppercase; font-weight: 600; }
+.num, code, .mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+code { font-size: .8125rem; background: var(--muted); padding: .1em .4em; border-radius: 6px; overflow-wrap: anywhere; }
+.muted { color: var(--muted-foreground); }
+
+/* Barra superior */
+.top {
+  position: sticky; top: 0; z-index: 10; background: var(--sidebar); color: var(--sidebar-foreground);
+  border-bottom: 1px solid var(--sidebar-border);
+}
+.top .in { max-width: 1120px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 12px; }
+@media (min-width: 720px) { .top .in { padding: 10px 32px; } }
+.top nav { display: flex; gap: 4px; overflow-x: auto; flex: 1; min-width: 0; scrollbar-width: none; }
+.top nav a {
+  color: #d8d3cf; text-decoration: none; font-size: .8125rem; font-weight: 500; padding: 6px 10px;
+  border-radius: 999px; white-space: nowrap;
+}
+.top nav a:hover { background: var(--sidebar-accent); color: #fff; }
+.toggle {
+  flex-shrink: 0; font: 600 .75rem var(--font-body); color: #fff; background: var(--sidebar-accent);
+  border: 1px solid var(--sidebar-border); border-radius: 999px; padding: 6px 12px; cursor: pointer;
+}
+.toggle:focus-visible { outline-color: var(--sidebar-ring); }
+
+/* Encabezado */
+header.hero { padding: 64px 0 40px; border-bottom: 1px solid var(--border-strong); }
+.eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; color: var(--terracotta-text); }
+.eyebrow::before { content: ""; width: 24px; height: 1px; background: var(--terracotta-text); }
+.hero h1 { font-size: clamp(2.5rem, 7vw, 4.5rem); font-weight: 600; line-height: .96; letter-spacing: -0.055em; }
+.hero p { margin-top: 20px; max-width: 42rem; color: var(--muted-foreground); font-size: 1.0625rem; }
+.hero .meta { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 8px; }
+
+section.block { padding-top: 72px; scroll-margin-top: 64px; }
+.sec-head { display: grid; gap: 8px; margin-bottom: 28px; max-width: 46rem; }
+.sec-head .idx { font-family: var(--font-heading); font-size: clamp(2.75rem, 5vw, 4.5rem); font-weight: 600; line-height: .8; letter-spacing: -0.08em; color: var(--border-strong); }
+.sec-head h2 { font-size: clamp(1.75rem, 3.5vw, 2.5rem); font-weight: 600; letter-spacing: -0.05em; }
+.sec-head p { color: var(--muted-foreground); }
+h3.sub { display: flex; align-items: center; gap: 8px; font-size: .9375rem; font-weight: 600; letter-spacing: -0.01em; margin: 36px 0 14px; }
+h3.sub::before { content: ""; width: 6px; height: 6px; border-radius: 999px; background: var(--terracotta); }
+
+.panel { min-width: 0; border-radius: calc(var(--radius) + 18px); border: 1px solid var(--border); background: var(--card); box-shadow: var(--shadow-panel); padding: 24px; }
+.grid { display: grid; gap: 16px; }
+.g2 { grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }
+.g3 { grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); }
+.g4 { grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); }
+
+/* Muestras de color */
+.swatch { border-radius: 22px; border: 1px solid var(--border); background: var(--card); overflow: hidden; min-width: 0; }
+.swatch .chip { height: 96px; display: flex; align-items: flex-end; justify-content: space-between; padding: 10px 12px; font: 600 .75rem var(--font-body); }
+.swatch .info { padding: 12px 14px 14px; display: grid; gap: 2px; }
+.swatch .name { font-weight: 600; font-size: .875rem; }
+.swatch .hex { font-family: var(--font-mono); font-size: .75rem; color: var(--muted-foreground); }
+.swatch .use { font-size: .75rem; color: var(--muted-foreground); margin-top: 4px; }
+.swatch.lg .chip { height: 150px; }
+.ratio { font-family: var(--font-mono); font-size: .6875rem; padding: 2px 6px; border-radius: 999px; background: rgb(255 255 255 / .85); color: #231f20; }
+
+/* Tipografía */
+.type-row { display: grid; gap: 6px 24px; padding: 20px 0; border-top: 1px solid var(--border); align-items: baseline; }
+@media (min-width: 720px) { .type-row { grid-template-columns: 200px 1fr; } }
+.type-row .spec { font-family: var(--font-mono); font-size: .75rem; color: var(--muted-foreground); }
+.specimen { font-size: clamp(3.5rem, 12vw, 8rem); font-weight: 600; letter-spacing: -0.06em; line-height: .9; }
+
+/* Componentes */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px;
+  border-radius: calc(var(--radius) + 4px); font: 600 .875rem var(--font-body); white-space: nowrap; cursor: pointer;
+  border: 1px solid transparent; transition: transform .15s, background-color .15s;
+}
+.btn-default { background: var(--terracotta); color: #fff; box-shadow: var(--shadow-cta); }
+.btn-default:hover { transform: translateY(-2px); background: rgb(169 83 58 / .9); }
+.btn-outline { background: var(--background); border-color: var(--input); color: var(--foreground); box-shadow: 0 1px 2px rgb(0 0 0 / .05); }
+.btn-outline:hover { border-color: var(--border-strong); background: var(--accent); }
+.btn-secondary { background: var(--secondary); color: var(--foreground); }
+.btn-ghost { background: transparent; color: var(--foreground); }
+.btn-ghost:hover { background: var(--accent); }
+.btn-destructive { background: var(--destructive); color: #fff; }
+.btn-link { background: none; color: var(--terracotta-text); padding: 0 4px; }
+.btn-link:hover { text-decoration: underline; text-underline-offset: 4px; }
+.btn-sm { height: 36px; padding: 0 12px; font-size: .75rem; }
+.btn-lg { height: 48px; padding: 0 28px; border-radius: calc(var(--radius) + 10px); }
+.btn svg { width: 16px; height: 16px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+
+.pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; border: 1px solid; padding: 4px 10px; font-size: .75rem; font-weight: 500; white-space: nowrap; }
+.pill .dot { width: 6px; height: 6px; border-radius: 999px; background: currentColor; }
+.t-green { background: var(--health-green-soft); color: var(--health-green); border-color: color-mix(in srgb, var(--health-green) 30%, transparent); }
+.t-amber { background: var(--health-amber-soft); color: var(--health-amber); border-color: color-mix(in srgb, var(--health-amber) 40%, transparent); }
+.t-red { background: var(--health-red-soft); color: var(--health-red); border-color: color-mix(in srgb, var(--health-red) 30%, transparent); }
+.t-taupe { background: var(--taupe-soft); color: var(--taupe); border-color: color-mix(in srgb, var(--taupe) 40%, transparent); }
+.t-muted { background: var(--muted); color: var(--muted-foreground); border-color: var(--border); }
+.t-cancel { background: transparent; color: var(--muted-foreground); border-color: var(--border); text-decoration: line-through; }
+
+.kpi { position: relative; min-height: 128px; border-radius: calc(var(--radius) + 18px); border: 1px solid var(--border); background: var(--card); box-shadow: var(--shadow-panel); padding: 20px; }
+.kpi::after { content: ""; position: absolute; right: 20px; top: 20px; width: 8px; height: 8px; border-radius: 999px; background: var(--terracotta); }
+.kpi .v { margin-top: 24px; font-size: 2.25rem; font-weight: 600; line-height: 1; letter-spacing: -0.06em; }
+.kpi .s { margin-top: 8px; font-size: .75rem; color: var(--muted-foreground); }
+
+.field { display: grid; gap: 6px; font-size: .875rem; font-weight: 500; }
+.field input, .field select {
+  height: 40px; border-radius: 12px; border: 1px solid var(--input); background: var(--card); color: var(--foreground);
+  padding: 0 12px; font: 400 .875rem var(--font-body); min-width: 0; width: 100%;
+}
+.bar { position: relative; height: 8px; border-radius: 999px; background: var(--muted); }
+.bar > i { position: absolute; inset: 0 auto 0 0; border-radius: 999px; background: var(--primary); }
+.bar > b { position: absolute; top: -3px; height: 14px; width: 1px; background: color-mix(in srgb, var(--foreground) 60%, transparent); }
+
+.nav-demo { border-radius: 22px; background: var(--sidebar); color: var(--sidebar-foreground); padding: 12px; display: grid; gap: 4px; }
+.nav-demo span { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 14px; font-size: .875rem; color: #d8d3cf; }
+.nav-demo span.on { background: var(--sidebar-primary); color: #fff; font-weight: 600; }
+.nav-demo span:not(.on):hover { background: var(--sidebar-accent); color: #fff; }
+
+/* Escalas */
+.radii { display: flex; flex-wrap: wrap; gap: 16px; }
+.radii div { width: 96px; height: 96px; background: var(--surface); border: 1px solid var(--border-strong); display: grid; place-items: end start; padding: 8px; font: .6875rem var(--font-mono); color: var(--muted-foreground); }
+.shadow-demo { height: 110px; border-radius: 28px; background: var(--card); border: 1px solid var(--border); display: grid; place-items: center; font-size: .8125rem; color: var(--muted-foreground); }
+
+table { width: 100%; border-collapse: collapse; font-size: .875rem; }
+th { text-align: left; font-weight: 600; }
+th, td { padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.tbl { overflow-x: auto; }
+
+.do, .dont { border-radius: 22px; padding: 18px 20px; border: 1px solid var(--border); background: var(--card); }
+.do h4, .dont h4 { margin: 0 0 8px; font-size: .875rem; }
+.do h4 { color: var(--health-green); } .dont h4 { color: var(--health-red); }
+.do ul, .dont ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: .875rem; }
+
+.logo-box { border-radius: 28px; display: grid; place-items: center; min-height: 200px; border: 1px solid var(--border); }
+.copy-btn { background: none; border: 0; padding: 0; color: inherit; font: inherit; cursor: pointer; text-align: left; }
+.copy-btn:hover { color: var(--terracotta-text); }
+footer { margin-top: 96px; padding-top: 24px; border-top: 1px solid var(--border); font-size: .8125rem; color: var(--muted-foreground); }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="in">
+    <svg width="28" height="28" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="16" fill="#f5f5f3"/><path d="M12 18v17.5c0 7.2 3.9 11.2 10.2 11.2 4.2 0 7.2-1.9 9-5.4 1.8 3.5 4.8 5.4 9 5.4C47 46.7 52 42.1 52 34V18h-8.2v16.2c0 3.3-1.4 5-3.8 5s-3.8-1.7-3.8-5V18H28v16.2c0 3.3-1.4 5-3.8 5s-3.8-1.7-3.8-5V18H12Z" fill="#231f20"/></svg>
+    <nav aria-label="Secciones">
+      <a href="#principios">Principios</a><a href="#logo">Logo</a><a href="#color">Color</a><a href="#tipografia">Tipografía</a>
+      <a href="#forma">Forma</a><a href="#componentes">Componentes</a><a href="#graficos">Gráficos</a><a href="#voz">Voz</a><a href="#tokens">Tokens</a>
+    </nav>
+    <button class="toggle" id="theme" type="button" aria-pressed="false">Modo oscuro</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="eyebrow label-caps">Gerencia de Innovación · Prontopaga</div>
+    <h1>Manual de marca<br>WWP Gestor de Proyectos</h1>
+    <p>Paleta, tipografía, formas, componentes y tono de la plataforma. Todo lo que ves en esta página usa los mismos valores que la app (<code>src/styles.css</code>), así que sirve de referencia para presentaciones, correos, piezas internas y nuevas pantallas.</p>
+    <div class="meta">
+      <span class="pill t-muted">Versión noviembre 2026</span>
+      <span class="pill t-taupe">Modo claro y oscuro</span>
+      <span class="pill t-green"><span class="dot"></span>Contraste AA verificado</span>
+    </div>
+  </header>
+
+  <section class="block" id="principios">
+    <div class="sec-head"><span class="idx">01</span><h2>Principios</h2><p>El lenguaje visual sale del deck oficial de WWP y comparte el acento con el sitio de AI Champions.</p></div>
+    <div class="grid g3">
+      <div class="panel"><div class="label-caps muted">Cálida y sobria</div><p style="margin-top:10px">Blanco cálido, carbón, piedra y arena son los únicos colores de marca. Nada de azules corporativos ni degradados saturados.</p></div>
+      <div class="panel"><div class="label-caps muted">Un solo acento</div><p style="margin-top:10px">El terracota marca la acción principal, el ítem activo y los detalles editoriales. Si todo es terracota, nada lo es.</p></div>
+      <div class="panel"><div class="label-caps muted">Estados contenidos</div><p style="margin-top:10px">Verde, ámbar y rojo se reservan para la salud del proyecto y siempre van con texto o punto, nunca solo color.</p></div>
+      <div class="panel"><div class="label-caps muted">Editorial</div><p style="margin-top:10px">Títulos grandes con interletrado negativo, etiquetas en mayúsculas espaciadas y números en monoespaciada.</p></div>
+      <div class="panel"><div class="label-caps muted">Accesible por defecto</div><p style="margin-top:10px">Texto con contraste 4.5:1 o más, foco visible, navegación por teclado y animaciones que se apagan con «reducir movimiento».</p></div>
+      <div class="panel"><div class="label-caps muted">Blanda</div><p style="margin-top:10px">Esquinas muy redondeadas, bordes finos y sombras amplias y casi transparentes en lugar de líneas duras.</p></div>
+    </div>
+  </section>
+
+  <section class="block" id="logo">
+    <div class="sec-head"><span class="idx">02</span><h2>Logo</h2><p>Isotipo «W» dentro de un cuadrado redondeado (radio 16 sobre 64). Archivo: <code>public/wwp-mark.svg</code>.</p></div>
+    <div class="grid g3">
+      <div>
+        <div class="logo-box" style="background:#f5f5f3;border-color:#ddd9d2">
+          <svg width="96" height="96" viewBox="0 0 64 64" role="img" aria-label="Isotipo WWP sobre fondo claro"><rect width="64" height="64" rx="16" fill="#231f20"/><path d="M12 18v17.5c0 7.2 3.9 11.2 10.2 11.2 4.2 0 7.2-1.9 9-5.4 1.8 3.5 4.8 5.4 9 5.4C47 46.7 52 42.1 52 34V18h-8.2v16.2c0 3.3-1.4 5-3.8 5s-3.8-1.7-3.8-5V18H28v16.2c0 3.3-1.4 5-3.8 5s-3.8-1.7-3.8-5V18H12Z" fill="#f5f5f3"/></svg>
+        </div>
+        <p class="muted" style="font-size:.8125rem;margin-top:8px">Principal: carbón <code>#231f20</code> con W en blanco cálido.</p>
+      </div>
+      <div>
+        <div class="logo-box" style="background:#141312;border-color:#2f2b2a">
+          <svg width="96" height="96" viewBox="0 0 64 64" role="img" aria-label="Isotipo WWP invertido sobre fondo oscuro"><rect width="64" height="64" rx="16" fill="#f5f5f3"/><path d="M12 18v17.5c0 7.2 3.9 11.2 10.2 11.2 4.2 0 7.2-1.9 9-5.4 1.8 3.5 4.8 5.4 9 5.4C47 46.7 52 42.1 52 34V18h-8.2v16.2c0 3.3-1.4 5-3.8 5s-3.8-1.7-3.8-5V18H12Z" fill="#231f20"/></svg>
+        </div>
+        <p class="muted" style="font-size:.8125rem;margin-top:8px">Invertido: sobre tinta <code>#141312</code> o fotos oscuras.</p>
+      </div>
+      <div class="do">
+        <h4>Uso correcto</h4>
+        <ul>
+          <li>Espacio libre alrededor de al menos ¼ del ancho del isotipo.</li>
+          <li>Tamaño mínimo: 24 px en pantalla.</li>
+          <li>Solo en carbón o blanco cálido.</li>
+        </ul>
+        <h4 style="margin-top:14px;color:var(--health-red)">Evitar</h4>
+        <ul>
+          <li>Recolorearlo en terracota u otros tonos.</li>
+          <li>Deformarlo, rotarlo o agregarle sombras.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="color">
+    <div class="sec-head"><span class="idx">03</span><h2>Color</h2><p>Hacé clic en cualquier código para copiarlo. Las cifras sobre cada muestra son el contraste del texto que lleva encima. Cambiá a modo oscuro arriba para ver la variante.</p></div>
+
+    <h3 class="sub">Marca</h3>
+    <div class="grid g4" data-swatches='[
+      ["Carbón","--brand-carbon","Texto e isotipo (--primary, --foreground en claro)"],
+      ["Blanco cálido","--brand-white","Fondo de página (--background en claro)"],
+      ["Terracota","--terracotta","Acción principal, ítem activo, acentos"],
+      ["Arena","--sand","Selección, realces, hover suave"],
+      ["Piedra","--brand-stone","Superficies secundarias (--surface en claro)"],
+      ["Tinta","--ink","Barra de navegación"]
+    ]' data-large="1"></div>
+
+    <h3 class="sub">Neutros de interfaz</h3>
+    <div class="grid g4" data-swatches='[
+      ["Tarjeta","--card","Paneles, diálogos, menús"],
+      ["Secundario","--secondary","Botón secundario"],
+      ["Atenuado","--muted","Fondos de chips y barras"],
+      ["Texto atenuado","--muted-foreground","Descripciones, etiquetas"],
+      ["Topo","--taupe","Estado «En curso»"],
+      ["Topo suave","--taupe-soft","Fondo de chip topo"],
+      ["Borde","--border","Bordes de tarjetas"],
+      ["Borde fuerte","--border-strong","Separadores, hover de borde"],
+      ["Campo","--input","Bordes de campos"],
+      ["Foco","--ring","Anillo de foco"],
+      ["Texto terracota","--terracotta-text","Enlaces y etiquetas en terracota"]
+    ]'></div>
+
+    <h3 class="sub">Acentos editoriales (uso puntual)</h3>
+    <div class="grid g4" data-swatches='[
+      ["Oliva","--olive","Ilustraciones y portadas"],
+      ["Ocre","--ochre","Ilustraciones y portadas"],
+      ["Pizarra","--slate","Ilustraciones y portadas"],
+      ["Malva","--mauve","Ilustraciones y portadas"]
+    ]'></div>
+
+    <h3 class="sub">Estados (salud del proyecto)</h3>
+    <div class="grid g4" data-swatches='[
+      ["Verde","--health-green","En plazo, aprobado, finalizado"],
+      ["Verde suave","--health-green-soft","Fondo del chip verde"],
+      ["Ámbar","--health-amber","En riesgo, en revisión"],
+      ["Ámbar suave","--health-amber-soft","Fondo del chip ámbar"],
+      ["Rojo","--health-red","Atrasado, bloqueado, rechazado"],
+      ["Rojo suave","--health-red-soft","Fondo del chip rojo"],
+      ["Destructivo","--destructive","Eliminar, acciones irreversibles"]
+    ]'></div>
+    <div class="row" style="margin-top:16px">
+      <span class="pill t-green"><span class="dot"></span>Green</span>
+      <span class="pill t-amber"><span class="dot"></span>Yellow</span>
+      <span class="pill t-red"><span class="dot"></span>Red</span>
+      <span class="muted" style="font-size:.8125rem">Siempre con punto y texto: el color nunca va solo.</span>
+    </div>
+  </section>
+
+  <section class="block" id="tipografia">
+    <div class="sec-head"><span class="idx">04</span><h2>Tipografía</h2><p>Una sola familia sans para títulos y texto, y una monoespaciada para cifras y códigos.</p></div>
+    <div class="grid g2">
+      <div class="panel">
+        <div class="label-caps muted">Títulos y texto</div>
+        <div class="specimen" style="margin-top:18px">Aa</div>
+        <p style="margin-top:16px;font-weight:600;font-size:1.125rem">Neue Montreal → Inter Tight</p>
+        <p class="muted" style="font-size:.875rem;margin-top:6px">Neue Montreal es la tipografía del deck (licencia comercial). Donde no está instalada, la app usa <strong>Inter Tight</strong> (Google Fonts, gratuita), en pesos 400, 500, 600 y 700. En correos: Arial.</p>
+      </div>
+      <div class="panel">
+        <div class="label-caps muted">Cifras y código</div>
+        <div class="specimen mono" style="margin-top:18px;letter-spacing:-0.04em">3,75</div>
+        <p style="margin-top:16px;font-weight:600;font-size:1.125rem">IBM Plex Mono</p>
+        <p class="muted" style="font-size:.875rem;margin-top:6px">Pesos 400 y 500, con cifras tabulares para que las columnas de números queden alineadas. Clase <code>num</code>.</p>
+      </div>
+    </div>
+
+    <h3 class="sub">Escala</h3>
+    <div class="panel">
+      <div class="type-row" style="border-top:0"><span class="spec">Título de página<br>56 px · 600 · −0.055em · alto 0.96</span><span style="font-size:clamp(2.25rem,6vw,3.5rem);font-weight:600;letter-spacing:-0.055em;line-height:.96">Portafolio 2026</span></div>
+      <div class="type-row"><span class="spec">Índice editorial<br>44–88 px · 600 · −0.08em</span><span style="font-size:clamp(2.75rem,5vw,5.5rem);font-weight:600;letter-spacing:-0.08em;line-height:.8">01</span></div>
+      <div class="type-row"><span class="spec">Cifra KPI<br>36 px · 600 · −0.06em</span><span style="font-size:2.25rem;font-weight:600;letter-spacing:-0.06em;line-height:1">87%</span></div>
+      <div class="type-row"><span class="spec">Título de sección<br>14 px · 600 · −0.01em</span><span style="font-size:.875rem;font-weight:600;letter-spacing:-0.01em">● Proyectos en riesgo</span></div>
+      <div class="type-row"><span class="spec">Cuerpo<br>14–16 px · 400 · alto 1.6</span><span style="font-size:1rem;line-height:1.6">El comité evalúa cada iniciativa con siete criterios ponderados y una recomendación final.</span></div>
+      <div class="type-row"><span class="spec">Etiqueta<br>11 px · 600 · +0.14em · mayúsculas</span><span class="label-caps" style="color:var(--terracotta-text)">Gerencia de Innovación</span></div>
+      <div class="type-row"><span class="spec">Nota / ayuda<br>12 px · 400 · texto atenuado</span><span class="muted" style="font-size:.75rem">Último envío: 03/11/26 10:42 a 24 personas.</span></div>
+      <div class="type-row"><span class="spec">Cifra tabular<br>IBM Plex Mono · 400</span><span class="num">1.250.000 · 3,75 · 75,0%</span></div>
+    </div>
+  </section>
+
+  <section class="block" id="forma">
+    <div class="sec-head"><span class="idx">05</span><h2>Forma, espacio y movimiento</h2><p>Radio base de 16 px, del que salen todos los demás.</p></div>
+    <h3 class="sub">Radios</h3>
+    <div class="radii">
+      <div style="border-radius:12px">sm · 12</div>
+      <div style="border-radius:14px">md · 14</div>
+      <div style="border-radius:16px">lg · 16</div>
+      <div style="border-radius:20px">xl · 20<br>botones</div>
+      <div style="border-radius:26px">2xl · 26</div>
+      <div style="border-radius:34px">3xl · 34<br>paneles</div>
+      <div style="border-radius:999px;place-items:center">full<br>chips</div>
+    </div>
+    <h3 class="sub">Sombras</h3>
+    <div class="grid g3">
+      <div><div class="shadow-demo" style="box-shadow:var(--shadow-panel)">Panel</div><p class="mono muted" style="font-size:.75rem;margin-top:8px">0 18px 50px rgb(35 31 32 / 4.5%)</p></div>
+      <div><div class="shadow-demo" style="box-shadow:var(--shadow-cta);border-radius:20px;background:var(--terracotta);color:#fff;border:0">Botón principal</div><p class="mono muted" style="font-size:.75rem;margin-top:8px">0 10px 24px rgb(169 83 58 / 28%)</p></div>
+      <div><div class="shadow-demo" style="background:radial-gradient(circle at 92% 0%, rgb(169 83 58 / 14%), transparent 70%), radial-gradient(circle at 88% 2%, rgb(217 208 192 / 40%), transparent 60%), var(--background)">Fondo de página</div><p class="mono muted" style="font-size:.75rem;margin-top:8px">Dos halos suaves (terracota y arena) arriba a la derecha</p></div>
+    </div>
+    <h3 class="sub">Espaciado y movimiento</h3>
+    <div class="tbl panel" style="padding:8px 12px">
+      <table>
+        <tr><th>Elemento</th><th>Valor</th></tr>
+        <tr><td>Relleno de panel</td><td class="num">20 px móvil · 24 px desde 640 px</td></tr>
+        <tr><td>Separación entre tarjetas</td><td class="num">16 px</td></tr>
+        <tr><td>Margen lateral mínimo</td><td class="num">16 px (ancho mínimo de la app: 320 px)</td></tr>
+        <tr><td>Alto de botón y campo</td><td class="num">40 px · chico 36 · grande 48</td></tr>
+        <tr><td>Entrada de página</td><td class="num">420 ms · cubic-bezier(0.22, 1, 0.36, 1) · sube 8 px</td></tr>
+        <tr><td>Hover del botón principal</td><td class="num">sube 2 px</td></tr>
+        <tr><td>Foco</td><td class="num">contorno 2 px color foco, separación 3 px</td></tr>
+        <tr><td>Reducir movimiento</td><td>Todas las animaciones se desactivan</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section class="block" id="componentes">
+    <div class="sec-head"><span class="idx">06</span><h2>Componentes</h2><p>Los bloques que más se repiten en la app. Íconos: <a href="https://lucide.dev" target="_blank" rel="noopener">Lucide</a>, 16 px en botones, trazo 2.</p></div>
+
+    <h3 class="sub">Botones</h3>
+    <div class="panel">
+      <div class="row">
+        <button class="btn btn-default"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Nuevo proyecto</button>
+        <button class="btn btn-outline">Exportar</button>
+        <button class="btn btn-secondary">Secundario</button>
+        <button class="btn btn-ghost">Fantasma</button>
+        <button class="btn btn-destructive">Eliminar</button>
+        <button class="btn btn-link">Ver detalle</button>
+      </div>
+      <div class="row" style="margin-top:14px">
+        <button class="btn btn-default btn-sm">Chico</button>
+        <button class="btn btn-default">Normal</button>
+        <button class="btn btn-default btn-lg">Grande</button>
+      </div>
+      <p class="muted" style="font-size:.8125rem;margin-top:16px">Una sola acción terracota por vista. El resto, contorno o fantasma. Texto blanco sobre terracota: contraste 5:1.</p>
+    </div>
+
+    <h3 class="sub">Chips de estado</h3>
+    <div class="panel">
+      <div class="row">
+        <span class="pill t-muted">Pendiente</span>
+        <span class="pill t-taupe">En curso</span>
+        <span class="pill t-amber">En revisión</span>
+        <span class="pill t-red">Bloqueada</span>
+        <span class="pill t-green">Finalizada</span>
+        <span class="pill t-cancel">Cancelada</span>
+      </div>
+    </div>
+
+    <h3 class="sub">Encabezado, KPI y progreso</h3>
+    <div class="grid g2">
+      <div class="panel">
+        <div class="eyebrow label-caps" style="margin-bottom:12px">Portafolio</div>
+        <div style="font-size:2.25rem;font-weight:600;letter-spacing:-0.055em;line-height:.96">Tablero ejecutivo</div>
+        <p class="muted" style="margin-top:12px;font-size:.875rem">Raya terracota + etiqueta en mayúsculas sobre el título de cada página.</p>
+        <div style="margin-top:20px;display:grid;gap:8px">
+          <div class="row" style="justify-content:space-between;font-size:.8125rem"><span>Avance</span><span class="num">62%</span></div>
+          <div class="bar"><i style="width:62%"></i><b style="left:70%"></b></div>
+          <span class="muted" style="font-size:.75rem">La marca vertical indica el avance esperado.</span>
+        </div>
+      </div>
+      <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(min(100%,150px),1fr))">
+        <div class="kpi"><div class="label-caps muted" style="padding-right:20px">Proyectos activos</div><div class="v">14</div><div class="s">3 en riesgo</div></div>
+        <div class="kpi"><div class="label-caps muted" style="padding-right:20px">A tiempo</div><div class="v" style="color:var(--health-green)">87%</div><div class="s">+4 pts vs. mes anterior</div></div>
+      </div>
+    </div>
+
+    <h3 class="sub">Campos y navegación</h3>
+    <div class="grid g2">
+      <div class="panel" style="display:grid;gap:14px">
+        <label class="field">Nombre del proyecto<input value="NDA Express"></label>
+        <label class="field">Área<select><option>Innovación</option><option>Tecnología</option></select></label>
+      </div>
+      <div class="nav-demo" aria-label="Ejemplo de navegación">
+        <span class="on">● Inicio</span><span>Proyectos</span><span>Comité de innovación</span><span>Reportes</span>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="graficos">
+    <div class="sec-head"><span class="idx">07</span><h2>Gráficos</h2><p>Paleta propia para datos, validada para daltonismo y contraste en ambos modos. No reutilizar los colores de estado como series.</p></div>
+    <h3 class="sub">Comparación (dos series)</h3>
+    <div class="grid g4" data-swatches='[
+      ["Promedio / serie principal","--viz-average","Promedio del comité"],
+      ["Comparación","--viz-member","Evaluador o segunda serie"]
+    ]'></div>
+    <h3 class="sub">Escala divergente 1 a 5</h3>
+    <div class="grid g4" data-swatches='[
+      ["Nota 1","--viz-n1","Muy bajo"],
+      ["Nota 2","--viz-n2","Bajo"],
+      ["Nota 3","--viz-n3","Neutro (gris)"],
+      ["Nota 4","--viz-n4","Alto"],
+      ["Nota 5","--viz-n5","Muy alto"]
+    ]'></div>
+    <div class="panel" style="margin-top:16px;display:grid;gap:10px">
+      <div style="display:flex;height:28px;gap:2px;border-radius:8px;overflow:hidden">
+        <i style="flex:1;background:var(--viz-n1)"></i><i style="flex:2;background:var(--viz-n2)"></i><i style="flex:3;background:var(--viz-n3)"></i><i style="flex:3;background:var(--viz-n4)"></i><i style="flex:1;background:var(--viz-n5)"></i>
+      </div>
+      <p class="muted" style="font-size:.8125rem">Reglas: líneas de 2 px, puntos de 8 px con aro del color de fondo, grilla muy tenue, separación de 2 px entre segmentos, leyenda solo con dos o más series, valor al pasar el mouse y vista de tabla.</p>
+    </div>
+    <h3 class="sub">Neutros para gráficos simples</h3>
+    <div class="grid g4" data-swatches='[
+      ["Chart 1","--chart-1",""],["Chart 2","--chart-2",""],["Chart 3","--chart-3",""],["Chart 4","--chart-4",""],["Chart 5","--chart-5",""]
+    ]'></div>
+  </section>
+
+  <section class="block" id="voz">
+    <div class="sec-head"><span class="idx">08</span><h2>Voz y tono</h2><p>Español rioplatense, claro y directo, pensado para equipos que leen rápido.</p></div>
+    <div class="grid g2">
+      <div class="do"><h4>Así sí</h4><ul>
+        <li>Voseo: «Podés», «Marcá», «Elegí los destinatarios».</li>
+        <li>Mayúscula solo en la primera palabra: «Comité de innovación».</li>
+        <li>Comillas latinas para nombres: «Migración Automation n8n».</li>
+        <li>Números en formato argentino: 3,75 · 1.250.000 · 75,0%.</li>
+        <li>Fechas cortas: 03/11/26. Fecha y hora: 03/11/26 10:42.</li>
+        <li>Botones con verbo: «Publicar», «Enviar por correo», «Cerrar evaluación».</li>
+        <li>Errores que dicen qué hacer: «Completá las siete notas para enviar».</li>
+      </ul></div>
+      <div class="dont"><h4>Así no</h4><ul>
+        <li>Tuteo o «usted»: «Puedes», «Seleccione».</li>
+        <li>Títulos En Mayúscula Cada Palabra.</li>
+        <li>Botones genéricos: «OK», «Aceptar», «Submit».</li>
+        <li>Anglicismos cuando hay palabra en español: «deadline», «owner».</li>
+        <li>Mensajes de error técnicos o culpando a la persona.</li>
+        <li>Signos de exclamación y emojis en la interfaz.</li>
+      </ul></div>
+    </div>
+  </section>
+
+  <section class="block" id="tokens">
+    <div class="sec-head"><span class="idx">09</span><h2>Tokens</h2><p>Para desarrollo: en la app se usan como clases de Tailwind (<code>bg-terracotta</code>, <code>text-muted-foreground</code>, <code>rounded-3xl</code>). Fuente única: <code>src/styles.css</code>.</p></div>
+    <div class="panel tbl" style="padding:8px 12px">
+      <table id="token-table">
+        <thead><tr><th>Variable</th><th>Claro</th><th>Oscuro</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>WWP Gestor de Proyectos · Gerencia de Innovación, Prontopaga · Generado desde el código de la app el 03/11/2026.</footer>
+</div>
+
+<script>
+(() => {
+  const root = document.documentElement;
+  const btn = document.getElementById("theme");
+  let saved = null;
+  try { saved = localStorage.getItem("wwp-brand-theme"); } catch {}
+  const prefersDark = window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches;
+  btn.addEventListener("click", () => {
+    const dark = !root.classList.contains("dark");
+    setTheme(dark);
+    try { localStorage.setItem("wwp-brand-theme", dark ? "dark" : "light"); } catch {}
+  });
+  function setTheme(dark) {
+    root.classList.toggle("dark", dark);
+    btn.textContent = dark ? "Modo claro" : "Modo oscuro";
+    btn.setAttribute("aria-pressed", String(dark));
+    paint();
+  }
+
+  // Contraste WCAG de cada muestra contra su mejor texto (carbón o blanco).
+  const lum = (rgb) => {
+    const [r, g, b] = rgb.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; });
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  };
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+  const toRgb = (value) => {
+    const probe = document.createElement("i");
+    probe.style.color = value; document.body.appendChild(probe);
+    const parts = getComputedStyle(probe).color.match(/[\d.]+/g).map(Number); probe.remove();
+    return parts;
+  };
+  const hex = (rgb) => rgb.length > 3 && rgb[3] < 1
+    ? `rgb(${rgb.slice(0, 3).join(" ")} / ${Math.round(rgb[3] * 100)}%)`
+    : "#" + rgb.slice(0, 3).map((v) => Math.round(v).toString(16).padStart(2, "0")).join("");
+  const read = (name) => getComputedStyle(root).getPropertyValue(name).trim();
+
+  const groups = [...document.querySelectorAll("[data-swatches]")];
+  for (const g of groups) {
+    const large = g.dataset.large;
+    for (const [name, token, use] of JSON.parse(g.dataset.swatches)) {
+      const el = document.createElement("div");
+      el.className = "swatch" + (large ? " lg" : "");
+      el.innerHTML = `<div class="chip" style="background:var(${token})"><span class="t">Aa</span><span class="ratio"></span></div>
+        <div class="info"><span class="name"></span><button class="copy-btn hex" type="button"></button><span class="hex">${token}</span>${use ? `<span class="use"></span>` : ""}</div>`;
+      el.querySelector(".name").textContent = name;
+      if (use) el.querySelector(".use").textContent = use;
+      el.dataset.token = token;
+      g.appendChild(el);
+    }
+  }
+  setTheme(saved ? saved === "dark" : prefersDark);
+
+  document.addEventListener("click", async (e) => {
+    const b = e.target.closest(".copy-btn");
+    if (!b) return;
+    const text = b.textContent;
+    try { await navigator.clipboard.writeText(text); b.textContent = "Copiado"; setTimeout(() => (b.textContent = text), 900); } catch {}
+  });
+
+  function paint() {
+    const dark = [35, 31, 32], white = [255, 255, 255];
+    document.querySelectorAll(".swatch").forEach((el) => {
+      const rgb = toRgb(read(el.dataset.token));
+      const onCard = toRgb(read("--card"));
+      // Mezcla los colores con transparencia sobre la tarjeta para medir lo que se ve.
+      const a = rgb[3] ?? 1;
+      const seen = rgb.slice(0, 3).map((v, i) => v * a + onCard[i] * (1 - a));
+      const best = ratio(seen, dark) >= ratio(seen, white) ? dark : white;
+      el.querySelector(".t").style.color = `rgb(${best.join(",")})`;
+      el.querySelector(".ratio").textContent = ratio(seen, best).toFixed(1) + ":1";
+      el.querySelector(".copy-btn").textContent = hex(rgb);
+    });
+    renderTokens();
+  }
+
+  const TOKENS = ["--background","--foreground","--surface","--card","--primary","--primary-foreground","--secondary","--muted","--muted-foreground","--accent","--taupe","--taupe-soft","--sand","--terracotta","--terracotta-text","--olive","--ochre","--slate","--mauve","--ink","--destructive","--border","--border-strong","--input","--ring","--health-green","--health-green-soft","--health-amber","--health-amber-soft","--health-red","--health-red-soft","--sidebar","--sidebar-primary","--sidebar-accent","--viz-average","--viz-member","--viz-n1","--viz-n2","--viz-n3","--viz-n4","--viz-n5"];
+  let base = null;
+  function renderTokens() {
+    if (!base) {
+      const wasDark = root.classList.contains("dark");
+      root.classList.remove("dark");
+      const light = Object.fromEntries(TOKENS.map((t) => [t, read(t)]));
+      root.classList.add("dark");
+      const dk = Object.fromEntries(TOKENS.map((t) => [t, read(t)]));
+      root.classList.toggle("dark", wasDark);
+      base = { light, dk };
+    }
+    const body = document.querySelector("#token-table tbody");
+    body.innerHTML = "";
+    for (const t of TOKENS) {
+      const tr = document.createElement("tr");
+      const cell = (v) => `<td><span class="row" style="gap:8px;flex-wrap:nowrap"><span aria-hidden="true" style="width:14px;height:14px;border-radius:4px;flex-shrink:0;border:1px solid var(--border);background:${v}"></span><span class="num" style="font-size:.8125rem">${v}</span></span></td>`;
+      const same = base.light[t] === base.dk[t];
+      tr.innerHTML = `<td><code>${t}</code></td>${cell(base.light[t])}${same ? `<td class="muted" style="font-size:.8125rem">igual</td>` : cell(base.dk[t])}`;
+      body.appendChild(tr);
+    }
+  }
+})();
+</script>
+</body>
+</html>

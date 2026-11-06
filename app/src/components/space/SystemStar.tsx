@@ -73,12 +73,12 @@ export const SystemStar: React.FC<SystemStarProps> = ({
           zIndexRange={Z_LAYERS.LABELS_3D}
           style={{ pointerEvents: 'none' }}
         >
-          <div data-sector-label="true" className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-950/85 border border-slate-700/80 backdrop-blur-md shadow-md whitespace-nowrap">
+          <div data-sector-label="true" className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-card/90 border border-border backdrop-blur-md shadow-panel whitespace-nowrap">
             <span
               className="w-1.5 h-1.5 rounded-full"
               style={{ backgroundColor: system.color }}
             />
-            <span className="font-display font-bold text-[11px] uppercase tracking-wider text-slate-200">
+            <span className="font-sans font-semibold text-[11px] uppercase tracking-wide text-foreground">
               {system.name}
             </span>
           </div>

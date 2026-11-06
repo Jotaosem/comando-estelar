@@ -57,14 +57,14 @@ export const OrbitStation: React.FC<OrbitStationProps> = ({
   const isFutura = etapa.estado === 'Pendiente' && !isActual;
 
   const stationColor = isBloqueada
-    ? '#ff3366'
+    ? '#ee8f88' // dark --health-red
     : isActual
-    ? '#00f2fe'
+    ? '#e08c6c' // --terracotta-text
     : isCompletada
-    ? '#10e396'
+    ? '#6fbf98' // dark --health-green
     : isReabierta
-    ? '#f59e0b'
-    : '#94a3b8'; // gris claro con borde visible
+    ? '#e3b25f' // dark --health-amber
+    : '#afa39c'; // --taupe (Pendiente con borde visible)
 
   const fechaTexto = isCompletada
     ? `Término real: ${etapa.fin_real || etapa.fin_plan}`
@@ -192,14 +192,14 @@ export const OrbitStation: React.FC<OrbitStationProps> = ({
       >
         <div data-orbit-label="true" className="flex flex-col items-center pointer-events-none select-none">
           {isActual ? (
-            <div className="h-7 px-3 rounded-full bg-[#030d22]/95 border border-cyan-400 text-cyan-200 text-xs font-display font-bold shadow-[0_0_15px_rgba(0,242,254,0.35)] flex items-center gap-1.5 whitespace-nowrap">
-              <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping shrink-0" />
+            <div className="h-7 px-3 rounded-full bg-card/95 border border-terracotta text-foreground text-xs font-sans font-bold shadow-panel flex items-center gap-1.5 whitespace-nowrap">
+              <span className="w-2 h-2 rounded-full bg-terracotta animate-ping shrink-0" />
               <span>{index + 1} · {nombreCorto} · Estás aquí</span>
             </div>
           ) : (
             <div
               style={{ fontSize: `${screenData ? screenData.fontSize : 11}px` }}
-              className="px-2 py-0.5 rounded-md bg-[#040817]/85 border border-slate-700/60 text-slate-200 font-mono whitespace-nowrap shadow-md flex items-center gap-1"
+              className="px-2.5 py-1 rounded-full bg-card/85 border border-border text-foreground font-mono whitespace-nowrap shadow-panel flex items-center gap-1"
             >
               <span>{index + 1} · {nombreCorto}{statusIcon}</span>
             </div>
@@ -613,9 +613,9 @@ export const OrbitStationsRing: React.FC<{
 
   return (
     <group ref={groupRef} rotation={[ (22 * Math.PI) / 180, 0, 0 ]}>
-      <primitive object={new THREE.Line(fullGeometry, new THREE.LineBasicMaterial({ color: '#334155', transparent: true, opacity: 0.3 }))} />
+      <primitive object={new THREE.Line(fullGeometry, new THREE.LineBasicMaterial({ color: '#b7b0a9', transparent: true, opacity: 0.35 }))} />
       {curvePoints.length > 1 && (
-        <primitive object={new THREE.Line(activeGeometry, new THREE.LineBasicMaterial({ color: '#00f2fe', linewidth: 3, transparent: true, opacity: 0.9 }))} />
+        <primitive object={new THREE.Line(activeGeometry, new THREE.LineBasicMaterial({ color: '#e08c6c', linewidth: 3, transparent: true, opacity: 0.85 }))} />
       )}
       {etapas.map((etapa, idx) => (
         <OrbitStation

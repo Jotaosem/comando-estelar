@@ -47,7 +47,6 @@ export const GalaxyMinimap: React.FC<GalaxyMinimapProps> = ({
     onPanTo(target3DX, target3DZ);
   };
 
-  // Frustum de la cámara
   const camPos = camera ? camera.position : new THREE.Vector3(0, 30, 40);
   const camCoords = toMapCoords(camPos.x, camPos.z);
 
@@ -55,7 +54,7 @@ export const GalaxyMinimap: React.FC<GalaxyMinimapProps> = ({
     <div
       onClick={handleMinimapPointer}
       onPointerDown={handleMinimapPointer}
-      className="hidden md:block absolute bottom-[56px] left-4 w-40 h-[100px] rounded-xl hud-glass border border-cyan-500/30 bg-[#020510]/95 backdrop-blur-xl p-1 shadow-2xl cursor-crosshair z-30 pointer-events-auto overflow-hidden animate-in fade-in select-none"
+      className="hidden md:block absolute bottom-[56px] left-4 w-40 h-[100px] rounded-2xl border border-border bg-card/90 backdrop-blur-xl p-1 shadow-panel cursor-crosshair z-30 pointer-events-auto overflow-hidden animate-in fade-in select-none"
       title="Minimapa Galáctico: haz clic o arrastra para moverte"
     >
       <div className="relative w-full h-full">
@@ -69,8 +68,8 @@ export const GalaxyMinimap: React.FC<GalaxyMinimapProps> = ({
               className="absolute w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none"
             >
               <span
-                className="w-full h-full block rounded-full shadow-[0_0_6px_currentColor]"
-                style={{ backgroundColor: sys.color, color: sys.color }}
+                className="w-full h-full block rounded-full"
+                style={{ backgroundColor: sys.color }}
               />
             </div>
           );
@@ -84,10 +83,10 @@ export const GalaxyMinimap: React.FC<GalaxyMinimapProps> = ({
             width: '36px',
             height: '24px',
           }}
-          className="absolute -translate-x-1/2 -translate-y-1/2 border border-cyan-400 bg-cyan-500/15 rounded pointer-events-none shadow-[0_0_8px_rgba(0,242,254,0.4)] transition-all duration-75"
+          className="absolute -translate-x-1/2 -translate-y-1/2 border-2 border-terracotta bg-terracotta/20 rounded pointer-events-none shadow-sm transition-all duration-75"
         />
 
-        <div className="absolute top-1 left-1.5 text-[8px] font-mono text-cyan-400 font-bold tracking-widest uppercase">
+        <div className="absolute top-1 left-1.5 text-[8px] font-mono text-terracotta font-bold tracking-widest uppercase">
           RADAR 2.5D
         </div>
       </div>
