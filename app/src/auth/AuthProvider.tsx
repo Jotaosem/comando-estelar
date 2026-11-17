@@ -49,20 +49,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     // Inicializar listener de Supabase Auth
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
         setIsDemo(false);
-        // Sincronizar usuarioActual con email del usuario autenticado
         const email = session.user.email?.toLowerCase() || '';
-        const rol = (session.user.app_metadata?.rol || 'Sin perfil') as any;
-        setUsuarioActual((prev) => ({
-          ...prev,
-          email,
-          nombre: session.user.user_metadata?.nombre || email.split('@')[0],
-          rol: prev.email === email ? prev.rol : rol,
-        }));
+        try {
+          const { data: dbUser } = await supabase
+            .from('usuario_rol')
+            .select('email, nombre, rol, area, activo')
+            .eq('email', email)
+            .eq('activo', true)
+            .maybeSingle();
+
+          if (dbUser) {
+            setUsuarioActual({
+              email: dbUser.email,
+              nombre: dbUser.nombre || session.user.user_metadata?.nombre || email.split('@')[0],
+              rol: dbUser.rol,
+              area: dbUser.area || undefined,
+            });
+          } else {
+            setUsuarioActual({
+              email,
+              nombre: session.user.user_metadata?.nombre || email.split('@')[0],
+              rol: 'Sin perfil',
+            });
+          }
+        } catch {
+          setUsuarioActual({
+            email,
+            nombre: session.user.user_metadata?.nombre || email.split('@')[0],
+            rol: 'Sin perfil',
+          });
+        }
       }
       setLoading(false);
     }).catch(() => {
@@ -71,17 +92,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
         setIsDemo(false);
         const email = session.user.email?.toLowerCase() || '';
-        setUsuarioActual((prev) => ({
-          ...prev,
-          email,
-          nombre: session.user.user_metadata?.nombre || email.split('@')[0],
-        }));
+        try {
+          const { data: dbUser } = await supabase
+            .from('usuario_rol')
+            .select('email, nombre, rol, area, activo')
+            .eq('email', email)
+            .eq('activo', true)
+            .maybeSingle();
+
+          if (dbUser) {
+            setUsuarioActual({
+              email: dbUser.email,
+              nombre: dbUser.nombre || session.user.user_metadata?.nombre || email.split('@')[0],
+              rol: dbUser.rol,
+              area: dbUser.area || undefined,
+            });
+          } else {
+            setUsuarioActual({
+              email,
+              nombre: session.user.user_metadata?.nombre || email.split('@')[0],
+              rol: 'Sin perfil',
+            });
+          }
+        } catch {
+          setUsuarioActual({
+            email,
+            nombre: session.user.user_metadata?.nombre || email.split('@')[0],
+            rol: 'Sin perfil',
+          });
+        }
       }
       setLoading(false);
     });

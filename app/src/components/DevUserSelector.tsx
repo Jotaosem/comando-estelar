@@ -8,6 +8,16 @@ export interface UsuarioPrueba {
   area?: string;
 }
 
+export function obtenerRolDisplay(rol?: string | null): string {
+  if (!rol) return 'Sin perfil';
+  if (rol === 'Gerencia') return 'Gerencia general';
+  if (rol === 'Admin') return 'Admin';
+  if (rol === 'Gerente de área') return 'Gerente de área';
+  if (rol === 'Solicitante') return 'Solicitante';
+  if (rol === 'Ejecutor') return 'Ejecutor';
+  return rol;
+}
+
 export const USUARIOS_SEED: UsuarioPrueba[] = [
   {
     email: 'admin@prontopaga.com',
@@ -54,18 +64,44 @@ export const DevUserSelector: React.FC<DevUserSelectorProps> = ({
 }) => {
   const [desplegado, setDesplegado] = useState<boolean>(false);
 
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setDesplegado(!desplegado)}
-        className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-card hover:bg-surface border border-border text-xs text-foreground transition-all shadow-sm font-mono"
-        title="Cambiar perfil de acceso"
+  // El selector de usuario de prueba existe solo con DEV_AUTH en local
+  const isDevAuth = import.meta.env.DEV && (import.meta.env.VITE_DEV_AUTH === 'true' || import.meta.env.VITE_MODO_DEMO === 'true');
+
+  if (!isDevAuth) {
+    return (
+      <div
+        className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-card border border-border text-xs text-foreground font-mono shadow-sm"
+        title={`Usuario: ${usuarioActual.email} · Rol: ${obtenerRolDisplay(usuarioActual.rol)}`}
       >
         <div className="w-5 h-5 rounded-full bg-surface border border-border flex items-center justify-center text-terracotta">
           <Shield className="w-3 h-3" />
         </div>
         <div className="text-left hidden sm:block">
-          <div className="font-semibold text-terracotta leading-none">{usuarioActual.rol}</div>
+          <div className="font-semibold text-terracotta leading-none">
+            {obtenerRolDisplay(usuarioActual.rol)}
+          </div>
+          <div className="text-[10px] text-muted-foreground truncate max-w-[140px]">
+            {usuarioActual.nombre}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setDesplegado(!desplegado)}
+        className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-card hover:bg-surface border border-border text-xs text-foreground transition-all shadow-sm font-mono"
+        title="Cambiar perfil de acceso (DEV_AUTH)"
+      >
+        <div className="w-5 h-5 rounded-full bg-surface border border-border flex items-center justify-center text-terracotta">
+          <Shield className="w-3 h-3" />
+        </div>
+        <div className="text-left hidden sm:block">
+          <div className="font-semibold text-terracotta leading-none">
+            {obtenerRolDisplay(usuarioActual.rol)}
+          </div>
           <div className="text-[10px] text-muted-foreground truncate max-w-[140px]">
             {usuarioActual.nombre}
           </div>
@@ -81,7 +117,7 @@ export const DevUserSelector: React.FC<DevUserSelectorProps> = ({
           />
           <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-card border border-border shadow-panel z-50 overflow-hidden font-mono text-xs">
             <div className="px-3 py-2 bg-surface border-b border-border text-[10px] text-terracotta font-bold uppercase tracking-wider">
-              Conmutar Identificador Operativo
+              Conmutar Identificador Operativo (DEV)
             </div>
             <div className="p-1 space-y-0.5">
               {USUARIOS_SEED.map((u) => {
@@ -102,7 +138,7 @@ export const DevUserSelector: React.FC<DevUserSelectorProps> = ({
                     <div>
                       <div className="font-semibold">{u.nombre}</div>
                       <div className="text-[10px] text-muted-foreground">
-                        {u.rol} {u.area ? `• Área: ${u.area}` : ''}
+                        {obtenerRolDisplay(u.rol)} {u.area ? `• Área: ${u.area}` : ''}
                       </div>
                     </div>
                     {isSelected && (
