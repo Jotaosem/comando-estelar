@@ -147,9 +147,6 @@ export const EtapaDetalle: React.FC<EtapaDetalleProps> = ({
           <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5 font-mono">
             <User className="w-3.5 h-3.5 text-terracotta" />
             <span>Responsable: <strong className="text-foreground">{etapa.responsable_nombre || 'Sin asignar'}</strong></span>
-            {etapa.responsable_email && (
-              <span className="text-muted-foreground/70">({etapa.responsable_email})</span>
-            )}
           </p>
         </div>
 
@@ -251,7 +248,11 @@ export const EtapaDetalle: React.FC<EtapaDetalleProps> = ({
           )}
         </div>
 
-        {totalTareas === 0 ? (
+        {proyecto.nivel_detalle === 'N1' ? (
+          <div className="p-3 rounded-xl bg-surface text-muted-foreground text-xs font-mono italic border border-border">
+            Detalle por etapa no disponible en esta fuente.
+          </div>
+        ) : totalTareas === 0 ? (
           <div className="p-3 rounded-xl bg-surface text-muted-foreground text-xs font-mono italic border border-border">
             Sin tareas desglosadas en esta etapa.
           </div>

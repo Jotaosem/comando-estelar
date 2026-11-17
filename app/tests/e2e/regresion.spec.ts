@@ -399,4 +399,16 @@ test.describe('Regresión Visual y Funcional - Comando Estelar', () => {
     const errorMsg = page.locator('text=@prontopaga.com').first();
     await expect(errorMsg).toBeVisible();
   });
+
+  test('P3 · Perfiles y Detalle: Nivel de detalle N1/N3 y Datos al en barra superior', async ({ page }) => {
+    await page.goto('/');
+    // Indicador Datos al en header
+    const datosAl = page.locator('text=/Datos al \\d{2}:\\d{2}|Sincronizado/');
+    await expect(datosAl.first()).toBeVisible({ timeout: 10000 });
+
+    // Navegar al detalle de un proyecto
+    await page.goto('/proyectos/proy-1');
+    const nivelBadge = page.locator('text=/N[13] · /');
+    await expect(nivelBadge.first()).toBeVisible({ timeout: 10000 });
+  });
 });

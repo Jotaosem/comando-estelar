@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { DevUserSelector, type UsuarioPrueba } from './DevUserSelector';
 import { useAuth } from '../auth/AuthProvider';
+import { DatosAl } from './DatosAl';
 import {
   Radio,
   ClipboardList,
@@ -121,6 +122,7 @@ export const NavigationHeader: React.FC<{
         </div>
 
         <div className="flex items-center gap-3">
+          <DatosAl />
           <button
             onClick={toggleTheme}
             className="w-9 h-9 rounded-full border border-border bg-card flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-border-strong transition-colors"

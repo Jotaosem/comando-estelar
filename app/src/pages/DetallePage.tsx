@@ -66,22 +66,22 @@ export const DetallePage: React.FC<DetallePageProps> = ({ usuarioActual }) => {
     }, 50);
   };
 
-  if (!proyecto) {
+  if (!proyecto || proyecto.puede_ver_detalle === false) {
     return (
-      <div className="panel p-12 text-center max-w-lg mx-auto border border-health-red/30 my-16 bg-card">
-        <ShieldAlert className="w-16 h-16 text-health-red mx-auto mb-4" />
-        <h2 className="text-xl font-bold text-foreground uppercase tracking-tight">
-          Misión No Encontrada o Bloqueada
+      <div className="panel p-12 text-center max-w-lg mx-auto border border-health-amber/30 my-16 bg-card rounded-3xl shadow-panel space-y-4">
+        <ShieldAlert className="w-16 h-16 text-health-amber mx-auto" />
+        <h2 className="text-xl font-bold text-foreground tracking-tight">
+          Sin acceso al detalle. Pide acceso al administrador
         </h2>
-        <p className="text-sm font-mono text-muted-foreground mt-2 mb-6">
-          No tienes credenciales de visualización para este sector con el usuario actual ({usuarioActual?.email}).
+        <p className="text-xs font-mono text-muted-foreground leading-relaxed">
+          Tu perfil actual ({usuarioActual?.rol}) no cuenta con credenciales para inspeccionar las fases tácticas, bloqueos o tareas de este proyecto.
         </p>
         <Link
           to="/"
           className="inline-flex items-center gap-2 text-xs font-mono font-bold px-5 py-2.5 bg-terracotta hover:opacity-90 text-white rounded-xl transition-all shadow-cta"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Volver al Cuartel General</span>
+          <span>Volver a la Galaxia</span>
         </Link>
       </div>
     );
@@ -130,6 +130,9 @@ export const DetallePage: React.FC<DetallePageProps> = ({ usuarioActual }) => {
                 <span className={`px-2.5 py-0.5 rounded-full border text-xs font-mono font-bold uppercase ${semaforoColor}`}>
                   {proyecto.semaforo === 'rojo' ? 'Crítico' : proyecto.semaforo === 'amarillo' ? 'Alerta' : 'Nominal'}
                 </span>
+                <span className="px-2.5 py-0.5 rounded-full border border-border bg-surface text-xs font-mono font-semibold text-terracotta">
+                  {proyecto.nivel_detalle === 'N3' ? 'N3 · Detalle completo' : 'N1 · Seguimiento general'}
+                </span>
                 <span className="text-xs font-mono text-muted-foreground">
                   Callsign: <strong className="text-foreground">{proyecto.callsign || proyecto.id}</strong>
                 </span>
@@ -157,7 +160,7 @@ export const DetallePage: React.FC<DetallePageProps> = ({ usuarioActual }) => {
             {proyecto.descripcion || 'Sin descripción táctica registrada en Notion.'}
           </p>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-border font-mono text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-3 border-t border-border font-mono text-xs">
             <div>
               <span className="text-muted-foreground block text-[10px] uppercase">Estimada</span>
               <strong className="text-foreground">{proyecto.fecha_reproyectada || '—'}</strong>
@@ -170,6 +173,19 @@ export const DetallePage: React.FC<DetallePageProps> = ({ usuarioActual }) => {
               <span className="text-muted-foreground block text-[10px] uppercase">Responsable de comunicar</span>
               <strong className="text-foreground">{proyecto.responsable_comunicar_nombre}</strong>
             </div>
+            {proyecto.url_principal && (
+              <div>
+                <span className="text-muted-foreground block text-[10px] uppercase">Origen de datos</span>
+                <a
+                  href={proyecto.url_principal}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-terracotta hover:underline inline-flex items-center gap-1 font-semibold"
+                >
+                  Abrir en origen ↗
+                </a>
+              </div>
+            )}
           </div>
         </div>
 
@@ -233,6 +249,36 @@ export const DetallePage: React.FC<DetallePageProps> = ({ usuarioActual }) => {
             })}
           </div>
         </div>
+
+        {/* SECCIÓN N1: PRÓXIMO PASO, DECISIONES Y RIESGOS */}
+        {(proyecto.proximo_paso || proyecto.decisiones_pendientes || proyecto.riesgos_texto) && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {proyecto.proximo_paso && (
+              <div className="panel p-5 bg-card border border-border rounded-2xl shadow-panel space-y-1.5 font-mono text-xs">
+                <span className="text-[10px] text-terracotta uppercase font-bold tracking-wider block">
+                  Próximo Paso
+                </span>
+                <p className="font-sans text-foreground text-xs leading-relaxed">{proyecto.proximo_paso}</p>
+              </div>
+            )}
+            {proyecto.decisiones_pendientes && (
+              <div className="panel p-5 bg-card border border-border rounded-2xl shadow-panel space-y-1.5 font-mono text-xs">
+                <span className="text-[10px] text-health-amber uppercase font-bold tracking-wider block">
+                  Decisiones Pendientes
+                </span>
+                <p className="font-sans text-foreground text-xs leading-relaxed">{proyecto.decisiones_pendientes}</p>
+              </div>
+            )}
+            {proyecto.riesgos_texto && (
+              <div className="panel p-5 bg-card border border-border rounded-2xl shadow-panel space-y-1.5 font-mono text-xs">
+                <span className="text-[10px] text-health-red uppercase font-bold tracking-wider block">
+                  Riesgos y Bloqueos Declarados
+                </span>
+                <p className="font-sans text-foreground text-xs leading-relaxed">{proyecto.riesgos_texto}</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* DETALLE UNIFICADO DE ETAPA SELECCIONADA */}
         <div ref={detallePanelRef}>
