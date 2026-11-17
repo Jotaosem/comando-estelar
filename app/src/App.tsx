@@ -7,6 +7,7 @@ import { AvisosPage } from './pages/AvisosPage';
 import { EncuestaPage } from './pages/EncuestaPage';
 import { AdminPage } from './pages/AdminPage';
 import { LoginPage } from './pages/LoginPage';
+import { IrPage } from './pages/IrPage';
 import { PageLayout } from './layouts/PageLayout';
 import { AuthProvider, useAuth } from './auth/AuthProvider';
 
@@ -125,7 +126,19 @@ const AppContent: React.FC = () => {
             <Navigate to="/login" replace />
           ) : (
             <PageLayout usuarioActual={usuarioActual} onCambiarUsuario={cambiarUsuarioDemo}>
-              <AdminPage />
+              <AdminPage usuarioActual={usuarioActual} />
+            </PageLayout>
+          )
+        }
+      />
+      <Route
+        path="/ir/:fuente/:id"
+        element={
+          !estaAutenticado ? (
+            <Navigate to="/login" replace />
+          ) : (
+            <PageLayout usuarioActual={usuarioActual} onCambiarUsuario={cambiarUsuarioDemo}>
+              <IrPage />
             </PageLayout>
           )
         }

@@ -62,3 +62,10 @@ Estado de avance por fases según especificación de `AGENTS.md`.
   - [x] Configuración SPA en Cloudflare Pages (`app/public/_redirects`)
   - [x] Documento operativo completo `docs/RUNBOOK.md`
   - [x] Script de verificación integral `scripts/check-aceptacion.ts` ejecutado con éxito total
+
+- [x] **Integración Supabase Real (P0 - P4)**
+  - [x] **P0**: Preparación de repositorio (.gitignore, ordenamiento y sanitización de migraciones)
+  - [x] **P1**: Autenticación Supabase con enlace mágico y restricción corporativa `@prontopaga.com`
+  - [x] **P2**: Lectura híbrida Opción B (`rpc('galaxia_resumen')` + enriquecimiento `v_proyecto_canonico` con RLS)
+  - [x] **P3**: Bloqueo de detalle para proyectos no autorizados, badge N1/N3 y componente `DatosAl` con `rpc('ultima_sincronizacion')`
+  - [x] **P4**: Panel multi-pestaña Admin (Usuarios, Fuentes, Áreas, Duplicados), deep-linking `/ir/:fuente/:id`, adaptador N3 Gestor tipado y pruebas E2E en verde

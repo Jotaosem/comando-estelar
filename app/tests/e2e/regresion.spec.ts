@@ -411,4 +411,23 @@ test.describe('Regresión Visual y Funcional - Comando Estelar', () => {
     const nivelBadge = page.locator('text=/N[13] · /');
     await expect(nivelBadge.first()).toBeVisible({ timeout: 10000 });
   });
+
+  test('P4 · Admin y Deep Link /ir: Panel de administración multi-pestaña y resolución de links', async ({ page }) => {
+    // 1. Acceso a /admin como Admin (usuario por defecto en demo)
+    await page.goto('/admin');
+    await expect(page.locator('text=Panel de Administración')).toBeVisible();
+    await expect(page.locator('button:has-text("Usuarios")')).toBeVisible();
+    await expect(page.locator('button:has-text("Fuentes")')).toBeVisible();
+    await expect(page.locator('button:has-text("Áreas")')).toBeVisible();
+    await expect(page.locator('button:has-text("Vincular Duplicados")')).toBeVisible();
+
+    // 2. Deep link /ir/:fuente/:id que resuelve proyecto existente
+    await page.goto('/ir/notion_seguimiento/notion-proj-a');
+    await expect(page).toHaveURL(/\/proyectos\/a0000000-0000-0000-0000-000000000001/);
+
+    // 3. Deep link con proyecto inexistente muestra pantalla vacía estándar
+    await page.goto('/ir/notion_seguimiento/inexistente-xyz');
+    await expect(page.locator('text=Proyecto no encontrado')).toBeVisible();
+    await expect(page.locator('text=Volver a Comando Estelar')).toBeVisible();
+  });
 });

@@ -37,6 +37,8 @@ export interface ProyectoResumenUI {
   bloqueos: any[];
   tareas: any[];
   // Mission Control extra attributes
+  notion_id?: string;
+  codigo_visible?: string;
   callsign?: string;
   threat_level?: 'ALPHA' | 'BETA' | 'CRITICAL' | 'STABLE';
   descripcion?: string;
@@ -396,6 +398,7 @@ export function obtenerProyectosSeed(usuarioActual?: { email: string; rol: strin
       etapas: etapasCompletas,
       bloqueos,
       tareas,
+      notion_id: pConfig.notion_id,
       callsign: pConfig.callsign,
       threat_level: pConfig.threat_level as any,
       descripcion: pConfig.descripcion,
