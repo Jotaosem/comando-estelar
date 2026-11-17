@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
 import type { ProyectoView } from '../../data/proyectoView';
-import { SECTOR_SYSTEMS, calcularPosicionPlaneta, calcularGalaxiaBox } from './galaxyData';
+import { obtenerSectorSystems, calcularPosicionPlaneta, calcularGalaxiaBox } from './galaxyData';
 import { SystemStar } from './SystemStar';
 import { Planet } from './Planet';
 import { OrbitStationsRing } from './OrbitStation';
@@ -30,6 +30,7 @@ interface GalaxyCanvas3DProps {
   targetFocusPos?: [number, number, number] | null;
   centrarTrigger?: number;
   zoomLevel?: number;
+  onProyectosPosicionUpdate?: (pos: { proyecto: ProyectoView; position: [number, number, number] }[]) => void;
 }
 
 const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
@@ -51,30 +52,43 @@ const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
   centrarTrigger = 0,
   zoomLevel = 1,
 }) => {
+  // 1. Áreas dinámicas basadas en los proyectos reales recibidos de Supabase
+  const systems = useMemo(() => {
+    const areasUnicas = Array.from(
+      new Set(
+        proyectos.map((p) => p.area_nombre || p.area_solicitante || 'Sin clasificar')
+      )
+    );
+    return obtenerSectorSystems(areasUnicas);
+  }, [proyectos]);
+
+  // 2. Posiciones deterministas por área con separación mínima garantizada
   const proyectosConPosicion = useMemo(() => {
     const sectorCountMap = new Map<string, number>();
     proyectos.forEach((p) => {
-      sectorCountMap.set(p.area_solicitante, (sectorCountMap.get(p.area_solicitante) || 0) + 1);
+      const area = p.area_nombre || p.area_solicitante || 'Sin clasificar';
+      sectorCountMap.set(area, (sectorCountMap.get(area) || 0) + 1);
     });
 
     const sectorCurrentIndexMap = new Map<string, number>();
     return proyectos.map((p, pIdx) => {
-      const totalInSector = sectorCountMap.get(p.area_solicitante) || 1;
-      const curIndex = sectorCurrentIndexMap.get(p.area_solicitante) || 0;
-      sectorCurrentIndexMap.set(p.area_solicitante, curIndex + 1);
+      const area = p.area_nombre || p.area_solicitante || 'Sin clasificar';
+      const totalInSector = sectorCountMap.get(area) || 1;
+      const curIndex = sectorCurrentIndexMap.get(area) || 0;
+      sectorCurrentIndexMap.set(area, curIndex + 1);
 
-      const pos = calcularPosicionPlaneta(p.area_solicitante, curIndex, totalInSector);
+      const pos = calcularPosicionPlaneta(area, curIndex, totalInSector, systems, p.id);
       return { proyecto: p, position: pos, projectIndex: pIdx };
     });
-  }, [proyectos]);
+  }, [proyectos, systems]);
 
   // Bounding Box con 15% de margen
   const galaxyBox = useMemo(() => {
-    return calcularGalaxiaBox(proyectosConPosicion);
-  }, [proyectosConPosicion]);
+    return calcularGalaxiaBox(proyectosConPosicion, systems);
+  }, [proyectosConPosicion, systems]);
 
   // Detección de colisión de chips de planetas en galaxia:
-  // Si colisionan en 3D (distancia < 5.5 unidades), se oculta el de menor riesgo
+  // Si colisionan en 3D (distancia < 5.0 unidades), se oculta el de menor riesgo
   const ocultarChipIds = useMemo(() => {
     const ocultos = new Set<string>();
     const riesgoScore: Record<string, number> = { rojo: 4, amarillo: 3, gris: 2, verde: 1 };
@@ -85,10 +99,9 @@ const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
         const p2 = proyectosConPosicion[j];
         const v1 = new THREE.Vector3(...p1.position);
         const v2 = new THREE.Vector3(...p2.position);
-        if (v1.distanceTo(v2) < 5.5) {
+        if (v1.distanceTo(v2) < 5.0) {
           const r1 = riesgoScore[p1.proyecto.semaforo] || 1;
           const r2 = riesgoScore[p2.proyecto.semaforo] || 1;
-          // Se muestra el de mayor riesgo; el otro se oculta (se muestra al hacer hover)
           if (r1 >= r2) {
             ocultos.add(p2.proyecto.id);
           } else {
@@ -111,9 +124,7 @@ const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
       {/* Proyector 3D -> 2D para tooltip en capa DOM */}
       <TooltipProjector data={hoverStageData} />
 
-      {/* CONTROLES SEPARADOS POR NIVEL (Nunca activos a la vez):
-          - En nivel 'galaxia': Galaxy25DControls (MapControls 2.5D, pan libre, zoom al cursor, sin rotación)
-          - En nivel 'planeta' o 'etapa': CameraDirector interpolado */}
+      {/* Controles según nivel */}
       {nivel === 'galaxia' ? (
         <Galaxy25DControls
           enabled={true}
@@ -134,14 +145,14 @@ const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
 
       <SpaceBackground />
 
-      {/* Sistemas Estelares (Sectores en Grilla limpia) */}
+      {/* Sistemas Estelares (Sectores calculados dinámicamente) */}
       {nivel === 'galaxia' &&
-        SECTOR_SYSTEMS.map((system) => {
+        systems.map((system) => {
           return (
             <group key={system.id}>
               <SystemStar
                 system={system}
-                onSelect={() => { }}
+                onSelect={() => {}}
                 active={selectedProyecto?.area_solicitante === system.id}
                 visible={true}
               />
@@ -149,7 +160,7 @@ const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
           );
         })}
 
-      {/* Planetas */}
+      {/* Planetas: se renderizan TODOS los proyectos que devuelve la RPC */}
       {proyectosConPosicion.map(({ proyecto, position, projectIndex }) => {
         const isSelected = selectedProyecto?.id === proyecto.id;
 
@@ -160,26 +171,27 @@ const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
 
         const isFilteredOutByHealth = healthFilter ? proyecto.semaforo !== healthFilter : false;
         const isFilteredOutBySearch = matchingIds && matchingIds.size > 0 ? !matchingIds.has(proyecto.id) : false;
-        const isDimmed = isFilteredOutByHealth || isFilteredOutBySearch;
+        const isCerradoOCancelado = proyecto.cerrado || proyecto.cancelado;
+        const isDimmed = isFilteredOutByHealth || isFilteredOutBySearch || isCerradoOCancelado;
 
         return (
           <group
             key={proyecto.id}
-            scale={isDimmed ? 0.75 : 1}
+            scale={isDimmed ? 0.8 : 1}
           >
-            <group position={isDimmed ? [position[0], position[1] - 4, position[2]] : position}>
+            <group position={isDimmed ? [position[0], position[1] - 2, position[2]] : position}>
               <Planet
                 proyecto={proyecto}
                 position={[0, 0, 0]}
                 onSelect={onSelectProyecto}
-                showOverlay={nivel === 'galaxia' && !isDimmed}
+                showOverlay={nivel === 'galaxia'}
                 projectIndex={projectIndex}
                 ocultarChipPorColision={ocultarChipIds.has(proyecto.id)}
                 onOpenStage={onSelectEtapa}
               />
             </group>
 
-            {/* En Nivel Planeta o Etapa: Órbita con esfera de hit y rotación */}
+            {/* En Nivel Planeta o Etapa: Órbita con estaciones */}
             {nivel !== 'galaxia' && isSelected && (
               <group position={position}>
                 <OrbitStationsRing
@@ -189,8 +201,8 @@ const GalaxyCanvas3D: React.FC<GalaxyCanvas3DProps> = ({
                       (e: any) => e.nombre === proyecto.etapa_actual_nombre
                     ) !== -1
                       ? proyecto.etapas.findIndex(
-                        (e: any) => e.nombre === proyecto.etapa_actual_nombre
-                      )
+                          (e: any) => e.nombre === proyecto.etapa_actual_nombre
+                        )
                       : Math.max(0, proyecto.etapas.length - 1)
                   }
                   onSelectEtapa={onSelectEtapa}

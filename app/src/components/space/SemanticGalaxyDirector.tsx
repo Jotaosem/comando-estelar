@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import * as THREE from 'three';
 import type { ProyectoView } from '../../data/proyectoView';
-import { calcularPosicionPlaneta, calcularGalaxiaBox } from './galaxyData';
+import { obtenerSectorSystems, calcularPosicionPlaneta, calcularGalaxiaBox } from './galaxyData';
 import { PlanetHUDCard } from './PlanetHUDCard';
 import { StageGlassPanel } from './StageGlassPanel';
 import { GalaxyMinimap } from './GalaxyMinimap';
@@ -100,45 +100,43 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
     }
   };
 
+  const systems = useMemo(() => {
+    const areas = Array.from(
+      new Set(proyectos.map((p) => p.area_nombre || p.area_solicitante || 'Sin clasificar'))
+    );
+    return obtenerSectorSystems(areas);
+  }, [proyectos]);
+
+  const proyectosConPosicion = useMemo(() => {
+    const sectorCountMap = new Map<string, number>();
+    proyectos.forEach((p) => {
+      const area = p.area_nombre || p.area_solicitante || 'Sin clasificar';
+      sectorCountMap.set(area, (sectorCountMap.get(area) || 0) + 1);
+    });
+    const sectorIndices = new Map<string, number>();
+    return proyectos.map((p) => {
+      const area = p.area_nombre || p.area_solicitante || 'Sin clasificar';
+      const total = sectorCountMap.get(area) || 1;
+      const idx = sectorIndices.get(area) || 0;
+      sectorIndices.set(area, idx + 1);
+      return {
+        proyecto: p,
+        position: calcularPosicionPlaneta(area, idx, total, systems, p.id),
+      };
+    });
+  }, [proyectos, systems]);
+
   const cameraTargetPos = useMemo<[number, number, number]>(() => {
     if (nivel === 'galaxia' || !selectedProyecto) {
       return [0, 0, 0];
     }
-    const sectorCountMap = new Map<string, number>();
-    proyectos.forEach((p) => {
-      sectorCountMap.set(p.area_solicitante, (sectorCountMap.get(p.area_solicitante) || 0) + 1);
-    });
-
-    const sectorIndices = new Map<string, number>();
-    let targetP: [number, number, number] = [0, 0, 0];
-
-    for (const p of proyectos) {
-      const total = sectorCountMap.get(p.area_solicitante) || 1;
-      const idx = sectorIndices.get(p.area_solicitante) || 0;
-      sectorIndices.set(p.area_solicitante, idx + 1);
-
-      if (p.id === selectedProyecto.id) {
-        targetP = calcularPosicionPlaneta(p.area_solicitante, idx, total);
-        break;
-      }
-    }
-    return targetP;
-  }, [nivel, selectedProyecto, proyectos]);
+    const found = proyectosConPosicion.find((item) => item.proyecto.id === selectedProyecto.id);
+    return found ? found.position : [0, 0, 0];
+  }, [nivel, selectedProyecto, proyectosConPosicion]);
 
   const galaxyBox = useMemo(() => {
-    const sectorCountMap = new Map<string, number>();
-    proyectos.forEach((p) => {
-      sectorCountMap.set(p.area_solicitante, (sectorCountMap.get(p.area_solicitante) || 0) + 1);
-    });
-    const sectorIndices = new Map<string, number>();
-    const proyectosConPosicion = proyectos.map((p) => {
-      const total = sectorCountMap.get(p.area_solicitante) || 1;
-      const idx = sectorIndices.get(p.area_solicitante) || 0;
-      sectorIndices.set(p.area_solicitante, idx + 1);
-      return { position: calcularPosicionPlaneta(p.area_solicitante, idx, total) };
-    });
-    return calcularGalaxiaBox(proyectosConPosicion);
-  }, [proyectos]);
+    return calcularGalaxiaBox(proyectosConPosicion, systems);
+  }, [proyectosConPosicion, systems]);
 
   return (
     <div className="w-full h-full relative flex flex-col flex-1 min-h-0 overflow-hidden bg-background select-none">
@@ -286,7 +284,7 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
         </div>
       )}
 
-      {/* 6. Minimapa con Box3 real y rectángulo de cámara (Solo en Nivel Galaxia, oculto en <768px) */}
+      {/* 6. Minimapa con Box3 real y radar 2.5D sincronizado con todos los planetas */}
       {!isMobile && (
         <GalaxyMinimap
           galaxyBox={galaxyBox}
@@ -296,6 +294,8 @@ export const SemanticGalaxyDirector: React.FC<SemanticGalaxyDirectorProps> = ({
             setTargetFocusPos(null);
           }}
           visible={nivel === 'galaxia'}
+          systems={systems}
+          proyectosConPosicion={proyectosConPosicion}
         />
       )}
 

@@ -45,6 +45,7 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({
 
   const [filtroSemaforo, setFiltroSemaforo] = useState<string>('todos');
   const [filtroArea, setFiltroArea] = useState<string>('todas');
+  const [mostrarCerradosCancelados, setMostrarCerradosCancelados] = useState<boolean>(true);
   const [focoIndex, setFocoIndex] = useState<number>(0);
 
   // Toggle de vistas: 'galaxia' | 'tarjetas' | 'tabla', persistido en URL y localStorage
@@ -82,20 +83,33 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({
     ? ((proyectosCargados || obtenerProyectosSeed(usuarioActual)) as any[]).map(mapProyecto)
     : (proyectosCargados || []);
 
-  const semaforoScore: Record<string, number> = {
-    rojo: 1,
-    amarillo: 2,
-    gris: 3,
-    verde: 4,
-  };
+  const activasCount = proyectos.filter((p) => !p.cerrado && !p.cancelado).length;
+  const cerradasCount = proyectos.filter((p) => p.cerrado || p.cancelado).length;
+
+  const areasDisponibles = React.useMemo(() => {
+    return Array.from(new Set(proyectos.map((p) => p.area_nombre || p.area_solicitante || 'Sin clasificar'))).sort();
+  }, [proyectos]);
 
   const esModoListaOTabla = vista === 'tarjetas' || vista === 'tabla';
 
   const proyectosFiltrados = proyectos
+    .filter((p) => (mostrarCerradosCancelados ? true : (!p.cerrado && !p.cancelado)))
     .filter((p) => (filtroSemaforo === 'todos' ? true : p.semaforo === filtroSemaforo))
-    .filter((p) => (filtroArea === 'todas' ? true : p.area_solicitante === filtroArea))
+    .filter((p) => (filtroArea === 'todas' ? true : (p.area_nombre || p.area_solicitante) === filtroArea))
     .filter((p) => (esModoListaOTabla && matchingIds ? matchingIds.has(p.id) : true))
-    .sort((a, b) => (semaforoScore[a.semaforo] || 5) - (semaforoScore[b.semaforo] || 5));
+    .sort((a, b) => {
+      // Orden canónico: Crítico, Alerta, Sin evaluar, Nominal, Cerrado, Cancelado; después por nombre
+      const ordenRiesgo = (item: ProyectoView) => {
+        if (item.cancelado) return 6;
+        if (item.cerrado) return 5;
+        if (item.semaforo === 'rojo') return 1;
+        if (item.semaforo === 'amarillo') return 2;
+        if (item.semaforo === 'gris') return 3;
+        return 4; // verde
+      };
+      const diff = ordenRiesgo(a) - ordenRiesgo(b);
+      return diff !== 0 ? diff : a.nombre.localeCompare(b.nombre);
+    });
 
   // Manejo de teclado estilo consola (flechas para navegar misiones, Enter para ingresar)
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -182,13 +196,13 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({
 
   const renderToolbar = () => (
     <header className="h-14 min-h-[56px] w-full px-3 sm:px-4 bg-surface/90 backdrop-blur-md border-b border-border flex items-center justify-between gap-2 sm:gap-3 z-30 shrink-0 select-none text-foreground">
-      {/* Izquierda: Badge de misiones activas */}
+      {/* Izquierda: Badge de misiones activas y cerradas */}
       <div className="flex items-center gap-2 shrink-0">
         <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-card border border-border text-foreground font-mono text-xs shadow-sm">
           <span className="w-1.5 h-1.5 rounded-full bg-terracotta" />
           <span className="font-bold">Misiones</span>
           <span className="text-muted-foreground">·</span>
-          <span>{proyectosFiltrados.length} activas</span>
+          <span>{activasCount} activas · {cerradasCount} cerradas</span>
         </div>
       </div>
 
@@ -228,7 +242,7 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({
           </select>
         </div>
 
-        {/* Filtro Área */}
+        {/* Filtro Área dinámico */}
         <div className="hidden sm:flex items-center bg-card border border-border rounded-full px-3 py-1 shadow-sm">
           <select
             className="bg-transparent border-0 focus:ring-0 text-foreground text-xs pr-2 cursor-pointer outline-none font-mono appearance-none"
@@ -237,13 +251,28 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({
             aria-label="Filtrar por área"
           >
             <option value="todas" className="bg-card text-foreground">Área ▾</option>
-            <option value="Operaciones" className="bg-card text-foreground">Operaciones</option>
-            <option value="Comercial" className="bg-card text-foreground">Comercial</option>
-            <option value="Compliance" className="bg-card text-foreground">Compliance</option>
-            <option value="Seguridad" className="bg-card text-foreground">Seguridad</option>
-            <option value="BI & Analítica" className="bg-card text-foreground">BI & Analítica</option>
+            {areasDisponibles.map((area) => (
+              <option key={area} value={area} className="bg-card text-foreground">
+                {area}
+              </option>
+            ))}
           </select>
         </div>
+
+        {/* Filtro Cerrados/Cancelados */}
+        <button
+          type="button"
+          onClick={() => setMostrarCerradosCancelados(!mostrarCerradosCancelados)}
+          className={`hidden md:flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-mono transition-all ${
+            mostrarCerradosCancelados
+              ? 'bg-card border-border text-foreground shadow-sm'
+              : 'bg-surface border-border text-muted-foreground/60'
+          }`}
+          title="Alternar proyectos cerrados y cancelados"
+        >
+          <span className={`w-1.5 h-1.5 rounded-full ${mostrarCerradosCancelados ? 'bg-terracotta' : 'bg-muted'}`} />
+          <span>Cerrados/Cancelados</span>
+        </button>
 
         {/* Toggle Segmentado de 3 vistas */}
         <div className="flex items-center p-0.5 rounded-full bg-surface border border-border">
