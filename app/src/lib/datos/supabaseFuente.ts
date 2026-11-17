@@ -22,14 +22,16 @@ export async function obtenerProyectosReales(_usuarioActual?: { email: string; r
   let etapasMap = new Map<string, any[]>();
   let bloqueosMap = new Map<string, any[]>();
   let tareasMap = new Map<string, any[]>();
+  let eventosMap = new Map<string, any[]>();
 
   if (idsConDetalle.length > 0) {
-    const [resCanonicos, resCalculos, resEtapas, resBloqueos, resTareas] = await Promise.all([
+    const [resCanonicos, resCalculos, resEtapas, resBloqueos, resTareas, resEventos] = await Promise.all([
       supabase.from('v_proyecto_canonico').select('*').in('id', idsConDetalle),
       supabase.from('proyecto_calculo').select('*').in('proyecto_id', idsConDetalle),
       supabase.from('etapa').select('*').in('proyecto_id', idsConDetalle).order('orden', { ascending: true }),
       supabase.from('bloqueo').select('*').in('proyecto_id', idsConDetalle),
       supabase.from('tarea').select('*').in('proyecto_id', idsConDetalle),
+      supabase.from('evento_cambio').select('*').in('proyecto_id', idsConDetalle).order('detectado_en', { ascending: false }).limit(60),
     ]);
 
     if (resCanonicos.data) {
@@ -59,6 +61,13 @@ export async function obtenerProyectosReales(_usuarioActual?: { email: string; r
         tareasMap.set(t.proyecto_id, arr);
       });
     }
+    if (resEventos.data) {
+      resEventos.data.forEach((ev) => {
+        const arr = eventosMap.get(ev.proyecto_id) || [];
+        arr.push(ev);
+        eventosMap.set(ev.proyecto_id, arr);
+      });
+    }
   }
 
   // 3. Mapear cada fila con mapProyecto combinando datos de la RPC y complementarios
@@ -68,6 +77,7 @@ export async function obtenerProyectosReales(_usuarioActual?: { email: string; r
     const etapas = etapasMap.get(g.id) || [];
     const bloqueos = bloqueosMap.get(g.id) || [];
     const tareas = tareasMap.get(g.id) || [];
+    const historial = eventosMap.get(g.id) || [];
 
     const filaCombinada = {
       ...canonico,
@@ -88,6 +98,7 @@ export async function obtenerProyectosReales(_usuarioActual?: { email: string; r
       atraso_dh: g.atraso_dh !== undefined ? g.atraso_dh : calculo?.atraso_dh,
       area_nombre: g.area_nombre || canonico?.area_nombre || 'Sin clasificar',
       responsable_nombre: g.responsable_nombre || canonico?.responsable_nombre || 'Sin asignar',
+      objetivo: g.objetivo || canonico?.objetivo || null,
       prioridad: g.prioridad || canonico?.prioridad || null,
       impacto: g.impacto || canonico?.impacto || null,
       alcance: g.alcance || canonico?.alcance || null,
@@ -100,6 +111,7 @@ export async function obtenerProyectosReales(_usuarioActual?: { email: string; r
       etapas,
       bloqueos,
       tareas,
+      historial,
     };
 
     return mapProyecto(filaCombinada);

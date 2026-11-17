@@ -34,6 +34,7 @@ export interface ProyectoView {
   atraso_display: string;
   area_nombre: string;
   responsable_nombre: string;
+  objetivo: string | null;
   prioridad: string | null;
   impacto: string | null;
   alcance: string | null;
@@ -196,6 +197,7 @@ export function mapProyecto(row: any): ProyectoView {
     atraso_display,
     area_nombre,
     responsable_nombre,
+    objetivo: row.objetivo || null,
     prioridad: row.prioridad || null,
     impacto: row.impacto || null,
     alcance: row.alcance || null,
