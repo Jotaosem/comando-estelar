@@ -4,42 +4,42 @@ import { Shield, ChevronDown, Check } from 'lucide-react';
 export interface UsuarioPrueba {
   email: string;
   nombre: string;
-  rol: 'Admin' | 'Gerencia' | 'Solicitante' | 'Ejecutor';
+  rol: 'Admin' | 'Gerencia' | 'Gerente de área' | 'Solicitante' | 'Ejecutor' | 'Sin perfil';
   area?: string;
 }
 
 export const USUARIOS_SEED: UsuarioPrueba[] = [
   {
-    email: 'admin@empresa.com',
+    email: 'admin@prontopaga.com',
     nombre: 'Admin General',
     rol: 'Admin',
   },
   {
-    email: 'gerente.general@empresa.com',
-    nombre: 'Valeria Castro',
+    email: 'gerencia@prontopaga.com',
+    nombre: 'Valeria Castro (Gerencia General)',
     rol: 'Gerencia',
   },
   {
-    email: 'solicitante.ops@empresa.com',
-    nombre: 'Carlos Solís',
-    rol: 'Solicitante',
+    email: 'gerente.area@prontopaga.com',
+    nombre: 'Rodrigo Fuentes',
+    rol: 'Gerente de área',
     area: 'Operaciones',
   },
   {
-    email: 'solicitante.comercial@empresa.com',
+    email: 'solicitante.comercial@prontopaga.com',
     nombre: 'Mariana Duarte',
     rol: 'Solicitante',
     area: 'Comercial',
   },
   {
-    email: 'lider.tecnico@empresa.com',
-    nombre: 'José Miguel (Líder)',
+    email: 'ejecutor.lider@prontopaga.com',
+    nombre: 'José Miguel (Ejecutor / Líder)',
     rol: 'Ejecutor',
   },
   {
-    email: 'dev.qa@empresa.com',
-    nombre: 'Francisca Morales (QA)',
-    rol: 'Ejecutor',
+    email: 'invitado.sinperfil@prontopaga.com',
+    nombre: 'Consultor Externo',
+    rol: 'Sin perfil',
   },
 ];
 

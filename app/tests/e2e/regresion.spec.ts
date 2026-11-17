@@ -385,4 +385,18 @@ test.describe('Regresión Visual y Funcional - Comando Estelar', () => {
     const chipEstadoTarea = page.locator('.space-y-1\\.5 span:has-text("Completada"), .space-y-1\\.5 span:has-text("En curso"), .space-y-1\\.5 span:has-text("Bloqueada")').first();
     await expect(chipEstadoTarea).toBeVisible();
   });
+
+  test('P1 · Login: Pantalla de login accesible y validación de dominio corporativo', async ({ page }) => {
+    await page.goto('/login');
+    const inputEmail = page.locator('input[type="email"]');
+    await expect(inputEmail).toBeVisible();
+
+    // Intentar ingresar con correo no corporativo
+    await inputEmail.fill('usuario@externo.com');
+    await page.locator('button[type="submit"]').click();
+
+    // Debe mostrar mensaje de error de dominio
+    const errorMsg = page.locator('text=@prontopaga.com').first();
+    await expect(errorMsg).toBeVisible();
+  });
 });

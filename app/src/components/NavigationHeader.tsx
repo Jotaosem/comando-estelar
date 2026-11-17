@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { DevUserSelector, type UsuarioPrueba } from './DevUserSelector';
+import { useAuth } from '../auth/AuthProvider';
 import {
   Radio,
   ClipboardList,
@@ -8,6 +9,7 @@ import {
   Activity,
   Sun,
   Moon,
+  LogOut,
 } from 'lucide-react';
 
 export const NavigationHeader: React.FC<{
@@ -15,6 +17,7 @@ export const NavigationHeader: React.FC<{
   onCambiarUsuario: (u: UsuarioPrueba) => void;
 }> = ({ usuarioActual, onCambiarUsuario }) => {
   const location = useLocation();
+  const { session, cerrarSesion } = useAuth();
   const puedeVerAvisos = usuarioActual.rol === 'Admin' || usuarioActual.rol === 'Ejecutor';
   const esAdmin = usuarioActual.rol === 'Admin';
 
@@ -126,6 +129,16 @@ export const NavigationHeader: React.FC<{
           >
             {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
+          {session && (
+            <button
+              onClick={() => cerrarSesion()}
+              className="w-9 h-9 rounded-full border border-border bg-card flex items-center justify-center text-muted-foreground hover:text-health-red hover:border-health-red/40 transition-colors"
+              title="Cerrar sesión"
+              aria-label="Cerrar sesión"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
+          )}
           <DevUserSelector usuarioActual={usuarioActual} onCambiarUsuario={onCambiarUsuario} />
         </div>
       </div>

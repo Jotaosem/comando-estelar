@@ -1,101 +1,133 @@
-import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ResumenPage } from './pages/ResumenPage';
 import { DetallePage } from './pages/DetallePage';
 import { ImprimirPage } from './pages/ImprimirPage';
 import { AvisosPage } from './pages/AvisosPage';
 import { EncuestaPage } from './pages/EncuestaPage';
 import { AdminPage } from './pages/AdminPage';
-import { USUARIOS_SEED, type UsuarioPrueba } from './components/DevUserSelector';
+import { LoginPage } from './pages/LoginPage';
 import { PageLayout } from './layouts/PageLayout';
+import { AuthProvider, useAuth } from './auth/AuthProvider';
 
 export const App: React.FC = () => {
-  const [usuarioActual, setUsuarioActual] = useState<UsuarioPrueba>(() => {
-    const savedEmail = localStorage.getItem('user_email');
-    return USUARIOS_SEED.find((u) => u.email === savedEmail) || USUARIOS_SEED[0];
-  });
-
-  const handleCambiarUsuario = (usuario: UsuarioPrueba) => {
-    setUsuarioActual(usuario);
-    localStorage.setItem('user_email', usuario.email);
-    localStorage.setItem('user_rol', usuario.rol);
-    if (usuario.area) {
-      localStorage.setItem('user_area', usuario.area);
-    } else {
-      localStorage.removeItem('user_area');
-    }
-  };
-
   return (
-    <BrowserRouter>
-      <AppContent usuarioActual={usuarioActual} onCambiarUsuario={handleCambiarUsuario} />
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <AppContent />
+      </BrowserRouter>
+    </AuthProvider>
   );
 };
 
-const AppContent: React.FC<{
-  usuarioActual: UsuarioPrueba;
-  onCambiarUsuario: (u: UsuarioPrueba) => void;
-}> = ({ usuarioActual, onCambiarUsuario }) => {
+const AppContent: React.FC = () => {
+  const { session, loading, isDemo, usuarioActual, cambiarUsuarioDemo } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="h-screen w-full bg-background text-foreground flex items-center justify-center font-mono text-xs">
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-terracotta animate-pulse" />
+          <span>Verificando credenciales de Comando Estelar...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Si no hay sesión y no estamos en modo demo, redirigir a Login
+  const estaAutenticado = !!session || isDemo;
+
   return (
     <Routes>
       <Route
+        path="/login"
+        element={<LoginPage />}
+      />
+      <Route
         path="/"
         element={
-          <ResumenPage
-            usuarioActual={usuarioActual}
-            onCambiarUsuario={onCambiarUsuario}
-          />
+          !estaAutenticado ? (
+            <Navigate to="/login" replace />
+          ) : (
+            <ResumenPage
+              usuarioActual={usuarioActual}
+              onCambiarUsuario={cambiarUsuarioDemo}
+            />
+          )
         }
       />
       <Route
         path="/lista"
         element={
-          <ResumenPage
-            usuarioActual={usuarioActual}
-            onCambiarUsuario={onCambiarUsuario}
-            vistaInicialLista
-          />
+          !estaAutenticado ? (
+            <Navigate to="/login" replace />
+          ) : (
+            <ResumenPage
+              usuarioActual={usuarioActual}
+              onCambiarUsuario={cambiarUsuarioDemo}
+              vistaInicialLista
+            />
+          )
         }
       />
       <Route
         path="/proyectos/:id"
         element={
-          <PageLayout usuarioActual={usuarioActual} onCambiarUsuario={onCambiarUsuario}>
-            <DetallePage usuarioActual={usuarioActual} />
-          </PageLayout>
+          !estaAutenticado ? (
+            <Navigate to="/login" replace />
+          ) : (
+            <PageLayout usuarioActual={usuarioActual} onCambiarUsuario={cambiarUsuarioDemo}>
+              <DetallePage usuarioActual={usuarioActual} />
+            </PageLayout>
+          )
         }
       />
       <Route
         path="/proyectos/:id/imprimir"
         element={
-          <PageLayout usuarioActual={usuarioActual} onCambiarUsuario={onCambiarUsuario} maxWidth="max-w-none">
-            <ImprimirPage />
-          </PageLayout>
+          !estaAutenticado ? (
+            <Navigate to="/login" replace />
+          ) : (
+            <PageLayout usuarioActual={usuarioActual} onCambiarUsuario={cambiarUsuarioDemo} maxWidth="max-w-none">
+              <ImprimirPage />
+            </PageLayout>
+          )
         }
       />
       <Route
         path="/avisos"
         element={
-          <PageLayout usuarioActual={usuarioActual} onCambiarUsuario={onCambiarUsuario}>
-            <AvisosPage />
-          </PageLayout>
+          !estaAutenticado ? (
+            <Navigate to="/login" replace />
+          ) : (
+            <PageLayout usuarioActual={usuarioActual} onCambiarUsuario={cambiarUsuarioDemo}>
+              <AvisosPage />
+            </PageLayout>
+          )
         }
       />
       <Route
         path="/encuesta"
         element={
-          <PageLayout usuarioActual={usuarioActual} onCambiarUsuario={onCambiarUsuario}>
-            <EncuestaPage usuarioActual={usuarioActual} />
-          </PageLayout>
+          !estaAutenticado ? (
+            <Navigate to="/login" replace />
+          ) : (
+            <PageLayout usuarioActual={usuarioActual} onCambiarUsuario={cambiarUsuarioDemo}>
+              <EncuestaPage usuarioActual={usuarioActual} />
+            </PageLayout>
+          )
         }
       />
       <Route
         path="/admin"
         element={
-          <PageLayout usuarioActual={usuarioActual} onCambiarUsuario={onCambiarUsuario}>
-            <AdminPage />
-          </PageLayout>
+          !estaAutenticado ? (
+            <Navigate to="/login" replace />
+          ) : (
+            <PageLayout usuarioActual={usuarioActual} onCambiarUsuario={cambiarUsuarioDemo}>
+              <AdminPage />
+            </PageLayout>
+          )
         }
       />
     </Routes>
