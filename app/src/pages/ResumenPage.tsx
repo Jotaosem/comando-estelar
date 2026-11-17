@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useRegistrarVista } from '../hooks/useRegistrarVista';
 import { obtenerProyectosSeed, type ProyectoResumenUI } from '../lib/proyectosData';
+import { useProyectos } from '../hooks/useProyectos';
 import type { UsuarioPrueba } from '../components/DevUserSelector';
 import { SemanticGalaxyDirector } from '../components/space/SemanticGalaxyDirector';
 import { GalaxySearchBar } from '../components/space/GalaxySearchBar';
@@ -73,7 +74,8 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({
   const [matchingIds, setMatchingIds] = useState<Set<string> | null>(null);
   const [mostrarFiltrosMobile, setMostrarFiltrosMobile] = useState<boolean>(false);
 
-  const proyectos = obtenerProyectosSeed(usuarioActual);
+  const { data: proyectosCargados } = useProyectos();
+  const proyectos = proyectosCargados || obtenerProyectosSeed(usuarioActual);
 
   const semaforoScore: Record<string, number> = {
     rojo: 1,

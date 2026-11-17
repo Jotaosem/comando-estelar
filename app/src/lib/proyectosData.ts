@@ -45,6 +45,13 @@ export interface ProyectoResumenUI {
   sprint_comprometido?: string;
   fecha_produccion?: string;
   sprint_estimado?: string;
+  // Campos multi-fuente canónicos
+  puede_ver_detalle?: boolean;
+  nivel_detalle?: 'N1' | 'N2' | 'N3';
+  url_principal?: string | null;
+  proximo_paso?: string | null;
+  decisiones_pendientes?: string | null;
+  riesgos_texto?: string | null;
 }
 
 // 7 Etapas canónicas de la directiva Mission Control

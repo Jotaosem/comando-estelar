@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useRegistrarVista } from '../hooks/useRegistrarVista';
 import { obtenerProyectosSeed } from '../lib/proyectosData';
+import { useProyectos } from '../hooks/useProyectos';
 import { GalaxySearchBar } from '../components/space/GalaxySearchBar';
 import { EtapaDetalle } from '../components/EtapaDetalle';
 import { MisionesErrorBoundary } from '../components/MisionesErrorBoundary';
@@ -26,7 +27,8 @@ export const DetallePage: React.FC<DetallePageProps> = ({ usuarioActual }) => {
   const navigate = useNavigate();
   useRegistrarVista('detalle', id);
 
-  const proyectos = obtenerProyectosSeed(usuarioActual);
+  const { data: proyectosCargados } = useProyectos();
+  const proyectos = proyectosCargados || obtenerProyectosSeed(usuarioActual);
   const proyecto = proyectos.find((p) => p.id === id) || (id === 'proy-1' ? proyectos[0] : undefined);
 
   // Sincronización con URL (?etapa=<id>)
