@@ -482,20 +482,29 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({
                       }}
                       onMouseEnter={() => setFocoIndex(idx)}
                       className={`relative group cursor-pointer rounded-3xl p-6 transition-all duration-200 flex flex-col justify-between overflow-hidden bg-card border ${
+                        p.cerrado || p.cancelado ? 'opacity-70' : 'opacity-100'
+                      } ${
                         isFocused
                           ? 'border-terracotta ring-2 ring-terracotta/20 shadow-panel scale-[1.01]'
                           : 'border-border hover:border-border-strong shadow-panel'
                       }`}
                     >
                       <div>
-                        {/* Sector y Callsign */}
-                        <div className="flex items-center justify-between gap-2 mb-3 font-mono text-[11px]">
-                          <span className="px-2.5 py-0.5 rounded-full bg-surface border border-border text-foreground uppercase tracking-wider font-semibold">
-                            {p.area_solicitante}
-                          </span>
-                          <span className="text-terracotta font-semibold tracking-wider">
-                            {p.callsign || `MIS-${idx + 1}`}
-                          </span>
+                        {/* Sector, Fase y Código (solo si existe código) */}
+                        <div className="flex items-center justify-between gap-2 mb-3 font-mono text-[11px] flex-wrap">
+                          <div className="flex items-center gap-1.5">
+                            <span className="px-2.5 py-0.5 rounded-full bg-surface border border-border text-foreground uppercase tracking-wider font-semibold">
+                              {p.area_nombre}
+                            </span>
+                            <span className="px-2 py-0.5 rounded-full bg-surface border border-border text-muted-foreground text-[10px] font-medium">
+                              {p.fase_macro}
+                            </span>
+                          </div>
+                          {p.codigo && (
+                            <span className="text-terracotta font-semibold tracking-wider">
+                              {p.codigo}
+                            </span>
+                          )}
                         </div>
 
                         {/* Título de Proyecto */}
@@ -505,20 +514,28 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({
 
                         {/* Descripción (máx. 2 líneas) */}
                         <p className="text-xs text-muted-foreground line-clamp-2 mb-3 leading-relaxed" title={p.descripcion || 'Sin descripción'}>
-                          {p.descripcion || <span className="italic opacity-60">Sin descripción</span>}
+                          {p.descripcion || <span className="italic opacity-60">Sin descripción táctica registrada</span>}
                         </p>
 
-                        {/* Estado y Salud */}
+                        {/* Estado y Alertas de Gobierno */}
                         <div className="flex items-center gap-2 mb-3 flex-wrap">
                           <div
                             className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold tracking-wide uppercase border ${semBadge.bg} ${semBadge.border} ${semBadge.color}`}
                           >
                             <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                            <span>{semBadge.label}</span>
+                            <span>{p.estado_display}</span>
                           </div>
-                          {(p.atraso_dh ?? 0) > 0 && (
+                          {p.atraso_dh !== null && p.atraso_dh > 0 && (
                             <span className="text-[11px] font-mono text-health-red font-semibold">
                               +{p.atraso_dh}d hábiles
+                            </span>
+                          )}
+                          {p.alertas_gobierno && p.alertas_gobierno.length > 0 && (
+                            <span
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono bg-health-amber-soft text-health-amber border border-health-amber/30 font-medium"
+                              title={p.alertas_gobierno.join(' · ')}
+                            >
+                              Datos incompletos ({p.alertas_gobierno.length})
                             </span>
                           )}
                         </div>
