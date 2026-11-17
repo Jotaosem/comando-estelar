@@ -1,14 +1,17 @@
 import { supabase } from '../supabase';
-import type { ProyectoResumenUI } from '../proyectosData';
-import { obtenerProyectosSeed } from '../proyectosData';
+import { mapProyecto, type ProyectoView } from '../../data/proyectoView';
 
-export async function obtenerProyectosReales(usuarioActual?: { email: string; rol: string; area?: string | null }): Promise<ProyectoResumenUI[]> {
+export async function obtenerProyectosReales(_usuarioActual?: { email: string; rol: string; area?: string | null }): Promise<ProyectoView[]> {
   // 1. Llamar rpc('galaxia_resumen')
   const { data: resGalaxia, error: errGalaxia } = await supabase.rpc('galaxia_resumen');
 
-  if (errGalaxia || !resGalaxia || resGalaxia.length === 0) {
-    // Si falla o no hay datos remotos, recurrir al seed local con fallback seguro
-    return obtenerProyectosSeed(usuarioActual);
+  if (errGalaxia) {
+    console.error('Error al llamar rpc(galaxia_resumen) en Supabase:', errGalaxia);
+    throw new Error(`Error en Supabase (galaxia_resumen): ${errGalaxia.message || errGalaxia.code || 'Permiso denegado'}`);
+  }
+
+  if (!resGalaxia || resGalaxia.length === 0) {
+    return [];
   }
 
   // 2. Para los proyectos con puede_ver_detalle, consultar v_proyecto_canonico + calculo + etapas
@@ -58,7 +61,7 @@ export async function obtenerProyectosReales(usuarioActual?: { email: string; ro
     }
   }
 
-  // 3. Mapear al modelo canónico que consume el front (ProyectoResumenUI)
+  // 3. Mapear cada fila con mapProyecto combinando datos de la RPC y complementarios
   return resGalaxia.map((g: any) => {
     const canonico = canonicosMap.get(g.id);
     const calculo = calculosMap.get(g.id);
@@ -66,55 +69,39 @@ export async function obtenerProyectosReales(usuarioActual?: { email: string; ro
     const bloqueos = bloqueosMap.get(g.id) || [];
     const tareas = tareasMap.get(g.id) || [];
 
-    // Etapas default si es N1 derivado
-    const etapasFinal = etapas.length > 0
-      ? etapas
-      : [
-          { id: `${g.id}-e1`, nombre: 'Idea', orden: 1, estado: 'Completada' },
-          { id: `${g.id}-e2`, nombre: 'Discovery', orden: 2, estado: 'Completada' },
-          { id: `${g.id}-e3`, nombre: 'Diseño', orden: 3, estado: 'Completada' },
-          { id: `${g.id}-e4`, nombre: 'Ejecución', orden: 4, estado: 'En curso' },
-          { id: `${g.id}-e5`, nombre: 'Seguimiento', orden: 5, estado: 'Pendiente' },
-        ];
-
-    const etapaActual = etapasFinal.find((e: any) => e.estado === 'En curso' || e.estado === 'Bloqueada');
-
-    return {
+    const filaCombinada = {
+      ...canonico,
+      ...calculo,
+      ...g,
       id: g.id,
-      nombre: g.nombre,
-      area_solicitante: g.area_nombre || 'Sin clasificar',
-      solicitante_nombre: 'ProntoPaga',
-      solicitante_email: '',
-      responsable_comunicar_nombre: g.responsable_nombre || 'Responsable no asignado',
-      responsable_comunicar_email: '',
-      fecha_comprometida: canonico?.fecha_comprometida || null,
-      notion_url: canonico?.url_principal || null,
-      etapa_actual_nombre: etapaActual?.nombre || g.fase_macro || 'Ejecución',
-      avance_pct: Math.round(Number(g.avance_pct ?? calculo?.avance_pct ?? 0)),
-      etapas_completadas: calculo?.etapas_completadas ?? (g.avance_pct ? Math.round((g.avance_pct / 100) * 5) : 2),
-      etapas_total: calculo?.etapas_total ?? 5,
-      fecha_reproyectada: g.fecha_estimada || calculo?.fecha_reproyectada || null,
-      atraso_dh: calculo?.atraso_dh ?? 0,
-      semaforo: (g.semaforo as any) || (calculo?.semaforo as any) || 'gris',
-      motivos_semaforo: calculo?.motivos_semaforo || ['Actualizado provisorio vía sync'],
-      bloqueos_abiertos: calculo?.bloqueos_abiertos ?? bloqueos.length,
-      ultima_actualizacion: canonico?.actualizado_origen_en || new Date().toISOString(),
-      sin_actualizar: calculo?.sin_actualizar ?? false,
-      alertas_gobierno: calculo?.alertas_gobierno || [],
-      desglose: calculo?.desglose || null,
-      cerrado: calculo?.cerrado ?? (g.fase_macro === 'Cerrado'),
-      etapas: etapasFinal,
+      nombre: g.nombre || canonico?.nombre,
+      codigo: canonico?.codigo_visible || g.codigo || null,
+      fase_macro: g.fase_macro || canonico?.fase_macro,
+      etapa_actual: g.etapa_actual || g.etapa_actual_nombre || calculo?.etapa_actual_nombre || '',
+      cancelado: Boolean(g.cancelado || g.fase_macro === 'Cancelado'),
+      cerrado: Boolean(g.cerrado || calculo?.cerrado || g.fase_macro === 'Cerrado'),
+      semaforo: g.semaforo || calculo?.semaforo || 'gris',
+      motivos_semaforo: g.motivos_semaforo || calculo?.motivos_semaforo,
+      avance_pct: g.avance_pct ?? calculo?.avance_pct ?? 0,
+      fecha_comprometida: g.fecha_comprometida || canonico?.fecha_comprometida || null,
+      fecha_estimada: g.fecha_estimada || calculo?.fecha_reproyectada || canonico?.fecha_comprometida || null,
+      atraso_dh: g.atraso_dh !== undefined ? g.atraso_dh : calculo?.atraso_dh,
+      area_nombre: g.area_nombre || canonico?.area_nombre || 'Sin clasificar',
+      responsable_nombre: g.responsable_nombre || canonico?.responsable_nombre || 'Sin asignar',
+      prioridad: g.prioridad || canonico?.prioridad || null,
+      impacto: g.impacto || canonico?.impacto || null,
+      alcance: g.alcance || canonico?.alcance || null,
+      salud_declarada: g.salud_declarada || canonico?.salud_declarada || null,
+      ultima_actualizacion: g.ultima_actualizacion || canonico?.actualizado_origen_en || calculo?.ultima_actualizacion || null,
+      nivel_detalle: g.nivel_detalle || canonico?.nivel_detalle || 'N1',
+      alertas_gobierno: g.alertas_gobierno || calculo?.alertas_gobierno || [],
+      url_origen: g.url_origen || canonico?.url_principal || g.url_principal || null,
+      puede_ver_detalle: g.puede_ver_detalle !== false,
+      etapas,
       bloqueos,
       tareas,
-      callsign: canonico?.codigo_visible || g.id.slice(0, 8).toUpperCase(),
-      descripcion: canonico?.descripcion || canonico?.objetivo || 'Sin descripción táctica registrada en la fuente.',
-      // Campos P3 añadidos al modelo
-      puede_ver_detalle: g.puede_ver_detalle,
-      nivel_detalle: (g.nivel_detalle || canonico?.nivel_detalle || 'N1') as 'N1' | 'N2' | 'N3',
-      url_principal: canonico?.url_principal || null,
-      proximo_paso: canonico?.proximo_paso || null,
-      decisiones_pendientes: canonico?.decisiones_pendientes || null,
-      riesgos_texto: canonico?.riesgos_texto || null,
     };
+
+    return mapProyecto(filaCombinada);
   });
 }

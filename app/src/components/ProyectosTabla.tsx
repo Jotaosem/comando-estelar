@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import type { ProyectoResumenUI } from '../lib/proyectosData';
+import type { ProyectoView } from '../data/proyectoView';
 import {
   Flame,
   AlertTriangle,
@@ -15,8 +15,8 @@ import {
 } from 'lucide-react';
 
 interface ProyectosTablaProps {
-  proyectos: ProyectoResumenUI[];
-  onSelectProyecto: (p: ProyectoResumenUI) => void;
+  proyectos: ProyectoView[];
+  onSelectProyecto: (p: ProyectoView) => void;
   onLimpiarFiltros?: () => void;
 }
 

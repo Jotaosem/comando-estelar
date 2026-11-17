@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useRegistrarVista } from '../hooks/useRegistrarVista';
 import { obtenerProyectosSeed } from '../lib/proyectosData';
+import { mapProyecto, type ProyectoView } from '../data/proyectoView';
+import { useAuth } from '../auth/AuthProvider';
 import { useProyectos } from '../hooks/useProyectos';
 import { GalaxySearchBar } from '../components/space/GalaxySearchBar';
 import { EtapaDetalle } from '../components/EtapaDetalle';
@@ -27,9 +29,12 @@ export const DetallePage: React.FC<DetallePageProps> = ({ usuarioActual }) => {
   const navigate = useNavigate();
   useRegistrarVista('detalle', id);
 
-  const { data: proyectosCargados } = useProyectos();
-  const proyectos = proyectosCargados || obtenerProyectosSeed(usuarioActual);
-  const proyecto = proyectos.find((p) => p.id === id) || (id === 'proy-1' ? proyectos[0] : undefined);
+  const { isDemo } = useAuth();
+  const { data: proyectosCargados, isLoading, error } = useProyectos();
+  const proyectos: ProyectoView[] = isDemo
+    ? ((proyectosCargados || obtenerProyectosSeed(usuarioActual)) as any[]).map(mapProyecto)
+    : (proyectosCargados || []);
+  const proyecto: ProyectoView | undefined = proyectos.find((p) => p.id === id) || (isDemo && id === 'proy-1' ? proyectos[0] : undefined);
 
   // Sincronización con URL (?etapa=<id>)
   const etapaParam = searchParams.get('etapa');
@@ -65,6 +70,32 @@ export const DetallePage: React.FC<DetallePageProps> = ({ usuarioActual }) => {
       detallePanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, 50);
   };
+
+  if (isLoading) {
+    return (
+      <div className="panel p-12 text-center max-w-lg mx-auto border border-border my-16 bg-card rounded-3xl font-mono text-xs shadow-panel">
+        <div className="w-4 h-4 rounded-full bg-terracotta animate-pulse mx-auto mb-4" />
+        <h2 className="text-base font-bold text-foreground">Cargando proyecto de Supabase...</h2>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="panel p-12 text-center max-w-lg mx-auto border border-health-red/30 my-16 bg-card rounded-3xl shadow-panel space-y-4">
+        <ShieldAlert className="w-16 h-16 text-health-red mx-auto" />
+        <h2 className="text-xl font-bold text-foreground">Error al consultar Supabase</h2>
+        <p className="text-xs font-mono text-health-red">{(error as any)?.message}</p>
+        <Link
+          to="/"
+          className="inline-flex items-center gap-2 text-xs font-mono font-bold px-5 py-2.5 bg-terracotta hover:opacity-90 text-white rounded-xl transition-all shadow-cta"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span>Volver a la Galaxia</span>
+        </Link>
+      </div>
+    );
+  }
 
   if (!proyecto || proyecto.puede_ver_detalle === false) {
     return (
@@ -149,8 +180,8 @@ export const DetallePage: React.FC<DetallePageProps> = ({ usuarioActual }) => {
               </div>
               <div className="p-3 bg-surface rounded-xl border border-border text-center">
                 <span className="text-[10px] text-muted-foreground block uppercase">Atraso</span>
-                <span className={`text-base font-bold ${proyecto.atraso_dh > 0 ? 'text-health-red' : 'text-health-green'}`}>
-                  {proyecto.atraso_dh > 0 ? `+${proyecto.atraso_dh}` : proyecto.atraso_dh} dh
+                <span className={`text-base font-bold ${(proyecto.atraso_dh ?? 0) > 0 ? 'text-health-red' : proyecto.atraso_dh === null ? 'text-muted-foreground' : 'text-health-green'}`}>
+                  {proyecto.atraso_dh !== null ? `${proyecto.atraso_dh > 0 ? '+' : ''}${proyecto.atraso_dh} dh` : '—'}
                 </span>
               </div>
             </div>

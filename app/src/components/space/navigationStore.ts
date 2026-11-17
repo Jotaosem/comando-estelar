@@ -1,12 +1,12 @@
 import { create } from 'zustand';
-import type { ProyectoResumenUI } from '../../lib/proyectosData';
+import type { ProyectoView } from '../../data/proyectoView';
 
 export type NivelNavegacion = 'galaxia' | 'planeta' | 'etapa';
 
 interface NavigationState {
   nivel: NivelNavegacion;
   areaId: string | null;
-  proyecto: ProyectoResumenUI | null;
+  proyecto: ProyectoView | any | null;
   etapa: any | null;
   searchQuery: string;
   isSearchDropdownOpen: boolean;
@@ -18,7 +18,7 @@ interface NavigationState {
   // Acciones puras de navegación
   irAGalaxia: () => void;
   seleccionarArea: (areaId: string) => void;
-  seleccionarProyecto: (proyecto: ProyectoResumenUI) => void;
+  seleccionarProyecto: (proyecto: ProyectoView | any) => void;
   seleccionarEtapa: (etapa: any) => void;
   volverUnNivel: () => void;
   setSearchQuery: (query: string) => void;
@@ -85,7 +85,7 @@ export const useNavigationStore = create<NavigationState>((set, get) => ({
     });
   },
 
-  seleccionarProyecto: (proyecto: ProyectoResumenUI) => {
+  seleccionarProyecto: (proyecto: ProyectoView | any) => {
     set({
       nivel: 'planeta',
       areaId: proyecto.area_solicitante,

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { ProyectoResumenUI } from '../../lib/proyectosData';
+import type { ProyectoView } from '../../data/proyectoView';
 import { User, MessageSquareQuote, ChevronUp, ChevronDown } from 'lucide-react';
 import * as Popover from '@radix-ui/react-popover';
 import { CompartirPopover } from '../CompartirPopover';
@@ -7,7 +7,7 @@ import { useNavigationStore } from './navigationStore';
 import { Z_LAYERS } from '../../constants/zLayers';
 
 interface PlanetHUDCardProps {
-  proyecto: ProyectoResumenUI;
+  proyecto: ProyectoView;
   isMobile?: boolean;
 }
 
@@ -90,14 +90,14 @@ export const PlanetHUDCard: React.FC<PlanetHUDCardProps> = ({ proyecto, isMobile
             </div>
             <span
               className={`font-semibold text-[11px] ${
-                proyecto.atraso_dh > 0
+                (proyecto.atraso_dh ?? 0) > 0
                   ? 'text-health-red'
-                  : proyecto.atraso_dh < 0
+                  : (proyecto.atraso_dh ?? 0) < 0
                   ? 'text-health-green'
                   : 'text-muted-foreground'
               }`}
             >
-              Atraso {proyecto.atraso_dh > 0 ? `+${proyecto.atraso_dh}` : proyecto.atraso_dh} dh
+              Atraso {proyecto.atraso_dh !== null ? `${proyecto.atraso_dh > 0 ? '+' : ''}${proyecto.atraso_dh} dh` : '—'}
             </span>
             <span className="text-[11px] text-muted-foreground">
               Est: <strong className="text-foreground">{formatearFecha(proyecto.fecha_reproyectada)}</strong>

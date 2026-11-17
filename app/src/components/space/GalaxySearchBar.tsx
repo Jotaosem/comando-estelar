@@ -2,14 +2,14 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import Fuse from 'fuse.js';
-import type { ProyectoResumenUI } from '../../lib/proyectosData';
+import type { ProyectoView } from '../../data/proyectoView';
 import { Search, Command, X } from 'lucide-react';
 import { useNavigationStore } from './navigationStore';
 import { Z_LAYERS } from '../../constants/zLayers';
 
 interface GalaxySearchBarProps {
-  proyectos: ProyectoResumenUI[];
-  onSelectProyecto?: (p: ProyectoResumenUI) => void;
+  proyectos: ProyectoView[] | any[];
+  onSelectProyecto?: (p: any) => void;
   onFilterChange?: (query: string, matchingIds: Set<string> | null) => void;
   className?: string;
   placeholder?: string;
@@ -212,7 +212,7 @@ export const GalaxySearchBar: React.FC<GalaxySearchBarProps> = ({
   // · Tarjetas o tabla → navega a /proyectos/:id.
   // · Planeta, etapa o detalle → navega al proyecto elegido en la misma vista.
   // Después de navegar, el input se limpia y se quita el filtro (sin dejar lista filtrada a 1).
-  const handleSelect = (p: ProyectoResumenUI) => {
+  const handleSelect = (p: ProyectoView) => {
     setSearchQuery('');
     setIsOpen(false);
     onFilterChange?.('', null);

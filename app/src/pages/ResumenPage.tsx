@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useRegistrarVista } from '../hooks/useRegistrarVista';
-import { obtenerProyectosSeed, type ProyectoResumenUI } from '../lib/proyectosData';
+import { obtenerProyectosSeed } from '../lib/proyectosData';
+import { mapProyecto, type ProyectoView } from '../data/proyectoView';
+import { useAuth } from '../auth/AuthProvider';
 import { useProyectos } from '../hooks/useProyectos';
 import type { UsuarioPrueba } from '../components/DevUserSelector';
 import { SemanticGalaxyDirector } from '../components/space/SemanticGalaxyDirector';
@@ -74,8 +76,11 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({
   const [matchingIds, setMatchingIds] = useState<Set<string> | null>(null);
   const [mostrarFiltrosMobile, setMostrarFiltrosMobile] = useState<boolean>(false);
 
-  const { data: proyectosCargados } = useProyectos();
-  const proyectos = proyectosCargados || obtenerProyectosSeed(usuarioActual);
+  const { isDemo } = useAuth();
+  const { data: proyectosCargados, isLoading, error } = useProyectos();
+  const proyectos: ProyectoView[] = isDemo
+    ? ((proyectosCargados || obtenerProyectosSeed(usuarioActual)) as any[]).map(mapProyecto)
+    : (proyectosCargados || []);
 
   const semaforoScore: Record<string, number> = {
     rojo: 1,
@@ -116,7 +121,7 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({
   };
 
   // REQUERIMIENTO 1: Seleccionar proyecto en el buscador según la vista
-  const handleSelectBuscador = (p: ProyectoResumenUI) => {
+  const handleSelectBuscador = (p: ProyectoView) => {
     if (vista === 'galaxia') {
       seleccionarProyecto(p);
     } else {
@@ -124,16 +129,51 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({
     }
   };
 
-  if (proyectos.length === 0) {
+  if (isLoading) {
+    return (
+      <PageLayout usuarioActual={usuarioActual!} onCambiarUsuario={onCambiarUsuario || (() => {})}>
+        <div className="panel p-12 text-center max-w-lg mx-auto border border-border my-16 bg-card font-mono text-xs">
+          <div className="w-4 h-4 rounded-full bg-terracotta animate-pulse mx-auto mb-4" />
+          <h2 className="text-base font-bold text-foreground uppercase tracking-tight">
+            Consultando Base de Datos Estelar...
+          </h2>
+          <p className="text-xs text-muted-foreground mt-2">
+            Cargando proyectos sincronizados en Supabase...
+          </p>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (error) {
     return (
       <PageLayout usuarioActual={usuarioActual!} onCambiarUsuario={onCambiarUsuario || (() => {})}>
         <div className="panel p-12 text-center max-w-lg mx-auto border border-health-red/30 my-16 bg-card">
           <ShieldAlert className="w-16 h-16 text-health-red mx-auto mb-4" />
           <h2 className="text-xl font-bold text-foreground uppercase tracking-tight">
-            Acceso No Autorizado
+            Error al consultar Supabase
+          </h2>
+          <p className="text-xs font-mono text-health-red mt-2 leading-relaxed">
+            {(error as any)?.message || 'No fue posible sincronizar los proyectos remotos.'}
+          </p>
+          <p className="text-[11px] font-mono text-muted-foreground mt-4">
+            Verifica tu sesión o las políticas de acceso de tu usuario en Supabase.
+          </p>
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (proyectos.length === 0) {
+    return (
+      <PageLayout usuarioActual={usuarioActual!} onCambiarUsuario={onCambiarUsuario || (() => {})}>
+        <div className="panel p-12 text-center max-w-lg mx-auto border border-border my-16 bg-card">
+          <ShieldAlert className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-foreground uppercase tracking-tight">
+            Sin Proyectos Visibles
           </h2>
           <p className="text-sm font-mono text-muted-foreground mt-2">
-            El usuario activo ({usuarioActual?.email}) no cuenta con credenciales tácticas asignadas para consultar las misiones en curso.
+            No se encontraron proyectos disponibles en Supabase para el perfil ({usuarioActual?.email || 'Sin sesión'}).
           </p>
         </div>
       </PageLayout>
@@ -447,7 +487,7 @@ export const ResumenPage: React.FC<ResumenPageProps> = ({
                             <span className="w-1.5 h-1.5 rounded-full bg-current" />
                             <span>{semBadge.label}</span>
                           </div>
-                          {p.atraso_dh > 0 && (
+                          {(p.atraso_dh ?? 0) > 0 && (
                             <span className="text-[11px] font-mono text-health-red font-semibold">
                               +{p.atraso_dh}d hábiles
                             </span>

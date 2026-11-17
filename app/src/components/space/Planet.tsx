@@ -1,15 +1,15 @@
 import React, { useRef, useState } from 'react';
 import { Html } from '@react-three/drei';
 import * as THREE from 'three';
-import type { ProyectoResumenUI } from '../../lib/proyectosData';
+import type { ProyectoView } from '../../data/proyectoView';
 import { EarthPlanetMesh } from './EarthPlanetMesh';
 import { useNavigationStore } from './navigationStore';
 import { Z_LAYERS } from '../../constants/zLayers';
 
 interface PlanetProps {
-  proyecto: ProyectoResumenUI;
+  proyecto: ProyectoView;
   position: [number, number, number];
-  onSelect: (p: ProyectoResumenUI) => void;
+  onSelect: (p: ProyectoView) => void;
   showOverlay?: boolean;
   projectIndex?: number;
   ocultarChipPorColision?: boolean;

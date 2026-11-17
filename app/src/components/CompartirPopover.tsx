@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import type { ProyectoResumenUI } from '../lib/proyectosData';
+import type { ProyectoView } from '../data/proyectoView';
 import { Share2, Download, Copy, Link as LinkIcon, Check, Eye } from 'lucide-react';
 import * as Popover from '@radix-ui/react-popover';
 
 interface CompartirPopoverProps {
-  proyecto: ProyectoResumenUI;
+  proyecto: ProyectoView | any;
   onToast: (msg: string) => void;
 }
 

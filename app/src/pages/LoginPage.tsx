@@ -1,10 +1,14 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
-import { Mail, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
+import { Mail, CheckCircle2, AlertCircle, ArrowRight, Lock, Sparkles } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
-  const { enviarEnlaceMagico, isDemo } = useAuth();
-  const [email, setEmail] = useState('');
+  const { enviarEnlaceMagico, iniciarSesionPassword } = useAuth();
+  const navigate = useNavigate();
+  const [metodo, setMetodo] = useState<'otp' | 'password'>('password');
+  const [email, setEmail] = useState('admin@prontopaga.com');
+  const [password, setPassword] = useState('');
   const [enviado, setEnviado] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
@@ -20,11 +24,37 @@ export const LoginPage: React.FC = () => {
     }
 
     setCargando(true);
+
+    if (metodo === 'password') {
+      if (!password) {
+        setError('Ingresa la contraseña asignada en Supabase.');
+        setCargando(false);
+        return;
+      }
+      const res = await iniciarSesionPassword(emailNorm, password);
+      setCargando(false);
+      if (res.error) {
+        setError(res.error);
+      } else {
+        navigate('/');
+      }
+      return;
+    }
+
     const res = await enviarEnlaceMagico(emailNorm);
     setCargando(false);
 
     if (res.error) {
-      setError(res.error);
+      if (
+        res.error.toLowerCase().includes('rate limit') ||
+        res.error.toLowerCase().includes('over_email_send_rate_limit')
+      ) {
+        setError(
+          'El servidor SMTP de Supabase alcanzó el límite de correos por hora. Puedes ingresar con contraseña o configurar Resend en Supabase.'
+        );
+      } else {
+        setError(res.error);
+      }
     } else {
       setEnviado(true);
     }
@@ -46,6 +76,40 @@ export const LoginPage: React.FC = () => {
             <h1 className="text-2xl font-bold tracking-tight text-foreground">Comando Estelar</h1>
             <p className="text-xs font-mono text-muted-foreground mt-1">Capa Transversal de Proyectos · ProntoPaga</p>
           </div>
+        </div>
+
+        {/* Selector de Método: Contraseña vs Enlace Mágico */}
+        <div className="flex rounded-xl bg-surface p-1 border border-border">
+          <button
+            type="button"
+            onClick={() => {
+              setMetodo('password');
+              setError(null);
+            }}
+            className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono font-medium transition-all flex items-center justify-center gap-1.5 ${
+              metodo === 'password'
+                ? 'bg-card text-foreground shadow-sm border border-border'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Lock className="w-3.5 h-3.5" />
+            <span>Contraseña</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setMetodo('otp');
+              setError(null);
+            }}
+            className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono font-medium transition-all flex items-center justify-center gap-1.5 ${
+              metodo === 'otp'
+                ? 'bg-card text-foreground shadow-sm border border-border'
+                : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Enlace Mágico</span>
+          </button>
         </div>
 
         {enviado ? (
@@ -87,6 +151,28 @@ export const LoginPage: React.FC = () => {
               </span>
             </div>
 
+            {metodo === 'password' && (
+              <div className="space-y-1.5 animate-in fade-in">
+                <label className="text-xs font-mono font-medium text-foreground uppercase tracking-wider block">
+                  Contraseña Supabase
+                </label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  <input
+                    type="password"
+                    required
+                    placeholder="••••••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface border border-border text-xs font-mono text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-terracotta transition-colors"
+                  />
+                </div>
+                <span className="text-[10px] font-mono text-muted-foreground block">
+                  Contraseña configurada en Supabase Auth
+                </span>
+              </div>
+            )}
+
             {error && (
               <div className="p-3 rounded-xl bg-health-red-soft border border-health-red/30 text-health-red text-xs font-mono flex items-start gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -99,17 +185,24 @@ export const LoginPage: React.FC = () => {
               disabled={cargando}
               className="w-full py-3 px-4 rounded-xl bg-terracotta text-white font-sans text-xs font-semibold hover:opacity-95 shadow-cta transition-all flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              <span>{cargando ? 'Enviando enlace...' : 'Ingresar con Enlace Mágico'}</span>
+              <span>
+                {cargando
+                  ? 'Autenticando...'
+                  : metodo === 'password'
+                  ? 'Ingresar con Contraseña'
+                  : 'Enviar Enlace Mágico'}
+              </span>
               <ArrowRight className="w-4 h-4" />
             </button>
 
-            {isDemo && (
-              <div className="pt-2 text-center">
-                <span className="text-[11px] font-mono text-muted-foreground">
-                  Modo de prueba local habilitado (acceso directo en curso)
-                </span>
-              </div>
-            )}
+            <div className="pt-2 text-center">
+              <a
+                href="/?demo=true"
+                className="text-[11px] font-mono text-muted-foreground hover:text-terracotta transition-colors underline"
+              >
+                Acceder en modo simulación de perfiles (?demo=true)
+              </a>
+            </div>
           </form>
         )}
 

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import * as THREE from 'three';
-import type { ProyectoResumenUI } from '../../lib/proyectosData';
+import type { ProyectoView } from '../../data/proyectoView';
 import { SECTOR_SYSTEMS, calcularPosicionPlaneta, calcularGalaxiaBox } from './galaxyData';
 import { SystemStar } from './SystemStar';
 import { Planet } from './Planet';
@@ -14,11 +14,11 @@ import type { NivelNavegacion } from './navigationStore';
 
 interface GalaxyCanvas3DProps {
   nivel: NivelNavegacion;
-  proyectos: ProyectoResumenUI[];
-  selectedProyecto: ProyectoResumenUI | null;
+  proyectos: ProyectoView[];
+  selectedProyecto: ProyectoView | null;
   selectedEtapa: any | null;
   cameraTargetPos: [number, number, number];
-  onSelectProyecto: (p: ProyectoResumenUI) => void;
+  onSelectProyecto: (p: ProyectoView) => void;
   onSelectEtapa: (e: any) => void;
   reducedMotion?: boolean;
   onHoverStage: (data: StageTooltipData | null) => void;

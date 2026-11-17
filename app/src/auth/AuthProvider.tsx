@@ -13,6 +13,7 @@ interface AuthContextType {
   cambiarUsuarioDemo: (u: UsuarioPrueba) => void;
   cerrarSesion: () => Promise<void>;
   enviarEnlaceMagico: (email: string) => Promise<{ error: string | null }>;
+  iniciarSesionPassword: (email: string, password: string) => Promise<{ error: string | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -22,10 +23,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Modo demo activo en desarrollo cuando no hay sesión real activa o está forzado por VITE_MODO_DEMO
+  // Modo demo activo solo si está explícitamente forzado por env (tests), webdriver o query param ?demo=true
   const [isDemo, setIsDemo] = useState<boolean>(() => {
     if (import.meta.env.PROD) return false;
-    return true; // Por defecto en desarrollo / test iniciamos con demo activo si no hay sesión
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('demo') === 'true') return true;
+      if ((window.navigator as any)?.webdriver) return true;
+    }
+    return import.meta.env.VITE_MODO_DEMO === 'true';
   });
 
   // Usuario demo activo
@@ -115,6 +121,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { error: null };
   };
 
+  const iniciarSesionPassword = async (email: string, password: string): Promise<{ error: string | null }> => {
+    const emailNorm = email.trim().toLowerCase();
+    if (!emailNorm.endsWith('@prontopaga.com')) {
+      return { error: 'Acceso restringido: debes usar tu correo corporativo (@prontopaga.com).' };
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: emailNorm,
+      password,
+    });
+
+    if (error) {
+      return { error: error.message };
+    }
+
+    if (data.session) {
+      setSession(data.session);
+      setUser(data.session.user);
+      setIsDemo(false);
+      const email = data.session.user.email?.toLowerCase() || '';
+      setUsuarioActual((prev) => ({
+        ...prev,
+        email,
+        nombre: data.session.user.user_metadata?.nombre || email.split('@')[0],
+      }));
+    }
+    return { error: null };
+  };
+
   const cerrarSesion = async () => {
     await supabase.auth.signOut();
     setSession(null);
@@ -136,6 +171,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         cambiarUsuarioDemo,
         cerrarSesion,
         enviarEnlaceMagico,
+        iniciarSesionPassword,
       }}
     >
       {children}
@@ -158,6 +194,7 @@ export const useAuth = () => {
       cambiarUsuarioDemo: () => {},
       cerrarSesion: async () => {},
       enviarEnlaceMagico: async () => ({ error: null }),
+      iniciarSesionPassword: async () => ({ error: null }),
     };
   }
   return context;

@@ -4,6 +4,8 @@ import { defineConfig } from 'vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+  envDir: '..',
+  envPrefix: ['VITE_', 'SUPABASE_'],
   server: {
     allowedHosts: [
       'semiphenomenal-brachydactylic-kimber.ngrok-free.dev'

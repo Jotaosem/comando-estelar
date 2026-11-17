@@ -4,7 +4,7 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import * as THREE from 'three';
-import type { ProyectoResumenUI } from '../../lib/proyectosData';
+import type { ProyectoView } from '../../data/proyectoView';
 import { calcularPosicionPlaneta, calcularGalaxiaBox } from './galaxyData';
 import { PlanetHUDCard } from './PlanetHUDCard';
 import { StageGlassPanel } from './StageGlassPanel';
@@ -17,7 +17,7 @@ import { Z_LAYERS } from '../../constants/zLayers';
 const GalaxyCanvas3D = lazy(() => import('./GalaxyCanvas3D'));
 
 interface SemanticGalaxyDirectorProps {
-  proyectos: ProyectoResumenUI[];
+  proyectos: ProyectoView[];
   matchingIds?: Set<string> | null;
 }
 
