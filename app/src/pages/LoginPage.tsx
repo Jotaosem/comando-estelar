@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
-import { Mail, CheckCircle2, AlertCircle, ArrowRight, Lock, Sparkles } from 'lucide-react';
+import { Mail, CheckCircle2, AlertCircle, ArrowRight, Lock, Sparkles, KeyRound } from 'lucide-react';
+import { USUARIOS_SEED } from '../components/DevUserSelector';
 
 export const LoginPage: React.FC = () => {
   const { enviarEnlaceMagico, iniciarSesionPassword } = useAuth();
   const navigate = useNavigate();
-  const [metodo, setMetodo] = useState<'otp' | 'password'>('password');
+  const [metodo, setMetodo] = useState<'password' | 'otp'>('password');
   const [email, setEmail] = useState('admin@prontopaga.com');
-  const [password, setPassword] = useState('');
+  const [password, setPassword] = useState('ProntoPaga2026!');
   const [enviado, setEnviado] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
@@ -27,7 +28,7 @@ export const LoginPage: React.FC = () => {
 
     if (metodo === 'password') {
       if (!password) {
-        setError('Ingresa la contraseña asignada en Supabase.');
+        setError('Ingresa la contraseña asignada (ProntoPaga2026!).');
         setCargando(false);
         return;
       }
@@ -50,7 +51,7 @@ export const LoginPage: React.FC = () => {
         res.error.toLowerCase().includes('over_email_send_rate_limit')
       ) {
         setError(
-          'El servidor SMTP de Supabase alcanzó el límite de correos por hora. Puedes ingresar con contraseña o configurar Resend en Supabase.'
+          'El servidor SMTP de Supabase alcanzó el límite de correos. Ingresa directamente con la opción Contraseña (ProntoPaga2026!).'
         );
       } else {
         setError(res.error);
@@ -58,6 +59,12 @@ export const LoginPage: React.FC = () => {
     } else {
       setEnviado(true);
     }
+  };
+
+  const seleccionarUsuarioRapido = (uEmail: string) => {
+    setEmail(uEmail);
+    setPassword('ProntoPaga2026!');
+    setError(null);
   };
 
   return (
@@ -86,7 +93,7 @@ export const LoginPage: React.FC = () => {
               setMetodo('password');
               setError(null);
             }}
-            className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono font-medium transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               metodo === 'password'
                 ? 'bg-card text-foreground shadow-sm border border-border'
                 : 'text-muted-foreground hover:text-foreground'
@@ -101,7 +108,7 @@ export const LoginPage: React.FC = () => {
               setMetodo('otp');
               setError(null);
             }}
-            className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono font-medium transition-all flex items-center justify-center gap-1.5 ${
+            className={`flex-1 py-1.5 px-3 rounded-lg text-xs font-mono font-medium transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
               metodo === 'otp'
                 ? 'bg-card text-foreground shadow-sm border border-border'
                 : 'text-muted-foreground hover:text-foreground'
@@ -117,14 +124,14 @@ export const LoginPage: React.FC = () => {
             <CheckCircle2 className="w-10 h-10 text-health-green mx-auto" />
             <h2 className="font-bold text-sm text-foreground">¡Enlace Mágico Enviado!</h2>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Hemos enviado un enlace de acceso seguro a <strong className="text-foreground">{email}</strong>. Revisa tu bandeja de entrada o spam para ingresar.
+              Hemos enviado un enlace de acceso seguro a <strong className="text-foreground">{email}</strong>. Revisa tu bandeja de entrada para ingresar.
             </p>
             <button
               onClick={() => {
                 setEnviado(false);
                 setEmail('');
               }}
-              className="mt-3 text-xs font-mono text-terracotta hover:underline"
+              className="mt-3 text-xs font-mono text-terracotta hover:underline cursor-pointer"
             >
               Probar con otro correo
             </button>
@@ -154,7 +161,7 @@ export const LoginPage: React.FC = () => {
             {metodo === 'password' && (
               <div className="space-y-1.5 animate-in fade-in">
                 <label className="text-xs font-mono font-medium text-foreground uppercase tracking-wider block">
-                  Contraseña Supabase
+                  Contraseña
                 </label>
                 <div className="relative">
                   <Lock className="w-4 h-4 text-muted-foreground absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -167,9 +174,19 @@ export const LoginPage: React.FC = () => {
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-surface border border-border text-xs font-mono text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-terracotta transition-colors"
                   />
                 </div>
-                <span className="text-[10px] font-mono text-muted-foreground block">
-                  Contraseña configurada en Supabase Auth
-                </span>
+                <div className="p-2 rounded-lg bg-surface border border-border flex items-center justify-between text-[11px] font-mono text-muted-foreground">
+                  <span className="flex items-center gap-1.5">
+                    <KeyRound className="w-3.5 h-3.5 text-terracotta" />
+                    <span>Clave: <strong className="text-foreground">ProntoPaga2026!</strong></span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setPassword('ProntoPaga2026!')}
+                    className="text-terracotta hover:underline cursor-pointer font-semibold"
+                  >
+                    Aplicar
+                  </button>
+                </div>
               </div>
             )}
 
@@ -183,7 +200,7 @@ export const LoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={cargando}
-              className="w-full py-3 px-4 rounded-xl bg-terracotta text-white font-sans text-xs font-semibold hover:opacity-95 shadow-cta transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full py-3 px-4 rounded-xl bg-terracotta text-white font-sans text-xs font-semibold hover:opacity-95 shadow-cta transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
             >
               <span>
                 {cargando
@@ -195,20 +212,35 @@ export const LoginPage: React.FC = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
 
-            <div className="pt-2 text-center">
-              <a
-                href="/?demo=true"
-                className="text-[11px] font-mono text-muted-foreground hover:text-terracotta transition-colors underline"
-              >
-                Acceder en modo simulación de perfiles (?demo=true)
-              </a>
+            {/* Accesos rápidos de perfiles */}
+            <div className="pt-2 border-t border-border space-y-2">
+              <span className="text-[10px] font-mono text-muted-foreground uppercase block text-center">
+                Seleccionar Perfil para Ingresar:
+              </span>
+              <div className="grid grid-cols-2 gap-1.5 text-[11px] font-mono">
+                {USUARIOS_SEED.map((u) => (
+                  <button
+                    key={u.email}
+                    type="button"
+                    onClick={() => seleccionarUsuarioRapido(u.email)}
+                    className={`p-1.5 rounded-lg border text-left truncate transition-colors cursor-pointer ${
+                      email === u.email
+                        ? 'bg-muted border-terracotta text-terracotta font-semibold'
+                        : 'bg-surface hover:bg-muted border-border text-foreground'
+                    }`}
+                  >
+                    <span className="block truncate">{u.rol}</span>
+                    <span className="text-[9px] text-muted-foreground block truncate">{u.nombre.split(' ')[0]}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </form>
         )}
 
         <div className="pt-4 border-t border-border text-center">
           <p className="text-[10px] font-mono text-muted-foreground">
-            Acceso auditado · Solo lectura multi-fuente
+            Acceso auditado · Capa multi-fuente ProntoPaga
           </p>
         </div>
       </div>

@@ -126,7 +126,7 @@ export const ImprimirPage: React.FC = () => {
           <div>
             <span className="text-muted-foreground text-[9px] uppercase block">Atraso</span>
             <span className="font-semibold">
-              {proyecto.atraso_dh > 0 ? `+${proyecto.atraso_dh} días hábiles` : `${proyecto.atraso_dh} días hábiles`}
+              {proyecto.atraso_dh !== null ? `${proyecto.atraso_dh > 0 ? '+' : ''}${proyecto.atraso_dh} días hábiles` : '—'}
             </span>
           </div>
         </div>

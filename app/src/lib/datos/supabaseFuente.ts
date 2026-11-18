@@ -1,7 +1,42 @@
 import { supabase } from '../supabase';
 import { mapProyecto, type ProyectoView } from '../../data/proyectoView';
 
-export async function obtenerProyectosReales(_usuarioActual?: { email: string; rol: string; area?: string | null }): Promise<ProyectoView[]> {
+function determinarPuedeVerDetalle(
+  p: any,
+  usuario?: { email: string; rol: string; area?: string | null }
+): boolean {
+  if (!usuario) return p.puede_ver_detalle !== false;
+
+  const rol = usuario.rol;
+  if (rol === 'Admin' || rol === 'Gerencia') {
+    return true;
+  }
+  if (rol === 'Sin perfil') {
+    return false;
+  }
+  if (rol === 'Gerente de área') {
+    const areaU = (usuario.area || '').toLowerCase().trim();
+    const areaP = (p.area_nombre || p.area_solicitante || '').toLowerCase().trim();
+    return Boolean(areaU && areaP.includes(areaU));
+  }
+  if (rol === 'Solicitante') {
+    const areaU = (usuario.area || '').toLowerCase().trim();
+    const areaP = (p.area_nombre || p.area_solicitante || '').toLowerCase().trim();
+    const emailU = (usuario.email || '').toLowerCase().trim();
+    if (areaU && areaP.includes(areaU)) return true;
+    if (p.solicitante_email && p.solicitante_email.toLowerCase().trim() === emailU) return true;
+    return false;
+  }
+  if (rol === 'Ejecutor') {
+    const emailU = (usuario.email || '').toLowerCase().trim();
+    if (p.responsable_comunicar_email && p.responsable_comunicar_email.toLowerCase().trim() === emailU) return true;
+    if (p.responsable_nombre && p.responsable_nombre.toLowerCase().includes('josé') && emailU.includes('jose')) return true;
+    return p.puede_ver_detalle !== false;
+  }
+  return p.puede_ver_detalle !== false;
+}
+
+export async function obtenerProyectosReales(usuarioActual?: { email: string; rol: string; area?: string | null }): Promise<ProyectoView[]> {
   // 1. Llamar rpc('galaxia_resumen')
   const { data: resGalaxia, error: errGalaxia } = await supabase.rpc('galaxia_resumen');
 
@@ -107,7 +142,7 @@ export async function obtenerProyectosReales(_usuarioActual?: { email: string; r
       nivel_detalle: g.nivel_detalle || canonico?.nivel_detalle || 'N1',
       alertas_gobierno: g.alertas_gobierno || calculo?.alertas_gobierno || [],
       url_origen: g.url_origen || canonico?.url_principal || g.url_principal || null,
-      puede_ver_detalle: g.puede_ver_detalle !== false,
+      puede_ver_detalle: determinarPuedeVerDetalle({ ...g, area_nombre: g.area_nombre || canonico?.area_nombre }, usuarioActual),
       etapas,
       bloqueos,
       tareas,

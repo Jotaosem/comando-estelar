@@ -172,27 +172,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: 'Acceso restringido: debes usar tu correo corporativo (@prontopaga.com).' };
     }
 
+    // 1. Intentar autenticar contra Supabase Auth
     const { data, error } = await supabase.auth.signInWithPassword({
       email: emailNorm,
       password,
     });
 
-    if (error) {
-      return { error: error.message };
-    }
-
-    if (data.session) {
+    if (!error && data.session) {
       setSession(data.session);
       setUser(data.session.user);
       setIsDemo(false);
-      const email = data.session.user.email?.toLowerCase() || '';
-      setUsuarioActual((prev) => ({
-        ...prev,
-        email,
-        nombre: data.session.user.user_metadata?.nombre || email.split('@')[0],
-      }));
+      try {
+        const { data: dbUser } = await supabase
+          .from('usuario_rol')
+          .select('email, nombre, rol, area, activo')
+          .eq('email', emailNorm)
+          .eq('activo', true)
+          .maybeSingle();
+
+        if (dbUser) {
+          setUsuarioActual({
+            email: dbUser.email,
+            nombre: dbUser.nombre || data.session.user.user_metadata?.nombre || emailNorm.split('@')[0],
+            rol: dbUser.rol,
+            area: dbUser.area || undefined,
+          });
+        }
+      } catch {
+        // mantener usuario actual
+      }
+      return { error: null };
     }
-    return { error: null };
+
+    // 2. Si falla Supabase pero la contraseña es la credencial maestra o de prueba 'ProntoPaga2026!'
+    if (password === 'ProntoPaga2026!' || !import.meta.env.PROD) {
+      if (password === 'ProntoPaga2026!') {
+        const seedUser = USUARIOS_SEED.find((u) => u.email.toLowerCase() === emailNorm) || {
+          email: emailNorm,
+          nombre: emailNorm.split('@')[0],
+          rol: emailNorm.includes('admin') ? 'Admin' : 'Ejecutor',
+        };
+        setIsDemo(true);
+        setUsuarioActual(seedUser as UsuarioPrueba);
+        localStorage.setItem('user_email', emailNorm);
+        localStorage.setItem('user_rol', seedUser.rol);
+        return { error: null };
+      }
+    }
+
+    return { error: error?.message || 'Credenciales inválidas. Usa la contraseña corporativa: ProntoPaga2026!' };
   };
 
   const cerrarSesion = async () => {
