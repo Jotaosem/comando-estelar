@@ -1,14 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { UsuarioPrueba } from './DevUserSelector';
-import { Sparkles, X, Send, ThumbsUp, ThumbsDown, MessageSquare } from 'lucide-react';
+import {
+  Sparkles,
+  X,
+  Send,
+  ThumbsUp,
+  ThumbsDown,
+  MessageSquare,
+  RotateCcw,
+  RefreshCw,
+  AlertCircle,
+} from 'lucide-react';
 import { useNavigationStore } from './space/navigationStore';
+import { useProyectos } from '../hooks/useProyectos';
+import { preguntarCopiloto, type MensajeHistorial } from '../services/copiloto';
+import { supabase } from '../lib/supabase';
 
 interface Mensaje {
   id: string;
   autor: 'user' | 'assistant';
   texto: string;
   timestamp: string;
+  consultaId?: string | null;
   valoracion?: number; // 1 o -1
+  valoradoTexto?: string;
+  esError?: boolean;
 }
 
 interface ChatAsistenteProps {
@@ -16,10 +32,17 @@ interface ChatAsistenteProps {
   proyectoIdInicial?: string;
 }
 
+const STORAGE_KEY = 'copiloto_historial_v1';
+
 export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
   usuarioActual,
   proyectoIdInicial,
 }) => {
+  // Ocultar el Copiloto a los usuarios "Sin perfil"
+  if (usuarioActual.rol === 'Sin perfil') {
+    return null;
+  }
+
   const {
     chatAbierto: abierto,
     abrirChatConProyecto,
@@ -27,106 +50,282 @@ export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
     chatProyectoId,
   } = useNavigationStore();
 
-  const [input, setInput] = useState('');
-  const [cargando, setCargando] = useState(false);
-  const [mensajes, setMensajes] = useState<Mensaje[]>([
-    {
-      id: 'm-1',
-      autor: 'assistant',
-      texto: `Hola ${usuarioActual.nombre.split(' ')[0]}. Soy el asistente de seguimiento de proyectos. Pregúntame sobre el estado de un proyecto, qué bloqueos tiene o cuándo se proyecta su término.\n\nFuente: Notion · actualizado 29/10 09:15`,
-      timestamp: '09:15',
-    },
-  ]);
+  const { data: proyectos } = useProyectos();
+
+  // Contexto de proyecto activo
+  const [contextoProyectoId, setContextoProyectoId] = useState<string | null>(
+    chatProyectoId || proyectoIdInicial || null
+  );
 
   useEffect(() => {
-    if (chatProyectoId && abierto) {
-      setMensajes((prev) => [
-        ...prev,
-        {
-          id: `m-ctx-${Date.now()}`,
-          autor: 'assistant',
-          texto: `Contexto sincronizado con la misión seleccionada (${chatProyectoId}). ¿Deseas consultar sobre su fecha estimada, el bloqueo activo o el desglose de días hábiles?\n\nFuente: Notion · actualizado hoy`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        },
-      ]);
+    if (chatProyectoId) {
+      setContextoProyectoId(chatProyectoId);
+    } else if (proyectoIdInicial) {
+      setContextoProyectoId(proyectoIdInicial);
     }
-  }, [chatProyectoId, abierto]);
+  }, [chatProyectoId, proyectoIdInicial]);
+
+  const proyectoActivo = proyectos?.find((p) => p.id === contextoProyectoId);
+  const nombreProyecto = proyectoActivo?.nombre || 'Proyecto seleccionado';
+
+  const [input, setInput] = useState('');
+  const [cargando, setCargando] = useState(false);
+  const [ultimoError, setUltimoError] = useState<{
+    pregunta: string;
+    proyectoId: string | null;
+  } | null>(null);
+
+  // Historial en sessionStorage protegido con try/catch
+  const [mensajes, setMensajes] = useState<Mensaje[]>(() => {
+    try {
+      const raw = sessionStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch {
+      // Ignorar error de lectura de sessionStorage
+    }
+    return [
+      {
+        id: 'msg-inicial',
+        autor: 'assistant',
+        texto: `Hola ${usuarioActual.nombre.split(' ')[0]}. Soy el Copiloto de Comando Estelar.\nPuedes consultarme sobre el estado de un proyecto, qué bloqueos tiene o cuándo se proyecta su término.\n\nFuente: Notion vía sync`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      },
+    ];
+  });
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(mensajes));
+    } catch {
+      // Ignorar error de escritura en sessionStorage
+    }
+  }, [mensajes]);
+
+  // Accesibilidad y manejo de focos
+  const botonRef = useRef<HTMLButtonElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const mensajesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (abierto) {
+      // Foco en el campo al abrir
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
+    }
+  }, [abierto]);
+
+  useEffect(() => {
+    if (abierto) {
+      mensajesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [mensajes, cargando, abierto]);
+
+  // Cierre con Esc y retorno de foco al botón
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && abierto) {
+        cerrarChat();
+        botonRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [abierto, cerrarChat]);
 
   const handleAbrir = () => {
-    if (proyectoIdInicial) {
-      abrirChatConProyecto(proyectoIdInicial);
-    } else {
-      abrirChatConProyecto('');
-    }
+    const targetId = contextoProyectoId || proyectoIdInicial || '';
+    abrirChatConProyecto(targetId);
   };
 
   const handleCerrar = () => {
     cerrarChat();
+    botonRef.current?.focus();
   };
 
-  const enviarPregunta = async () => {
-    if (!input.trim() || cargando) return;
+  const limpiarConversacion = () => {
+    const msgReset: Mensaje[] = [
+      {
+        id: `msg-${Date.now()}`,
+        autor: 'assistant',
+        texto: `Conversación reiniciada. ¿En qué proyecto o entrega puedo apoyarte hoy?\n\nFuente: Notion vía sync`,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      },
+    ];
+    setMensajes(msgReset);
+    setUltimoError(null);
+    try {
+      sessionStorage.removeItem(STORAGE_KEY);
+    } catch {}
+  };
 
-    const textoUsuario = input.trim();
-    setInput('');
+  const ejecutarConsulta = async (preguntaTexto: string, pId: string | null) => {
+    setCargando(true);
+    setUltimoError(null);
+
+    // Registrar evento_uso (vista = 'asistente') sin el texto de la pregunta
+    try {
+      await supabase.from('evento_uso').insert({
+        email: usuarioActual.email,
+        rol: usuarioActual.rol,
+        vista: 'asistente',
+        proyecto_id: pId || null,
+      });
+    } catch {
+      // No bloquear la experiencia de usuario si falla la telemetría
+    }
+
+    // Preparar historial para el servicio (máx 6 mensajes previos, rol y texto)
+    const historialParaServicio: MensajeHistorial[] = mensajes
+      .filter((m) => !m.esError)
+      .slice(-6)
+      .map((m) => ({
+        rol: m.autor,
+        texto: m.texto,
+      }));
+
+    const resultado = await preguntarCopiloto({
+      pregunta: preguntaTexto,
+      proyectoId: pId,
+      historial: historialParaServicio,
+    });
+
     const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+    if (resultado.error) {
+      setUltimoError({ pregunta: preguntaTexto, proyectoId: pId });
+      setMensajes((prev) => [
+        ...prev,
+        {
+          id: `msg-err-${Date.now()}`,
+          autor: 'assistant',
+          texto: resultado.respuesta,
+          timestamp: now,
+          esError: true,
+        },
+      ]);
+    } else {
+      setMensajes((prev) => [
+        ...prev,
+        {
+          id: `msg-ok-${Date.now()}`,
+          autor: 'assistant',
+          texto: resultado.respuesta,
+          timestamp: now,
+          consultaId: resultado.consulta_id,
+        },
+      ]);
+    }
+
+    setCargando(false);
+  };
+
+  const enviarPregunta = () => {
+    if (!input.trim() || cargando) return;
+
+    const texto = input.trim();
+    setInput('');
+
+    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     setMensajes((prev) => [
       ...prev,
       {
-        id: `m-${Date.now()}`,
+        id: `user-${Date.now()}`,
         autor: 'user',
-        texto: textoUsuario,
+        texto,
         timestamp: now,
       },
     ]);
 
-    setCargando(true);
-
-    setTimeout(() => {
-      let respuestaMock = '';
-      const pLower = textoUsuario.toLowerCase();
-
-      if (pLower.includes('bloqueo') || pLower.includes('bloquea')) {
-        respuestaMock =
-          'El proyecto presenta un bloqueo activo por "Aprobación QA" abierto hace 6 días hábiles por el área de Calidad. La penalización automática aplicada en la proyección es de +5 días hábiles.\n\nFuente: Notion · actualizado 29/10 09:15';
-      } else if (pLower.includes('cuándo') || pLower.includes('fecha') || pLower.includes('termina')) {
-        respuestaMock =
-          'La fecha proyectada auditada es el 12/11/2026. Se calcula desde hoy (29/10) + 3 días hábiles restantes de QA + 8 días de etapas pendientes + 5 días por 1 bloqueo = 16 días hábiles en total.\n\nFuente: Notion · actualizado 29/10 09:15';
-      } else if (pLower.includes('responsable')) {
-        respuestaMock =
-          'El responsable de comunicar el estado es José Miguel (lider.tecnico@empresa.com). Para destrabar el bloqueo actual, el área a contactar es Calidad y Testing.\n\nFuente: Notion · actualizado 29/10 09:15';
-      } else {
-        respuestaMock =
-          'El proyecto se encuentra en la etapa 03 (Pruebas de Calidad) con un 60% de avance auditado. Semáforo actual: Crítico por bloqueo de QA superior a 5 días hábiles.\n\nFuente: Notion · actualizado 29/10 09:15';
-      }
-
-      setMensajes((prev) => [
-        ...prev,
-        {
-          id: `m-bot-${Date.now()}`,
-          autor: 'assistant',
-          texto: respuestaMock,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        },
-      ]);
-      setCargando(false);
-    }, 700);
+    ejecutarConsulta(texto, contextoProyectoId);
   };
 
-  const valorar = (id: string, val: number) => {
-    setMensajes((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, valoracion: val } : m))
+  const reintentarUltima = () => {
+    if (!ultimoError) return;
+    ejecutarConsulta(ultimoError.pregunta, ultimoError.proyectoId);
+  };
+
+  const valorar = async (mensajeId: string, consultaId: string, val: number) => {
+    try {
+      await supabase
+        .from('consulta_asistente')
+        .update({ valoracion: val })
+        .eq('id', consultaId);
+
+      setMensajes((prev) =>
+        prev.map((m) =>
+          m.id === mensajeId
+            ? {
+                ...m,
+                valoracion: val,
+                valoradoTexto: 'Gracias por tu valoración',
+              }
+            : m
+        )
+      );
+    } catch {
+      // Si falla la red, reflejar en UI defensivamente
+      setMensajes((prev) =>
+        prev.map((m) =>
+          m.id === mensajeId
+            ? {
+                ...m,
+                valoracion: val,
+                valoradoTexto: 'Gracias por tu valoración',
+              }
+            : m
+        )
+      );
+    }
+  };
+
+  // Renderizador seguro como TEXTO PLANO
+  // Separa saltos de línea y viñetas sin HTML ni dangerouslySetInnerHTML
+  const renderTextoPlano = (texto: string) => {
+    const lineas = texto.split('\n');
+    let cuerpoLineas: string[] = [];
+    let fuenteLinea: string | null = null;
+
+    // Detectar si la última línea no vacía empieza con "Fuente:"
+    let lastIdx = lineas.length - 1;
+    while (lastIdx >= 0 && !lineas[lastIdx].trim()) {
+      lastIdx--;
+    }
+
+    if (lastIdx >= 0 && lineas[lastIdx].trim().startsWith('Fuente:')) {
+      cuerpoLineas = lineas.slice(0, lastIdx);
+      fuenteLinea = lineas[lastIdx].trim();
+    } else {
+      cuerpoLineas = lineas;
+    }
+
+    return (
+      <div className="space-y-1">
+        <div className="whitespace-pre-wrap leading-relaxed">
+          {cuerpoLineas.join('\n')}
+        </div>
+        {fuenteLinea && (
+          <div className="mt-2 pt-2 border-t border-border/40 font-mono text-[11px] text-muted-foreground/60 select-text">
+            {fuenteLinea}
+          </div>
+        )}
+      </div>
     );
   };
 
   return (
     <>
-      {/* Botón Flotante con estilo principal WWP (Terracota con sombra cta, sin azul/cian) */}
+      {/* Botón Flotante con posición fija cuidada para no tapar radar ni controles */}
       <button
+        ref={botonRef}
         onClick={handleAbrir}
-        className="fixed bottom-6 right-6 z-40 bg-terracotta hover:opacity-90 text-white p-3.5 rounded-full shadow-cta flex items-center gap-2.5 transition-all transform hover:scale-105 active:scale-95 border border-terracotta"
-        title="Activar Copiloto IA"
+        className="fixed bottom-6 right-6 z-40 bg-terracotta hover:opacity-95 text-white p-3.5 rounded-full shadow-cta flex items-center gap-2.5 transition-all transform hover:scale-105 active:scale-95 border border-terracotta cursor-pointer"
+        title="Abrir Copiloto IA"
         aria-label="Abrir Copiloto IA"
       >
         <div className="relative">
@@ -138,9 +337,14 @@ export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
         </span>
       </button>
 
-      {/* Panel Lateral */}
+      {/* Panel Lateral en Desktop / Pantalla completa en Móvil */}
       {abierto && (
-        <div className="fixed inset-y-0 right-0 w-full sm:w-[420px] bg-card text-foreground backdrop-blur-2xl shadow-panel z-50 flex flex-col border-l border-border">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Panel del Copiloto IA"
+          className="fixed inset-y-0 right-0 w-full sm:w-[420px] bg-card text-foreground backdrop-blur-2xl shadow-panel z-50 flex flex-col border-l border-border animate-in slide-in-from-right duration-200"
+        >
           {/* Header */}
           <div className="p-4 border-b border-border flex items-center justify-between bg-surface">
             <div className="flex items-center gap-3">
@@ -150,26 +354,62 @@ export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="font-sans font-bold text-sm text-foreground tracking-tight uppercase">
-                    Copiloto Táctico IA
+                    Copiloto IA
                   </h3>
-                  <span className="inline-block w-2 h-2 rounded-full bg-health-green" />
+                  <span className="inline-block w-2 h-2 rounded-full bg-health-green" title="Conectado a n8n" />
                 </div>
                 <p className="text-[10px] font-mono text-muted-foreground">
-                  MOD: CLAUDE-SONNET-5 · LATENCY: 24ms
+                  Comando Estelar · Agente Táctico
                 </p>
               </div>
             </div>
-            <button
-              onClick={handleCerrar}
-              className="p-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              aria-label="Cerrar copiloto"
-            >
-              <X className="w-5 h-5" />
-            </button>
+
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={limpiarConversacion}
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                title="Nueva conversación"
+                aria-label="Nueva conversación"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={handleCerrar}
+                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                title="Cerrar copiloto (Esc)"
+                aria-label="Cerrar copiloto"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
-          {/* Mensajes */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 font-mono text-xs">
+          {/* Contexto de proyecto activo (si existe) */}
+          {contextoProyectoId && (
+            <div className="px-4 py-2 bg-surface/80 border-b border-border flex items-center justify-between text-xs font-mono">
+              <div className="flex items-center gap-1.5 text-muted-foreground truncate">
+                <span className="text-[10px] text-terracotta uppercase font-bold">Sobre:</span>
+                <span className="text-foreground font-semibold truncate">{nombreProyecto}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setContextoProyectoId(null)}
+                className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer shrink-0 ml-2"
+                title="Quitar contexto de proyecto"
+                aria-label="Quitar contexto de proyecto"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+
+          {/* Lista de Mensajes (con aria-live="polite") */}
+          <div
+            aria-live="polite"
+            className="flex-1 overflow-y-auto p-4 space-y-4 font-mono text-xs select-text"
+          >
             {mensajes.map((m) => {
               const isAssistant = m.autor === 'assistant';
               return (
@@ -180,43 +420,51 @@ export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
                   }`}
                 >
                   <div className="flex items-center gap-1.5 mb-1 text-[10px] text-muted-foreground font-mono">
-                    <span>{isAssistant ? 'MISSION_AI' : usuarioActual.nombre}</span>
+                    <span>{isAssistant ? 'COPILOTO_IA' : usuarioActual.nombre}</span>
                     <span>•</span>
                     <span>{m.timestamp}</span>
                   </div>
 
                   <div
-                    className={`p-3.5 rounded-2xl max-w-[90%] leading-relaxed whitespace-pre-wrap ${
+                    className={`p-3.5 rounded-2xl max-w-[92%] leading-relaxed ${
                       isAssistant
-                        ? 'bg-surface text-foreground border border-border shadow-sm'
+                        ? m.esError
+                          ? 'bg-health-red-soft text-health-red border border-health-red/30 shadow-sm'
+                          : 'bg-surface text-foreground border border-border shadow-sm'
                         : 'bg-terracotta text-white font-sans font-medium shadow-cta'
                     }`}
                   >
-                    {m.texto}
+                    {renderTextoPlano(m.texto)}
                   </div>
 
-                  {/* Valoración para asistente */}
-                  {isAssistant && m.id !== 'm-1' && (
-                    <div className="flex items-center gap-2 mt-1.5 text-[10px] text-muted-foreground">
-                      <span className="font-mono text-[9px]">¿Respuesta útil?</span>
-                      <button
-                        onClick={() => valorar(m.id, 1)}
-                        className={`p-1 rounded-full hover:text-foreground transition-colors ${
-                          m.valoracion === 1 ? 'text-health-green' : ''
-                        }`}
-                        title="Respuesta útil"
-                      >
-                        <ThumbsUp className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => valorar(m.id, -1)}
-                        className={`p-1 rounded-full hover:text-foreground transition-colors ${
-                          m.valoracion === -1 ? 'text-health-red' : ''
-                        }`}
-                        title="Respuesta con errores"
-                      >
-                        <ThumbsDown className="w-3.5 h-3.5" />
-                      </button>
+                  {/* Valoración 👍 / 👎 solo si consulta_id no es null */}
+                  {isAssistant && !m.esError && m.consultaId && (
+                    <div className="flex items-center gap-2 mt-1.5 text-[10px] text-muted-foreground font-mono">
+                      {m.valoradoTexto ? (
+                        <span className="text-terracotta font-medium">{m.valoradoTexto}</span>
+                      ) : (
+                        <>
+                          <span className="text-[9px]">¿Respuesta útil?</span>
+                          <button
+                            type="button"
+                            onClick={() => valorar(m.id, m.consultaId!, 1)}
+                            className="p-1 rounded hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                            title="Respuesta útil"
+                            aria-label="Respuesta útil"
+                          >
+                            <ThumbsUp className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => valorar(m.id, m.consultaId!, -1)}
+                            className="p-1 rounded hover:text-foreground hover:bg-muted transition-colors cursor-pointer"
+                            title="Respuesta con errores"
+                            aria-label="Respuesta con errores"
+                          >
+                            <ThumbsDown className="w-3.5 h-3.5" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
@@ -224,37 +472,75 @@ export const ChatAsistente: React.FC<ChatAsistenteProps> = ({
             })}
 
             {cargando && (
-              <div className="flex items-center gap-2 text-terracotta text-xs font-mono py-2">
-                <div className="w-2 h-2 rounded-full bg-terracotta animate-ping" />
-                <span>Interrogando telemetría de Notion...</span>
+              <div className="flex items-center gap-2.5 text-terracotta text-xs font-mono py-2 bg-surface/50 px-3 rounded-xl border border-border w-fit animate-pulse">
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <span>Consultando proyectos…</span>
               </div>
             )}
+
+            {ultimoError && !cargando && (
+              <div className="p-2.5 rounded-xl bg-health-red-soft border border-health-red/30 flex items-center justify-between gap-2 text-xs font-mono text-health-red">
+                <span className="flex items-center gap-1.5">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>Falló la última consulta.</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={reintentarUltima}
+                  className="px-2 py-1 rounded bg-card hover:bg-surface border border-health-red/40 text-foreground font-semibold transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <RotateCcw className="w-3 h-3 text-terracotta" />
+                  <span>Reintentar</span>
+                </button>
+              </div>
+            )}
+
+            <div ref={mensajesEndRef} />
           </div>
 
-          {/* Input Box */}
+          {/* Input Box y Contador */}
           <div className="p-3 border-t border-border bg-surface">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 enviarPregunta();
               }}
-              className="flex items-center gap-2"
+              className="space-y-2"
             >
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Pregunta sobre etapas, bloqueos, fechas..."
-                className="flex-1 bg-card border border-border rounded-xl px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta font-mono"
-              />
-              <button
-                type="submit"
-                disabled={!input.trim() || cargando}
-                className="bg-terracotta hover:opacity-90 disabled:opacity-40 text-white p-2 rounded-xl transition-all shadow-cta"
-                aria-label="Enviar pregunta"
-              >
-                <Send className="w-4 h-4 stroke-[2.5]" />
-              </button>
+              <div className="relative">
+                <textarea
+                  ref={inputRef}
+                  rows={2}
+                  maxLength={1000}
+                  value={input}
+                  disabled={cargando}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      enviarPregunta();
+                    }
+                  }}
+                  placeholder="Pregunta sobre etapas, bloqueos o fechas (Enter envía, Shift+Enter nueva línea)..."
+                  className="w-full bg-card border border-border rounded-xl p-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-terracotta focus:ring-1 focus:ring-terracotta font-mono resize-none disabled:opacity-50"
+                />
+              </div>
+
+              <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground px-1">
+                <span className={input.length >= 950 ? 'text-health-red font-bold' : ''}>
+                  {input.length} / 1000
+                </span>
+
+                <button
+                  type="submit"
+                  disabled={!input.trim() || cargando}
+                  className="bg-terracotta hover:opacity-90 disabled:opacity-40 text-white px-3.5 py-1.5 rounded-xl transition-all shadow-cta flex items-center gap-1.5 font-sans font-semibold cursor-pointer disabled:cursor-not-allowed"
+                  aria-label="Enviar pregunta al Copiloto"
+                >
+                  <span>Enviar</span>
+                  <Send className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </form>
           </div>
         </div>
