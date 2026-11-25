@@ -1,0 +1,173 @@
+{
+  "name": "Sync Gestor Documental a Comando Estelar",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 */4 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Cada 4 Horas",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM public.projects WHERE status <> 'ARCHIVADO';"
+      },
+      "id": "postgres-projects",
+      "name": "Query Projects Gestor",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [440, 200],
+      "credentials": {
+        "postgres": {
+          "id": "gestor_documental_db",
+          "name": "PostgreSQL Gestor Documental (ce_reader)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM public.project_phases ORDER BY project_id, position ASC;"
+      },
+      "id": "postgres-phases",
+      "name": "Query Phases Gestor",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [440, 320],
+      "credentials": {
+        "postgres": {
+          "id": "gestor_documental_db",
+          "name": "PostgreSQL Gestor Documental (ce_reader)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM public.project_tasks WHERE status <> 'CANCELADA';"
+      },
+      "id": "postgres-tasks",
+      "name": "Query Tasks Gestor",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [440, 440],
+      "credentials": {
+        "postgres": {
+          "id": "gestor_documental_db",
+          "name": "PostgreSQL Gestor Documental (ce_reader)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM public.blockers;"
+      },
+      "id": "postgres-blockers",
+      "name": "Query Blockers Gestor",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [440, 560],
+      "credentials": {
+        "postgres": {
+          "id": "gestor_documental_db",
+          "name": "PostgreSQL Gestor Documental (ce_reader)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM public.profiles WHERE active = true;"
+      },
+      "id": "postgres-profiles",
+      "name": "Query Profiles Gestor",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [440, 680],
+      "credentials": {
+        "postgres": {
+          "id": "gestor_documental_db",
+          "name": "PostgreSQL Gestor Documental (ce_reader)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const projects = $('Query Projects Gestor').all().map(i => i.json);\nconst phases = $('Query Phases Gestor').all().map(i => i.json);\nconst tasks = $('Query Tasks Gestor').all().map(i => i.json);\nconst blockers = $('Query Blockers Gestor').all().map(i => i.json);\nconst profiles = $('Query Profiles Gestor').all().map(i => i.json);\n\n// Mapeo canónico a contrato de Comando Estelar\nconst profilesMap = new Map(profiles.map(p => [p.id, p]));\n\nconst proyectosCanonicos = projects.map(p => {\n  const leader = profilesMap.get(p.leader_id) || {};\n  return {\n    notion_id: 'gestor_' + p.id,\n    nombre: p.name || 'Sin título',\n    codigo: p.code || null,\n    area_solicitante: p.requesting_area_name || 'Innovación',\n    responsable_nombre: leader.full_name || 'Sin asignar',\n    responsable_email: (leader.email || '').toLowerCase(),\n    fecha_comprometida: p.committed_target_date || p.target_delivery_date || null,\n    notion_url: 'https://gestor.wwp.cl/projects/' + (p.code || p.id)\n  };\n});\n\nreturn [{\n  json: {\n    fuente: 'gestor_wwp',\n    leido_en: new Date().toISOString(),\n    proyectos: proyectosCanonicos,\n    etapas: phases,\n    tareas: tasks,\n    bloqueos: blockers\n  }\n}];"
+      },
+      "id": "adaptador-normalizador",
+      "name": "Normalizar Payload Canónico",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 440]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/functions/v1/sync-ingest",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-sync-secret",
+              "value": "={{ $env.SYNC_SECRET }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "jsonBody": "={{ JSON.stringify($json) }}"
+      },
+      "id": "post-sync-ingest",
+      "name": "POST sync-ingest Comando Estelar",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 440]
+    }
+  ],
+  "connections": {
+    "Cada 4 Horas": {
+      "main": [
+        [
+          { "node": "Query Projects Gestor", "type": "main", "index": 0 },
+          { "node": "Query Phases Gestor", "type": "main", "index": 0 },
+          { "node": "Query Tasks Gestor", "type": "main", "index": 0 },
+          { "node": "Query Blockers Gestor", "type": "main", "index": 0 },
+          { "node": "Query Profiles Gestor", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Query Profiles Gestor": {
+      "main": [
+        [
+          { "node": "Normalizar Payload Canónico", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Normalizar Payload Canónico": {
+      "main": [
+        [
+          { "node": "POST sync-ingest Comando Estelar", "type": "main", "index": 0 }
+        ]
+      ]
+    }
+  }
+}
