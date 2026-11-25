@@ -8,6 +8,8 @@ node_modules/
 dist/
 app/test-results/
 app/playwright-report/
+test-results/
+playwright-report/
 
 # Supabase local
 supabase/.temp/

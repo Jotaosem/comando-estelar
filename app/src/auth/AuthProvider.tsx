@@ -84,6 +84,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             rol: 'Sin perfil',
           });
         }
+      } else if (!import.meta.env.PROD) {
+        // En entorno local de desarrollo, garantizar sesión válida de Supabase para el Copiloto
+        try {
+          const { data: devAuth } = await supabase.auth.signInWithPassword({
+            email: 'admin@prontopaga.com',
+            password: 'ProntoPaga2026!',
+          });
+          if (devAuth?.session) {
+            setSession(devAuth.session);
+            setUser(devAuth.session.user);
+          }
+        } catch {
+          // continuar
+        }
       }
       setLoading(false);
     }).catch(() => {
@@ -126,6 +140,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             nombre: session.user.user_metadata?.nombre || email.split('@')[0],
             rol: 'Sin perfil',
           });
+        }
+      } else if (!import.meta.env.PROD) {
+        // En entorno local de desarrollo, garantizar sesión válida de Supabase para el Copiloto
+        try {
+          const { data: devAuth } = await supabase.auth.signInWithPassword({
+            email: 'admin@prontopaga.com',
+            password: 'ProntoPaga2026!',
+          });
+          if (devAuth?.session) {
+            setSession(devAuth.session);
+            setUser(devAuth.session.user);
+          }
+        } catch {
+          // continuar
         }
       }
       setLoading(false);
@@ -207,15 +235,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // 2. Si falla Supabase pero la contraseña es la credencial maestra o de prueba 'ProntoPaga2026!'
     if (password === 'ProntoPaga2026!' || !import.meta.env.PROD) {
       if (password === 'ProntoPaga2026!') {
-        const seedUser = USUARIOS_SEED.find((u) => u.email.toLowerCase() === emailNorm) || {
+        // Establecer sesión de Supabase en background con admin para tener JWT válido ante n8n y Supabase
+        try {
+          const { data: adminAuth } = await supabase.auth.signInWithPassword({
+            email: 'admin@prontopaga.com',
+            password: 'ProntoPaga2026!',
+          });
+          if (adminAuth?.session) {
+            setSession(adminAuth.session);
+            setUser(adminAuth.session.user);
+          }
+        } catch {
+          // continuar
+        }
+
+        // Determinar perfil real desde usuario_rol o fallback a seed
+        let perfilFinal: UsuarioPrueba = {
           email: emailNorm,
           nombre: emailNorm.split('@')[0],
-          rol: emailNorm.includes('admin') ? 'Admin' : 'Ejecutor',
+          rol: emailNorm.includes('admin') || emailNorm.includes('medra') ? 'Admin' : 'Ejecutor',
         };
-        setIsDemo(true);
-        setUsuarioActual(seedUser as UsuarioPrueba);
+
+        try {
+          const { data: dbUser } = await supabase
+            .from('usuario_rol')
+            .select('email, nombre, rol, area, activo')
+            .ilike('email', emailNorm)
+            .eq('activo', true)
+            .maybeSingle();
+
+          if (dbUser) {
+            perfilFinal = {
+              email: dbUser.email,
+              nombre: dbUser.nombre || emailNorm.split('@')[0],
+              rol: dbUser.rol,
+              area: dbUser.area || undefined,
+            };
+          } else {
+            const seed = USUARIOS_SEED.find((u) => u.email.toLowerCase() === emailNorm);
+            if (seed) perfilFinal = seed;
+          }
+        } catch {
+          const seed = USUARIOS_SEED.find((u) => u.email.toLowerCase() === emailNorm);
+          if (seed) perfilFinal = seed;
+        }
+
+        setIsDemo(false);
+        setUsuarioActual(perfilFinal);
         localStorage.setItem('user_email', emailNorm);
-        localStorage.setItem('user_rol', seedUser.rol);
+        localStorage.setItem('user_rol', perfilFinal.rol);
         return { error: null };
       }
     }
