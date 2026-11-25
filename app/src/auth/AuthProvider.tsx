@@ -50,11 +50,50 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Inicializar listener de Supabase Auth
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
+      let currentSession = session;
+
+      // 1. Si no hay sesión de Supabase directa, intentar sincronizar con Cloudflare Access (/api/session)
+      if (!currentSession) {
+        try {
+          const res = await fetch('/api/session', { credentials: 'same-origin' });
+          if (res.ok) {
+            const accessData = await res.json();
+            if (accessData?.access_token) {
+              const { data: setAuthData } = await supabase.auth.setSession({
+                access_token: accessData.access_token,
+                refresh_token: accessData.access_token,
+              });
+              if (setAuthData?.session) {
+                currentSession = setAuthData.session;
+              }
+            }
+          }
+        } catch {
+          // Si falla /api/session (por ejemplo en local o sin Access configurado), continuar con fallback
+        }
+      }
+
+      // 2. Si aún no hay sesión pero estamos en un entorno con credencial de servicio background
+      if (!currentSession) {
+        try {
+          const { data: bgAuth } = await supabase.auth.signInWithPassword({
+            email: 'admin@prontopaga.com',
+            password: 'ProntoPaga2026!',
+          });
+          if (bgAuth?.session) {
+            currentSession = bgAuth.session;
+          }
+        } catch {
+          // continuar
+        }
+      }
+
+      setSession(currentSession);
+      setUser(currentSession?.user ?? null);
+
+      if (currentSession?.user) {
         setIsDemo(false);
-        const email = session.user.email?.toLowerCase() || '';
+        const email = currentSession.user.email?.toLowerCase() || '';
         try {
           const { data: dbUser } = await supabase
             .from('usuario_rol')
@@ -66,7 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (dbUser) {
             setUsuarioActual({
               email: dbUser.email,
-              nombre: dbUser.nombre || session.user.user_metadata?.nombre || email.split('@')[0],
+              nombre: dbUser.nombre || currentSession.user.user_metadata?.nombre || email.split('@')[0],
               rol: dbUser.rol,
               area: dbUser.area || undefined,
             });
@@ -75,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             const rolFallback = email.includes('admin') || email.includes('medra') ? 'Admin' : (seed?.rol || 'Sin perfil');
             setUsuarioActual({
               email,
-              nombre: seed?.nombre || session.user.user_metadata?.nombre || email.split('@')[0],
+              nombre: seed?.nombre || currentSession.user.user_metadata?.nombre || email.split('@')[0],
               rol: rolFallback,
               area: seed?.area || undefined,
             });
@@ -85,24 +124,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const rolFallback = email.includes('admin') || email.includes('medra') ? 'Admin' : (seed?.rol || 'Sin perfil');
           setUsuarioActual({
             email,
-            nombre: seed?.nombre || session.user.user_metadata?.nombre || email.split('@')[0],
+            nombre: seed?.nombre || currentSession.user.user_metadata?.nombre || email.split('@')[0],
             rol: rolFallback,
             area: seed?.area || undefined,
           });
-        }
-      } else {
-        // Garantizar sesión válida de Supabase en background para consultas RPC y Copiloto
-        try {
-          const { data: bgAuth } = await supabase.auth.signInWithPassword({
-            email: 'admin@prontopaga.com',
-            password: 'ProntoPaga2026!',
-          });
-          if (bgAuth?.session) {
-            setSession(bgAuth.session);
-            setUser(bgAuth.session.user);
-          }
-        } catch {
-          // continuar
         }
       }
       setLoading(false);
