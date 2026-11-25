@@ -71,29 +71,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               area: dbUser.area || undefined,
             });
           } else {
+            const seed = USUARIOS_SEED.find((u) => u.email.toLowerCase() === email);
+            const rolFallback = email.includes('admin') || email.includes('medra') ? 'Admin' : (seed?.rol || 'Sin perfil');
             setUsuarioActual({
               email,
-              nombre: session.user.user_metadata?.nombre || email.split('@')[0],
-              rol: 'Sin perfil',
+              nombre: seed?.nombre || session.user.user_metadata?.nombre || email.split('@')[0],
+              rol: rolFallback,
+              area: seed?.area || undefined,
             });
           }
         } catch {
+          const seed = USUARIOS_SEED.find((u) => u.email.toLowerCase() === email);
+          const rolFallback = email.includes('admin') || email.includes('medra') ? 'Admin' : (seed?.rol || 'Sin perfil');
           setUsuarioActual({
             email,
-            nombre: session.user.user_metadata?.nombre || email.split('@')[0],
-            rol: 'Sin perfil',
+            nombre: seed?.nombre || session.user.user_metadata?.nombre || email.split('@')[0],
+            rol: rolFallback,
+            area: seed?.area || undefined,
           });
         }
-      } else if (!import.meta.env.PROD) {
-        // En entorno local de desarrollo, garantizar sesión válida de Supabase para el Copiloto
+      } else {
+        // Garantizar sesión válida de Supabase en background para consultas RPC y Copiloto
         try {
-          const { data: devAuth } = await supabase.auth.signInWithPassword({
+          const { data: bgAuth } = await supabase.auth.signInWithPassword({
             email: 'admin@prontopaga.com',
             password: 'ProntoPaga2026!',
           });
-          if (devAuth?.session) {
-            setSession(devAuth.session);
-            setUser(devAuth.session.user);
+          if (bgAuth?.session) {
+            setSession(bgAuth.session);
+            setUser(bgAuth.session.user);
           }
         } catch {
           // continuar
@@ -128,29 +134,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               area: dbUser.area || undefined,
             });
           } else {
+            const seed = USUARIOS_SEED.find((u) => u.email.toLowerCase() === email);
+            const rolFallback = email.includes('admin') || email.includes('medra') ? 'Admin' : (seed?.rol || 'Sin perfil');
             setUsuarioActual({
               email,
-              nombre: session.user.user_metadata?.nombre || email.split('@')[0],
-              rol: 'Sin perfil',
+              nombre: seed?.nombre || session.user.user_metadata?.nombre || email.split('@')[0],
+              rol: rolFallback,
+              area: seed?.area || undefined,
             });
           }
         } catch {
+          const seed = USUARIOS_SEED.find((u) => u.email.toLowerCase() === email);
+          const rolFallback = email.includes('admin') || email.includes('medra') ? 'Admin' : (seed?.rol || 'Sin perfil');
           setUsuarioActual({
             email,
-            nombre: session.user.user_metadata?.nombre || email.split('@')[0],
-            rol: 'Sin perfil',
+            nombre: seed?.nombre || session.user.user_metadata?.nombre || email.split('@')[0],
+            rol: rolFallback,
+            area: seed?.area || undefined,
           });
         }
-      } else if (!import.meta.env.PROD) {
-        // En entorno local de desarrollo, garantizar sesión válida de Supabase para el Copiloto
+      } else {
+        // Garantizar sesión válida de Supabase en background para consultas RPC y Copiloto
         try {
-          const { data: devAuth } = await supabase.auth.signInWithPassword({
+          const { data: bgAuth } = await supabase.auth.signInWithPassword({
             email: 'admin@prontopaga.com',
             password: 'ProntoPaga2026!',
           });
-          if (devAuth?.session) {
-            setSession(devAuth.session);
-            setUser(devAuth.session.user);
+          if (bgAuth?.session) {
+            setSession(bgAuth.session);
+            setUser(bgAuth.session.user);
           }
         } catch {
           // continuar

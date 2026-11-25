@@ -49,8 +49,14 @@ export async function obtenerProyectosReales(usuarioActual?: { email: string; ro
     return [];
   }
 
+  // Pre-evaluar puede_ver_detalle para cada proyecto según rol/área del usuario actual
+  const resGalaxiaConPermisos = resGalaxia.map((p: any) => ({
+    ...p,
+    puede_ver_detalle: determinarPuedeVerDetalle(p, usuarioActual),
+  }));
+
   // 2. Para los proyectos con puede_ver_detalle, consultar v_proyecto_canonico + calculo + etapas
-  const idsConDetalle = resGalaxia.filter((p: any) => p.puede_ver_detalle).map((p: any) => p.id);
+  const idsConDetalle = resGalaxiaConPermisos.filter((p: any) => p.puede_ver_detalle).map((p: any) => p.id);
 
   let canonicosMap = new Map<string, any>();
   let calculosMap = new Map<string, any>();
@@ -106,7 +112,7 @@ export async function obtenerProyectosReales(usuarioActual?: { email: string; ro
   }
 
   // 3. Mapear cada fila con mapProyecto combinando datos de la RPC y complementarios
-  return resGalaxia.map((g: any) => {
+  return resGalaxiaConPermisos.map((g: any) => {
     const canonico = canonicosMap.get(g.id);
     const calculo = calculosMap.get(g.id);
     const etapas = etapasMap.get(g.id) || [];
