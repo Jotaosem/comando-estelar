@@ -30,7 +30,7 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       const url = new URL(request.url);
       const devEmailQuery = url.searchParams.get('email');
       const devEmailHeader = request.headers.get('x-dev-email');
-      email = (devEmailQuery || devEmailHeader || env.DEV_AUTH_EMAIL || 'gerencia@empresa.cl').toLowerCase();
+      email = (devEmailQuery || devEmailHeader || env.DEV_AUTH_EMAIL || 'admin@prontopaga.com').toLowerCase();
     }
 
     if (!email) {
